@@ -4,8 +4,8 @@ import 'any_align.dart';
 import 'any_border.dart';
 import 'any_fill.dart';
 import 'any_shadow.dart';
-import 'geometry/any_border_geometry.dart';
-import 'geometry/any_region.dart';
+import '../geometry/border_geometry.dart';
+import '../geometry/path_region.dart';
 
 enum AnyShapeBase {
   /// Shape of the element based on border corners but ignoring border side width.
@@ -64,7 +64,7 @@ class AnyDecoration extends Decoration with MAnyFill {
 
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {
-    final geometry = AnyBorderGeometry.resolve(rect, border);
+    final geometry = BorderGeometry.resolve(rect, border);
     return geometry.pathForShapeBase(clip);
   }
 
@@ -96,7 +96,7 @@ class _AnyBoxPainter extends BoxPainter {
     if (size == null || size.isEmpty) return;
 
     final rect = offset & size;
-    final geometry = AnyBorderGeometry.resolve(rect, decoration.border);
+    final geometry = BorderGeometry.resolve(rect, decoration.border);
 
     _paintShadows(canvas, geometry);
 
@@ -106,7 +106,7 @@ class _AnyBoxPainter extends BoxPainter {
     }
   }
 
-  void _paintShadows(Canvas canvas, AnyBorderGeometry geometry) {
+  void _paintShadows(Canvas canvas, BorderGeometry geometry) {
     final shadows = decoration.shadows;
     if (shadows == null || shadows.isEmpty) return;
 
@@ -128,7 +128,7 @@ class _AnyBoxPainter extends BoxPainter {
 
   void _paintRegion(
       Canvas canvas,
-      AnyRegion region,
+      PathRegion region,
       Rect rect,
       ImageConfiguration configuration,
       ) {

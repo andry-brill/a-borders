@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import '../any_corner.dart';
+import '../../decoration/any_corner.dart';
 
-enum AnyCornerVariant {
+enum CornerVariant {
   square,
   rounded,
   innerRounded,
@@ -11,82 +11,84 @@ enum AnyCornerVariant {
   sideRoundedVertical,
 }
 
-enum AnyCornerPosition {
+enum CornerPosition {
   topLeft,
   topRight,
   bottomRight,
   bottomLeft,
 }
 
-class AnyCornerProfile {
-  const AnyCornerProfile({
+class CornerProfile {
+
+  const CornerProfile({
     required this.variant,
     required this.radius,
     required this.position,
   });
 
-  final AnyCornerVariant variant;
+  final CornerVariant variant;
   final Radius radius;
-  final AnyCornerPosition position;
+  final CornerPosition position;
 
   bool get isSquare =>
-      variant == AnyCornerVariant.square ||
+      variant == CornerVariant.square ||
           (radius.x == 0.0 && radius.y == 0.0);
 
-  static AnyCornerProfile fromCorner(
+  static CornerProfile fromCorner(
       IAnyCorner corner,
-      AnyCornerPosition position,
+      CornerPosition position,
       Size contourSize,
       ) {
     if (corner is AnySquareCorner) {
-      return AnyCornerProfile(
-        variant: AnyCornerVariant.square,
+      return CornerProfile(
+        variant: CornerVariant.square,
         radius: Radius.zero,
         position: position,
       );
     }
 
     if (corner is AnyRoundedCorner) {
-      return AnyCornerProfile(
-        variant: AnyCornerVariant.rounded,
+      return CornerProfile(
+        variant: CornerVariant.rounded,
         radius: corner.resolveForSize(contourSize),
         position: position,
       );
     }
 
     if (corner is AnyInnerRoundedCorner) {
-      return AnyCornerProfile(
-        variant: AnyCornerVariant.innerRounded,
+      return CornerProfile(
+        variant: CornerVariant.innerRounded,
         radius: corner.resolveForSize(contourSize),
         position: position,
       );
     }
 
     if (corner is AnySideRoundedCorner) {
-      return AnyCornerProfile(
+      return CornerProfile(
         variant: corner.horizontal
-            ? AnyCornerVariant.sideRoundedHorizontal
-            : AnyCornerVariant.sideRoundedVertical,
+            ? CornerVariant.sideRoundedHorizontal
+            : CornerVariant.sideRoundedVertical,
         radius: corner.resolveForSize(contourSize),
         position: position,
       );
     }
 
-    return AnyCornerProfile(
-      variant: AnyCornerVariant.square,
+    return CornerProfile(
+      variant: CornerVariant.square,
       radius: Radius.zero,
       position: position,
     );
   }
 }
 
-class AnyContour {
-  AnyContour({
+class BorderContour {
+
+  BorderContour({
     required Rect rect,
-    required AnyCornerProfile topLeft,
-    required AnyCornerProfile topRight,
-    required AnyCornerProfile bottomRight,
-    required AnyCornerProfile bottomLeft,
+    required CornerProfile topLeft,
+    required CornerProfile topRight,
+    required CornerProfile bottomRight,
+    required CornerProfile bottomLeft,
   })  : rect = rect,
         topLeft = topLeft,
         topRight = topRight,
@@ -96,10 +98,10 @@ class AnyContour {
   }
 
   final Rect rect;
-  AnyCornerProfile topLeft;
-  AnyCornerProfile topRight;
-  AnyCornerProfile bottomRight;
-  AnyCornerProfile bottomLeft;
+  CornerProfile topLeft;
+  CornerProfile topRight;
+  CornerProfile bottomRight;
+  CornerProfile bottomLeft;
 
   Size get size => rect.size;
   Offset get topMiddle => Offset(rect.center.dx, rect.top);
@@ -126,22 +128,22 @@ class AnyContour {
     final width = rect.width.abs();
     final height = rect.height.abs();
     if (width == 0.0 || height == 0.0) {
-      topLeft = AnyCornerProfile(
+      topLeft = CornerProfile(
         variant: topLeft.variant,
         radius: Radius.zero,
         position: topLeft.position,
       );
-      topRight = AnyCornerProfile(
+      topRight = CornerProfile(
         variant: topRight.variant,
         radius: Radius.zero,
         position: topRight.position,
       );
-      bottomRight = AnyCornerProfile(
+      bottomRight = CornerProfile(
         variant: bottomRight.variant,
         radius: Radius.zero,
         position: bottomRight.position,
       );
-      bottomLeft = AnyCornerProfile(
+      bottomLeft = CornerProfile(
         variant: bottomLeft.variant,
         radius: Radius.zero,
         position: bottomLeft.position,
@@ -155,22 +157,22 @@ class AnyContour {
     final sy2 = (tryy + bry) > height ? height / (tryy + bry) : 1.0;
     final s = math.min(math.min(sx1, sx2), math.min(sy1, sy2));
 
-    topLeft = AnyCornerProfile(
+    topLeft = CornerProfile(
       variant: topLeft.variant,
       radius: Radius.elliptical(tlx * s, tly * s),
       position: topLeft.position,
     );
-    topRight = AnyCornerProfile(
+    topRight = CornerProfile(
       variant: topRight.variant,
       radius: Radius.elliptical(trx * s, tryy * s),
       position: topRight.position,
     );
-    bottomRight = AnyCornerProfile(
+    bottomRight = CornerProfile(
       variant: bottomRight.variant,
       radius: Radius.elliptical(brx * s, bry * s),
       position: bottomRight.position,
     );
-    bottomLeft = AnyCornerProfile(
+    bottomLeft = CornerProfile(
       variant: bottomLeft.variant,
       radius: Radius.elliptical(blx * s, bly * s),
       position: bottomLeft.position,
@@ -227,11 +229,11 @@ class AnyContour {
     path.lineTo(tm.dx, tm.dy);
   }
 
-  void appendCornerCW(Path path, AnyCornerProfile c) {
+  void appendCornerCW(Path path, CornerProfile c) {
     final rx = c.radius.x;
     final ry = c.radius.y;
     switch (c.position) {
-      case AnyCornerPosition.topLeft:
+      case CornerPosition.topLeft:
         _appendCornerPathCW(
           path,
           c,
@@ -241,7 +243,7 @@ class AnyContour {
           inward: Offset(rect.left + rx, rect.top + ry),
         );
         break;
-      case AnyCornerPosition.topRight:
+      case CornerPosition.topRight:
         _appendCornerPathCW(
           path,
           c,
@@ -251,7 +253,7 @@ class AnyContour {
           inward: Offset(rect.right - rx, rect.top + ry),
         );
         break;
-      case AnyCornerPosition.bottomRight:
+      case CornerPosition.bottomRight:
         _appendCornerPathCW(
           path,
           c,
@@ -261,7 +263,7 @@ class AnyContour {
           inward: Offset(rect.right - rx, rect.bottom - ry),
         );
         break;
-      case AnyCornerPosition.bottomLeft:
+      case CornerPosition.bottomLeft:
         _appendCornerPathCW(
           path,
           c,
@@ -274,11 +276,11 @@ class AnyContour {
     }
   }
 
-  void appendCornerCCW(Path path, AnyCornerProfile c) {
+  void appendCornerCCW(Path path, CornerProfile c) {
     final rx = c.radius.x;
     final ry = c.radius.y;
     switch (c.position) {
-      case AnyCornerPosition.topLeft:
+      case CornerPosition.topLeft:
         _appendCornerPathCCW(
           path,
           c,
@@ -288,7 +290,7 @@ class AnyContour {
           inward: Offset(rect.left + rx, rect.top + ry),
         );
         break;
-      case AnyCornerPosition.topRight:
+      case CornerPosition.topRight:
         _appendCornerPathCCW(
           path,
           c,
@@ -298,7 +300,7 @@ class AnyContour {
           inward: Offset(rect.right - rx, rect.top + ry),
         );
         break;
-      case AnyCornerPosition.bottomRight:
+      case CornerPosition.bottomRight:
         _appendCornerPathCCW(
           path,
           c,
@@ -308,7 +310,7 @@ class AnyContour {
           inward: Offset(rect.right - rx, rect.bottom - ry),
         );
         break;
-      case AnyCornerPosition.bottomLeft:
+      case CornerPosition.bottomLeft:
         _appendCornerPathCCW(
           path,
           c,
@@ -323,7 +325,7 @@ class AnyContour {
 
   void _appendCornerPathCW(
       Path path,
-      AnyCornerProfile c, {
+      CornerProfile c, {
         required Offset from,
         required Offset to,
         required Offset vertex,
@@ -338,24 +340,24 @@ class AnyContour {
     }
 
     switch (c.variant) {
-      case AnyCornerVariant.square:
+      case CornerVariant.square:
         path.lineTo(vertex.dx, vertex.dy);
         path.lineTo(to.dx, to.dy);
         return;
-      case AnyCornerVariant.rounded:
+      case CornerVariant.rounded:
         path.arcToPoint(to, radius: c.radius, clockwise: true);
         return;
-      case AnyCornerVariant.innerRounded:
+      case CornerVariant.innerRounded:
         path.quadraticBezierTo(inward.dx, inward.dy, to.dx, to.dy);
         return;
-      case AnyCornerVariant.sideRoundedHorizontal:
+      case CornerVariant.sideRoundedHorizontal:
         final control = Offset(
           positionIsRight(c.position) ? vertex.dx + rx : vertex.dx - rx,
           vertex.dy,
         );
         path.quadraticBezierTo(control.dx, control.dy, to.dx, to.dy);
         return;
-      case AnyCornerVariant.sideRoundedVertical:
+      case CornerVariant.sideRoundedVertical:
         final control = Offset(
           vertex.dx,
           positionIsBottom(c.position) ? vertex.dy + ry : vertex.dy - ry,
@@ -367,7 +369,7 @@ class AnyContour {
 
   void _appendCornerPathCCW(
       Path path,
-      AnyCornerProfile c, {
+      CornerProfile c, {
         required Offset from,
         required Offset to,
         required Offset vertex,
@@ -382,24 +384,24 @@ class AnyContour {
     }
 
     switch (c.variant) {
-      case AnyCornerVariant.square:
+      case CornerVariant.square:
         path.lineTo(vertex.dx, vertex.dy);
         path.lineTo(to.dx, to.dy);
         return;
-      case AnyCornerVariant.rounded:
+      case CornerVariant.rounded:
         path.arcToPoint(to, radius: c.radius, clockwise: false);
         return;
-      case AnyCornerVariant.innerRounded:
+      case CornerVariant.innerRounded:
         path.quadraticBezierTo(inward.dx, inward.dy, to.dx, to.dy);
         return;
-      case AnyCornerVariant.sideRoundedHorizontal:
+      case CornerVariant.sideRoundedHorizontal:
         final control = Offset(
           positionIsRight(c.position) ? vertex.dx + rx : vertex.dx - rx,
           vertex.dy,
         );
         path.quadraticBezierTo(control.dx, control.dy, to.dx, to.dy);
         return;
-      case AnyCornerVariant.sideRoundedVertical:
+      case CornerVariant.sideRoundedVertical:
         final control = Offset(
           vertex.dx,
           positionIsBottom(c.position) ? vertex.dy + ry : vertex.dy - ry,
@@ -409,9 +411,9 @@ class AnyContour {
     }
   }
 
-  static bool positionIsRight(AnyCornerPosition p) =>
-      p == AnyCornerPosition.topRight || p == AnyCornerPosition.bottomRight;
+  static bool positionIsRight(CornerPosition p) =>
+      p == CornerPosition.topRight || p == CornerPosition.bottomRight;
 
-  static bool positionIsBottom(AnyCornerPosition p) =>
-      p == AnyCornerPosition.bottomRight || p == AnyCornerPosition.bottomLeft;
+  static bool positionIsBottom(CornerPosition p) =>
+      p == CornerPosition.bottomRight || p == CornerPosition.bottomLeft;
 }

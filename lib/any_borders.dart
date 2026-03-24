@@ -1,7 +1,9 @@
 library any_borders;
 
-export 'src/any_border.dart';
-export 'src/any_decoration.dart';
-export 'src/any_fill.dart';
-export 'src/any_shadow.dart';
-export 'src/any_side.dart';
+export 'decoration/any_align.dart';
+export 'decoration/any_border.dart';
+export 'decoration/any_corner.dart';
+export 'decoration/any_decoration.dart';
+export 'decoration/any_fill.dart';
+export 'decoration/any_shadow.dart';
+export 'decoration/any_side.dart';
