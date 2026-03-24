@@ -9,7 +9,6 @@ abstract class IAnyFill {
 }
 
 mixin MAnyFill implements IAnyFill {
-
   @override
   bool isSameAs(IAnyFill? other) {
     if (other == null) return false;
@@ -22,5 +21,5 @@ mixin MAnyFill implements IAnyFill {
 
 extension EAnyFill on IAnyFill {
   bool get isEmpty => color == null && gradient == null && image == null;
-  bool get hasBaseFill => color != null || gradient != null;
+  bool get hasBaseFill => color != null || gradient != null || image != null;
 }

@@ -1,0 +1,14 @@
+name: example
+description: Example
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  any_borders:
+    path: ../
+
+flutter:
+  uses-material-design: true

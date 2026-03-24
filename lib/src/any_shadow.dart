@@ -1,15 +1,13 @@
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+
 import 'any_align.dart';
 
-abstract class IAnyShadow {
-
-}
+abstract class IAnyShadow {}
 
 @immutable
 class AnyShadow implements IAnyShadow {
-
   const AnyShadow({
     required this.color,
     this.blurRadius = 0.0,

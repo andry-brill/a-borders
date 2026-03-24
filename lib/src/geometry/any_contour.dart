@@ -29,13 +29,15 @@ class AnyCornerProfile {
   final Radius radius;
   final AnyCornerPosition position;
 
-  bool get isSquare => variant == AnyCornerVariant.square || (radius.x == 0.0 && radius.y == 0.0);
+  bool get isSquare =>
+      variant == AnyCornerVariant.square ||
+          (radius.x == 0.0 && radius.y == 0.0);
 
   static AnyCornerProfile fromCorner(
-    IAnyCorner corner,
-    AnyCornerPosition position,
-    Size contourSize,
-  ) {
+      IAnyCorner corner,
+      AnyCornerPosition position,
+      Size contourSize,
+      ) {
     if (corner is AnySquareCorner) {
       return AnyCornerProfile(
         variant: AnyCornerVariant.square,
@@ -124,10 +126,26 @@ class AnyContour {
     final width = rect.width.abs();
     final height = rect.height.abs();
     if (width == 0.0 || height == 0.0) {
-      topLeft = AnyCornerProfile(variant: topLeft.variant, radius: Radius.zero, position: topLeft.position);
-      topRight = AnyCornerProfile(variant: topRight.variant, radius: Radius.zero, position: topRight.position);
-      bottomRight = AnyCornerProfile(variant: bottomRight.variant, radius: Radius.zero, position: bottomRight.position);
-      bottomLeft = AnyCornerProfile(variant: bottomLeft.variant, radius: Radius.zero, position: bottomLeft.position);
+      topLeft = AnyCornerProfile(
+        variant: topLeft.variant,
+        radius: Radius.zero,
+        position: topLeft.position,
+      );
+      topRight = AnyCornerProfile(
+        variant: topRight.variant,
+        radius: Radius.zero,
+        position: topRight.position,
+      );
+      bottomRight = AnyCornerProfile(
+        variant: bottomRight.variant,
+        radius: Radius.zero,
+        position: bottomRight.position,
+      );
+      bottomLeft = AnyCornerProfile(
+        variant: bottomLeft.variant,
+        radius: Radius.zero,
+        position: bottomLeft.position,
+      );
       return;
     }
 
@@ -137,10 +155,26 @@ class AnyContour {
     final sy2 = (tryy + bry) > height ? height / (tryy + bry) : 1.0;
     final s = math.min(math.min(sx1, sx2), math.min(sy1, sy2));
 
-    topLeft = AnyCornerProfile(variant: topLeft.variant, radius: Radius.elliptical(tlx * s, tly * s), position: topLeft.position);
-    topRight = AnyCornerProfile(variant: topRight.variant, radius: Radius.elliptical(trx * s, tryy * s), position: topRight.position);
-    bottomRight = AnyCornerProfile(variant: bottomRight.variant, radius: Radius.elliptical(brx * s, bry * s), position: bottomRight.position);
-    bottomLeft = AnyCornerProfile(variant: bottomLeft.variant, radius: Radius.elliptical(blx * s, bly * s), position: bottomLeft.position);
+    topLeft = AnyCornerProfile(
+      variant: topLeft.variant,
+      radius: Radius.elliptical(tlx * s, tly * s),
+      position: topLeft.position,
+    );
+    topRight = AnyCornerProfile(
+      variant: topRight.variant,
+      radius: Radius.elliptical(trx * s, tryy * s),
+      position: topRight.position,
+    );
+    bottomRight = AnyCornerProfile(
+      variant: bottomRight.variant,
+      radius: Radius.elliptical(brx * s, bry * s),
+      position: bottomRight.position,
+    );
+    bottomLeft = AnyCornerProfile(
+      variant: bottomLeft.variant,
+      radius: Radius.elliptical(blx * s, bly * s),
+      position: bottomLeft.position,
+    );
   }
 
   Offset topStart() => Offset(rect.left + tlRadius.x, rect.top);
@@ -198,16 +232,44 @@ class AnyContour {
     final ry = c.radius.y;
     switch (c.position) {
       case AnyCornerPosition.topLeft:
-        _appendCornerPathCW(path, c, from: topStart(), to: leftEnd(), vertex: rect.topLeft, inward: Offset(rect.left + rx, rect.top + ry));
+        _appendCornerPathCW(
+          path,
+          c,
+          from: topStart(),
+          to: leftEnd(),
+          vertex: rect.topLeft,
+          inward: Offset(rect.left + rx, rect.top + ry),
+        );
         break;
       case AnyCornerPosition.topRight:
-        _appendCornerPathCW(path, c, from: topEnd(), to: rightStart(), vertex: rect.topRight, inward: Offset(rect.right - rx, rect.top + ry));
+        _appendCornerPathCW(
+          path,
+          c,
+          from: topEnd(),
+          to: rightStart(),
+          vertex: rect.topRight,
+          inward: Offset(rect.right - rx, rect.top + ry),
+        );
         break;
       case AnyCornerPosition.bottomRight:
-        _appendCornerPathCW(path, c, from: rightEnd(), to: bottomStart(), vertex: rect.bottomRight, inward: Offset(rect.right - rx, rect.bottom - ry));
+        _appendCornerPathCW(
+          path,
+          c,
+          from: rightEnd(),
+          to: bottomStart(),
+          vertex: rect.bottomRight,
+          inward: Offset(rect.right - rx, rect.bottom - ry),
+        );
         break;
       case AnyCornerPosition.bottomLeft:
-        _appendCornerPathCW(path, c, from: bottomEnd(), to: leftStart(), vertex: rect.bottomLeft, inward: Offset(rect.left + rx, rect.bottom - ry));
+        _appendCornerPathCW(
+          path,
+          c,
+          from: bottomEnd(),
+          to: leftStart(),
+          vertex: rect.bottomLeft,
+          inward: Offset(rect.left + rx, rect.bottom - ry),
+        );
         break;
     }
   }
@@ -217,28 +279,56 @@ class AnyContour {
     final ry = c.radius.y;
     switch (c.position) {
       case AnyCornerPosition.topLeft:
-        _appendCornerPathCCW(path, c, from: leftEnd(), to: topStart(), vertex: rect.topLeft, inward: Offset(rect.left + rx, rect.top + ry));
+        _appendCornerPathCCW(
+          path,
+          c,
+          from: leftEnd(),
+          to: topStart(),
+          vertex: rect.topLeft,
+          inward: Offset(rect.left + rx, rect.top + ry),
+        );
         break;
       case AnyCornerPosition.topRight:
-        _appendCornerPathCCW(path, c, from: rightStart(), to: topEnd(), vertex: rect.topRight, inward: Offset(rect.right - rx, rect.top + ry));
+        _appendCornerPathCCW(
+          path,
+          c,
+          from: rightStart(),
+          to: topEnd(),
+          vertex: rect.topRight,
+          inward: Offset(rect.right - rx, rect.top + ry),
+        );
         break;
       case AnyCornerPosition.bottomRight:
-        _appendCornerPathCCW(path, c, from: bottomStart(), to: rightEnd(), vertex: rect.bottomRight, inward: Offset(rect.right - rx, rect.bottom - ry));
+        _appendCornerPathCCW(
+          path,
+          c,
+          from: bottomStart(),
+          to: rightEnd(),
+          vertex: rect.bottomRight,
+          inward: Offset(rect.right - rx, rect.bottom - ry),
+        );
         break;
       case AnyCornerPosition.bottomLeft:
-        _appendCornerPathCCW(path, c, from: leftStart(), to: bottomEnd(), vertex: rect.bottomLeft, inward: Offset(rect.left + rx, rect.bottom - ry));
+        _appendCornerPathCCW(
+          path,
+          c,
+          from: leftStart(),
+          to: bottomEnd(),
+          vertex: rect.bottomLeft,
+          inward: Offset(rect.left + rx, rect.bottom - ry),
+        );
         break;
     }
   }
 
   void _appendCornerPathCW(
-    Path path,
-    AnyCornerProfile c, {
-    required Offset from,
-    required Offset to,
-    required Offset vertex,
-    required Offset inward,
-  }) {
+      Path path,
+      AnyCornerProfile c, {
+        required Offset from,
+        required Offset to,
+        required Offset vertex,
+        required Offset inward,
+      }) {
     final rx = c.radius.x;
     final ry = c.radius.y;
     if (c.isSquare || rx == 0.0 || ry == 0.0) {
@@ -276,13 +366,13 @@ class AnyContour {
   }
 
   void _appendCornerPathCCW(
-    Path path,
-    AnyCornerProfile c, {
-    required Offset from,
-    required Offset to,
-    required Offset vertex,
-    required Offset inward,
-  }) {
+      Path path,
+      AnyCornerProfile c, {
+        required Offset from,
+        required Offset to,
+        required Offset vertex,
+        required Offset inward,
+      }) {
     final rx = c.radius.x;
     final ry = c.radius.y;
     if (c.isSquare || rx == 0.0 || ry == 0.0) {

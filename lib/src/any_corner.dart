@@ -1,35 +1,44 @@
-
+import 'dart:math' as math;
 
 import 'package:flutter/painting.dart';
 
-abstract class IAnyCorner {
-}
+abstract class IAnyCorner {}
 
 abstract class AAnyCorner implements IAnyCorner {
   const AAnyCorner();
 }
 
-/// Standard 90 degree corner
+/// Standard 90 degree corner.
 class AnySquareCorner extends AAnyCorner {
   const AnySquareCorner();
 }
 
-class AAnyRoundedCorner extends AAnyCorner {
+abstract class AAnyRoundedCorner extends AAnyCorner {
   final Radius radius;
   const AAnyRoundedCorner(this.radius);
+
+  bool get isInfinite => radius.x.isInfinite || radius.y.isInfinite;
+
+  Radius resolveForSize(Size size) {
+    if (!isInfinite) return radius;
+    final m = math.min(size.width, size.height) / 2.0;
+    return Radius.elliptical(m, m);
+  }
 }
 
-/// Standard rounded corner
+/// Standard rounded corner.
 class AnyRoundedCorner extends AAnyRoundedCorner {
   const AnyRoundedCorner(super.radius);
 }
 
-/// Rounded corner that looks inside (like post mark)
+/// Rounded corner that looks inside (like a post mark notch).
 class AnyInnerRoundedCorner extends AAnyRoundedCorner {
   const AnyInnerRoundedCorner(super.radius);
 }
 
-/// Rounded corner that goes outside. Example: _| TAB |_ with horizontal bottom side corners.
+/// Rounded corner that goes outside.
+///
+/// Example: a tab-like edge where only one axis bulges.
 class AnySideRoundedCorner extends AAnyRoundedCorner {
   final bool horizontal;
   const AnySideRoundedCorner.horizontal(super.radius) : horizontal = true;

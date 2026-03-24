@@ -1,4 +1,3 @@
-
 enum AnyAlign {
   inside,
   center,
