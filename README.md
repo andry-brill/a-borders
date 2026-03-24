@@ -1,2 +1,4 @@
-# a-borders
-Flexible decoration and border primitives with per-side fills, inner/outer radii, and merged background-border painting
+
+# any_borders
+
+Universal border box decoration with non-uniform border, custom corners and merged background-border painting

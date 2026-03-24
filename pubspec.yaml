@@ -1,5 +1,5 @@
 name: any_borders
-description: Flexible decoration and border primitives with per-side fills, inner/outer radii, and merged background-border painting.
+description: Universal border box decoration with non-uniform border, custom corners and merged background-border painting
 version: 0.0.1
 publish_to: none
 
