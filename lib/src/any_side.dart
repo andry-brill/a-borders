@@ -1,0 +1,57 @@
+
+import 'package:flutter/painting.dart';
+
+import 'any_align.dart';
+import 'any_fill.dart';
+
+
+abstract class IAnySide implements IAnyFill {
+
+}
+
+class AnySide with MAnyFill implements IAnySide {
+
+  static AnyAlign alignBase = AnyAlign.inside;
+
+  final double width;
+  final AnyAlign? _align;
+  AnyAlign get align => _align ?? alignBase;
+
+  @override final Color? color;
+  @override final Gradient? gradient;
+  @override final DecorationImage? image;
+  @override final BlendMode? blendMode;
+
+  const AnySide({
+    required this.width,
+    AnyAlign? align,
+    this.color,
+    this.gradient,
+    this.image,
+    this.blendMode,
+  }) : _align = align, assert(width >= 0.0);
+
+
+  AnySide copyWith({
+
+    double? width,
+    AnyAlign? align,
+
+    Color? color,
+    Gradient? gradient,
+    DecorationImage? image,
+    BlendMode? blendMode,
+  }) {
+    return AnySide(
+
+      width: width ?? this.width,
+      align: align ?? this._align,
+
+      color: color ?? this.color,
+      gradient: gradient ?? this.gradient,
+      image: image ?? this.image,
+      blendMode: blendMode ?? this.blendMode,
+    );
+  }
+
+}
