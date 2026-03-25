@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import '../../decoration/any_corner.dart';
+import '../decoration/any_corner.dart';
 
 enum CornerVariant {
   square,

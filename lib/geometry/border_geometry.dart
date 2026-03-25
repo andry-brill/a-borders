@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 
-import '../../decoration/any_align.dart';
-import '../../decoration/any_border.dart';
-import '../../decoration/any_decoration.dart';
-import '../../decoration/any_fill.dart';
-import '../../decoration/any_side.dart';
+import '../decoration/any_align.dart';
+import '../decoration/any_border.dart';
+import '../decoration/any_decoration.dart';
+import '../decoration/any_fill.dart';
+import '../decoration/any_side.dart';
 import 'border_contour.dart';
 import 'checkpoints_builder.dart';
 import 'path_region.dart';
@@ -154,16 +154,10 @@ class BorderGeometry {
     final components = _buildFillComponents(decoration);
 
     for (final component in components) {
-      final path = _buildComponentPath(component, decoration);
-      if (path == null) continue;
-      path.fillType = PathFillType.evenOdd;
-      regions.add(
-        PathRegion(
-          path: path,
-          fill: component.fill,
-          debugLabel: component.debugLabel,
-        ),
-      );
+      final descriptor = _buildComponentDescriptor(component, decoration);
+      if (descriptor == null) continue;
+      descriptor.path.fillType = PathFillType.evenOdd;
+      regions.add(descriptor);
     }
 
     return regions;
@@ -178,9 +172,11 @@ class BorderGeometry {
 
     Path? merged;
     for (final component in background) {
-      final path = _buildComponentPath(component, decoration);
-      if (path == null) continue;
-      merged = merged == null ? path : Path.combine(PathOperation.union, merged, path);
+      final region = _buildComponentDescriptor(component, decoration);
+      if (region == null) continue;
+      merged = merged == null
+          ? region.path
+          : Path.combine(PathOperation.union, merged, region.path);
     }
     return merged ?? pathForShapeBase(decoration.background);
   }
@@ -246,7 +242,11 @@ class BorderGeometry {
 
   bool _nodesAreConnected(_RegionNode a, _RegionNode b) {
     if (a.kind == _RegionNodeKind.background || b.kind == _RegionNodeKind.background) {
-      final sideNode = a.kind == _RegionNodeKind.side ? a : b.kind == _RegionNodeKind.side ? b : null;
+      final sideNode = a.kind == _RegionNodeKind.side
+          ? a
+          : b.kind == _RegionNodeKind.side
+              ? b
+              : null;
       return sideNode != null;
     }
 
@@ -257,34 +257,94 @@ class BorderGeometry {
     return side != null && side.width > 0.0 && !side.isEmpty;
   }
 
-  Path? _buildComponentPath(_FillComponent component, AnyDecoration decoration) {
-    Path? result;
+  PathRegion? _buildComponentDescriptor(
+    _FillComponent component,
+    AnyDecoration decoration,
+  ) {
+    final targets = _targetsForComponent(component);
+    if (targets.isEmpty) return null;
+
+    final geometry = BorderCheckpointsGeometry(rect, border);
+    final builder = CheckpointsBuilder(border);
+
+    late final Path path;
+    final checkpointSets = <List<ContourCheckpoint>>[];
+    final bases = <AnyShapeBase>[];
+
+    if (!component.includesBackground && _isFullVisibleBorderComponent(component)) {
+      final outerCheckpoints = builder.build(ContourTarget.sides, base: AnyShapeBase.outerBorder);
+      final innerCheckpoints = builder.build(ContourTarget.sides, base: AnyShapeBase.innerBorder);
+      checkpointSets..add(outerCheckpoints)..add(innerCheckpoints);
+      bases..add(AnyShapeBase.outerBorder)..add(AnyShapeBase.innerBorder);
+      path = Path.combine(
+        PathOperation.difference,
+        geometry.build(outerCheckpoints),
+        geometry.build(innerCheckpoints),
+      );
+    } else {
+      final base = component.includesBackground ? decoration.background : null;
+      if (base != null) {
+        bases.add(base);
+      }
+      final checkpoints = builder.build(targets, base: base);
+      checkpointSets.add(checkpoints);
+      path = geometry.build(checkpoints);
+    }
+
+    return PathRegion(
+      path: path,
+      fill: component.fill,
+      debugLabel: component.debugLabel,
+      targets: targets,
+      bases: bases,
+      checkpointSets: checkpointSets,
+    );
+  }
+
+  Set<ContourTarget> _targetsForComponent(_FillComponent component) {
+    final targets = <ContourTarget>{};
+    if (component.includesBackground) {
+      targets.add(ContourTarget.background);
+    }
+
+    final sideTargets = component.sideIds.map(_targetForSideId).toSet();
+    targets.addAll(sideTargets);
 
     if (component.includesBackground) {
-      result = pathForShapeBase(decoration.background);
+      return targets;
     }
 
-    final segments = <int>{};
-    for (final sideId in component.sideIds) {
-      segments.addAll(_segmentIndicesForSide(sideId));
+    final ordered = [
+      _SideId.top,
+      _SideId.right,
+      _SideId.bottom,
+      _SideId.left,
+    ].where(sideTargets.contains).toList();
+
+    if (ordered.isEmpty) return targets;
+
+    final targetSet = ordered.toSet();
+    for (final sideId in ordered) {
+      final previous = _previousSide(sideId);
+      final next = _nextSide(sideId);
+      final hasPreviousInComponent = targetSet.contains(previous);
+      final hasNextInComponent = targetSet.contains(next);
+
+      if (!hasPreviousInComponent && !_isVisibleSide(_sideForId(previous))) {
+        targets.add(_targetForSideId(previous));
+      }
+      if (!hasNextInComponent && !_isVisibleSide(_sideForId(next))) {
+        targets.add(_targetForSideId(next));
+      }
     }
 
-    if (!component.includesBackground && segments.length == 8 && _allVisibleSidesPresent()) {
-      final ring = Path.combine(
-        PathOperation.difference,
-        outerContour.toPath(),
-        innerContour.toPath(),
-      );
-      return result == null ? ring : Path.combine(PathOperation.union, result, ring);
-    }
+    return targets;
+  }
 
-    for (final segment in segments) {
-      final piece = _buildHalfBorderSegmentPath(segment);
-      if (piece == null) continue;
-      result = result == null ? piece : Path.combine(PathOperation.union, result, piece);
-    }
-
-    return result;
+  bool _isFullVisibleBorderComponent(_FillComponent component) {
+    return !component.includesBackground &&
+        component.sideIds.length == 4 &&
+        _allVisibleSidesPresent();
   }
 
   bool _allVisibleSidesPresent() {
@@ -294,38 +354,56 @@ class BorderGeometry {
         _isVisibleSide(border.left);
   }
 
-  List<int> _segmentIndicesForSide(_SideId sideId) {
+  _SideId _previousSide(_SideId sideId) {
     switch (sideId) {
       case _SideId.top:
-        return const [7, 0];
+        return _SideId.left;
       case _SideId.right:
-        return const [1, 2];
+        return _SideId.top;
       case _SideId.bottom:
-        return const [3, 4];
+        return _SideId.right;
       case _SideId.left:
-        return const [5, 6];
+        return _SideId.bottom;
     }
   }
 
-  Path? _buildHalfBorderSegmentPath(int segmentIndex) {
-    final outer = _ContourWalker.clockwise(outerContour);
-    final inner = _ContourWalker.counterClockwise(innerContour);
+  _SideId _nextSide(_SideId sideId) {
+    switch (sideId) {
+      case _SideId.top:
+        return _SideId.right;
+      case _SideId.right:
+        return _SideId.bottom;
+      case _SideId.bottom:
+        return _SideId.left;
+      case _SideId.left:
+        return _SideId.top;
+    }
+  }
 
-    if (!outer.isUsable || !inner.isUsable) return null;
+  ContourTarget _targetForSideId(_SideId sideId) {
+    switch (sideId) {
+      case _SideId.top:
+        return ContourTarget.top;
+      case _SideId.right:
+        return ContourTarget.right;
+      case _SideId.bottom:
+        return ContourTarget.bottom;
+      case _SideId.left:
+        return ContourTarget.left;
+    }
+  }
 
-    final path = Path();
-    final startOuter = outer.splitPoint(segmentIndex);
-    path.moveTo(startOuter.dx, startOuter.dy);
-    outer.appendSegment(path, segmentIndex);
-
-    final endInner = inner.splitPoint(segmentIndex + 1);
-    path.lineTo(endInner.dx, endInner.dy);
-    inner.appendSegmentReverse(path, segmentIndex);
-
-    final startInner = inner.splitPoint(segmentIndex);
-    path.lineTo(startInner.dx, startInner.dy);
-    path.close();
-    return path;
+  IAnySide? _sideForId(_SideId sideId) {
+    switch (sideId) {
+      case _SideId.top:
+        return border.top;
+      case _SideId.right:
+        return border.right;
+      case _SideId.bottom:
+        return border.bottom;
+      case _SideId.left:
+        return border.left;
+    }
   }
 
   bool _areAdjacent(_SideId a, _SideId b) {
@@ -355,79 +433,6 @@ class _ContourWalker {
 
   bool get isUsable => metric != null;
 
-  factory _ContourWalker.clockwise(BorderContour contour) {
-    final path = contour.toPath();
-    final metric = _firstMetric(path);
-
-    final topRightSide = (contour.topMiddle - contour.topEnd()).distance;
-    final rightTopSide = (contour.rightMiddle - contour.rightStart()).distance;
-    final rightBottomSide = (contour.rightEnd() - contour.rightMiddle).distance;
-    final bottomRightSide = (contour.bottomStart() - contour.bottomMiddle).distance;
-    final bottomLeftSide = (contour.bottomMiddle - contour.bottomEnd()).distance;
-    final leftBottomSide = (contour.leftStart() - contour.leftMiddle).distance;
-    final leftTopSide = (contour.leftMiddle - contour.leftEnd()).distance;
-    final topLeftSide = (contour.topStart() - contour.topMiddle).distance;
-
-    final topRightHalf = _halfCornerLength(contour, CornerPosition.topRight);
-    final bottomRightHalf = _halfCornerLength(contour, CornerPosition.bottomRight);
-    final bottomLeftHalf = _halfCornerLength(contour, CornerPosition.bottomLeft);
-    final topLeftHalf = _halfCornerLength(contour, CornerPosition.topLeft);
-
-    final splitOffsets = <double>[0.0];
-    splitOffsets.add(splitOffsets.last + topRightSide + topRightHalf);
-    splitOffsets.add(splitOffsets.last + topRightHalf + rightTopSide);
-    splitOffsets.add(splitOffsets.last + rightBottomSide + bottomRightHalf);
-    splitOffsets.add(splitOffsets.last + bottomRightHalf + bottomRightSide);
-    splitOffsets.add(splitOffsets.last + bottomLeftSide + bottomLeftHalf);
-    splitOffsets.add(splitOffsets.last + bottomLeftHalf + leftBottomSide);
-    splitOffsets.add(splitOffsets.last + leftTopSide + topLeftHalf);
-    // Keep the split table shape stable even for degenerate paths.
-    splitOffsets.add(metric?.length ?? splitOffsets.last);
-
-    return _ContourWalker._(
-      path: path,
-      metric: metric,
-      splitOffsets: splitOffsets,
-      reverseMap: const [7, 6, 5, 4, 3, 2, 1, 0],
-    );
-  }
-
-  factory _ContourWalker.counterClockwise(BorderContour contour) {
-    final path = contour.toPath(clockwise: false);
-    final metric = _firstMetric(path);
-
-    final topLeftSide = (contour.topMiddle - contour.topStart()).distance;
-    final leftTopSide = (contour.leftEnd() - contour.leftMiddle).distance;
-    final leftBottomSide = (contour.leftMiddle - contour.leftStart()).distance;
-    final bottomLeftSide = (contour.bottomEnd() - contour.bottomMiddle).distance;
-    final bottomRightSide = (contour.bottomMiddle - contour.bottomStart()).distance;
-    final rightBottomSide = (contour.rightMiddle - contour.rightEnd()).distance;
-    final rightTopSide = (contour.rightStart() - contour.rightMiddle).distance;
-    final topRightSide = (contour.topEnd() - contour.topMiddle).distance;
-
-    final topLeftHalf = _halfCornerLength(contour, CornerPosition.topLeft);
-    final bottomLeftHalf = _halfCornerLength(contour, CornerPosition.bottomLeft);
-    final bottomRightHalf = _halfCornerLength(contour, CornerPosition.bottomRight);
-    final topRightHalf = _halfCornerLength(contour, CornerPosition.topRight);
-
-    final splitOffsets = <double>[0.0];
-    splitOffsets.add(splitOffsets.last + topLeftSide + topLeftHalf);
-    splitOffsets.add(splitOffsets.last + topLeftHalf + leftTopSide);
-    splitOffsets.add(splitOffsets.last + leftBottomSide + bottomLeftHalf);
-    splitOffsets.add(splitOffsets.last + bottomLeftHalf + bottomLeftSide);
-    splitOffsets.add(splitOffsets.last + bottomRightSide + bottomRightHalf);
-    splitOffsets.add(splitOffsets.last + bottomRightHalf + rightBottomSide);
-    splitOffsets.add(splitOffsets.last + rightTopSide + topRightHalf);
-    // Keep the split table shape stable even for degenerate paths.
-    splitOffsets.add(metric?.length ?? splitOffsets.last);
-
-    return _ContourWalker._(
-      path: path,
-      metric: metric,
-      splitOffsets: splitOffsets,
-      reverseMap: const [7, 6, 5, 4, 3, 2, 1, 0],
-    );
-  }
 
   static double _halfCornerLength(BorderContour contour, CornerPosition position) {
     final p = Path();
@@ -554,13 +559,25 @@ enum _SideId { top, right, bottom, left }
 
 
 class BorderCheckpointsGeometry {
+  final Rect _bounds;
+  final IAnyBorder _border;
+  late final BorderGeometry _geometry;
+  late final Map<ContourPosition, _ContourNavigator> _cw;
+  late final Map<ContourPosition, _ContourNavigator> _ccw;
 
-  Rect _bounds;
-  Path _path;
-  IAnyBorder _border;
-
-  BorderCheckpointsGeometry(this._bounds, this._border) : _path = Path()
-    ..fillType = PathFillType.evenOdd;
+  BorderCheckpointsGeometry(this._bounds, this._border) {
+    _geometry = BorderGeometry.resolve(_bounds, _border);
+    _cw = {
+      ContourPosition.outer: _ContourNavigator.clockwise(_geometry.outerContour),
+      ContourPosition.middle: _ContourNavigator.clockwise(_geometry.baseContour),
+      ContourPosition.inner: _ContourNavigator.clockwise(_geometry.innerContour),
+    };
+    _ccw = {
+      ContourPosition.outer: _ContourNavigator.counterClockwise(_geometry.outerContour),
+      ContourPosition.middle: _ContourNavigator.counterClockwise(_geometry.baseContour),
+      ContourPosition.inner: _ContourNavigator.counterClockwise(_geometry.innerContour),
+    };
+  }
 
   void alignBounds() {
     // TODO base on _border.topLeft, ... corners detect do we need to reduce bounds
@@ -569,29 +586,273 @@ class BorderCheckpointsGeometry {
   }
 
   Path build(List<ContourCheckpoint> checkpoints) {
-    assert(checkpoints.length > 1);
-    assert(checkpoints.first.variant == ContourVariant.side); // contour always must starts from side
+    final path = Path()..fillType = PathFillType.evenOdd;
+    if (checkpoints.isEmpty) return path;
 
-    Offset lastPoint = _bounds.topCenter; // TODO resolve based on first checkpoint
-    _path.moveTo(lastPoint.dx, lastPoint.dy);
+    final firstPoint = _pointFor(checkpoints.first);
+    path.moveTo(firstPoint.dx, firstPoint.dy);
 
-    for (int i = 0; i < checkpoints.length; i++) {
-      if (i != checkpoints.length - 1) {
-        lastPoint = connect(lastPoint, checkpoints[i], checkpoints[i + 1]);
-      } else {
-        lastPoint = connect(lastPoint, checkpoints[i], checkpoints[0]);
-      }
+    for (var i = 0; i < checkpoints.length; i++) {
+      final current = checkpoints[i];
+      final next = checkpoints[(i + 1) % checkpoints.length];
+      _connect(path, current, next);
     }
 
-    _path.close();
-    return _path;
+    path.close();
+    return path;
   }
 
-  /// Probably we can connect always clockwise?
-  Offset connect(Offset previousPoint, ContourCheckpoint start, ContourCheckpoint end) {
-    // TODO logic that will connect two checkpoints
-    Offset lastPoint = previousPoint; // TODO return really last point
-    return lastPoint; // TODO return really last point
+  void _connect(Path path, ContourCheckpoint start, ContourCheckpoint end) {
+    if (start.position == end.position) {
+      final startPoint = _pointFor(start);
+      final endPoint = _pointFor(end);
+      if ((startPoint - endPoint).distance <= 0.0001) {
+        return;
+      }
+
+      final cw = _cw[start.position]!;
+      final ccw = _ccw[start.position]!;
+      final cwLength = cw.segmentLength(start, end);
+      final ccwLength = ccw.segmentLength(start, end);
+      if (cwLength <= ccwLength) {
+        cw.appendSegment(path, start, end);
+      } else {
+        ccw.appendSegment(path, start, end);
+      }
+      return;
+    }
+
+    final endPoint = _pointFor(end);
+    path.lineTo(endPoint.dx, endPoint.dy);
   }
 
+  Offset _pointFor(ContourCheckpoint checkpoint) {
+    final position = checkpoint.position;
+    switch (checkpoint.variant) {
+      case ContourVariant.side:
+        return _sidePoint(position, checkpoint.point);
+      case ContourVariant.corner:
+        return _cornerPoint(position, checkpoint.point);
+      case ContourVariant.split:
+        return _cw[position]!.pointFor(checkpoint);
+    }
+  }
+
+  Offset _sidePoint(ContourPosition position, ContourPoint point) {
+    final contour = _contourFor(position);
+    switch (point) {
+      case ContourPoint.topCenter:
+        return contour.topMiddle;
+      case ContourPoint.rightCenter:
+        return contour.rightMiddle;
+      case ContourPoint.bottomCenter:
+        return contour.bottomMiddle;
+      case ContourPoint.leftCenter:
+        return contour.leftMiddle;
+      default:
+        throw ArgumentError('Invalid side checkpoint point: $point');
+    }
+  }
+
+  Offset _cornerPoint(ContourPosition position, ContourPoint point) {
+    final contour = _contourFor(position);
+    switch (point) {
+      case ContourPoint.topLeft:
+        return contour.topStart();
+      case ContourPoint.topRight:
+        return contour.topEnd();
+      case ContourPoint.rightTop:
+        return contour.rightStart();
+      case ContourPoint.rightBottom:
+        return contour.rightEnd();
+      case ContourPoint.bottomRight:
+        return contour.bottomStart();
+      case ContourPoint.bottomLeft:
+        return contour.bottomEnd();
+      case ContourPoint.leftBottom:
+        return contour.leftStart();
+      case ContourPoint.leftTop:
+        return contour.leftEnd();
+      default:
+        throw ArgumentError('Invalid corner checkpoint point: $point');
+    }
+  }
+
+  BorderContour _contourFor(ContourPosition position) {
+    switch (position) {
+      case ContourPosition.outer:
+        return _geometry.outerContour;
+      case ContourPosition.middle:
+        return _geometry.baseContour;
+      case ContourPosition.inner:
+        return _geometry.innerContour;
+    }
+  }
+}
+
+class _ContourNavigator {
+  _ContourNavigator._({
+    required this.path,
+    required this.metric,
+    required this.offsets,
+  });
+
+  final Path path;
+  final PathMetric? metric;
+  final Map<_CheckpointKey, double> offsets;
+
+  factory _ContourNavigator.clockwise(BorderContour contour) {
+    final path = contour.toPath();
+    final metric = _ContourWalker._firstMetric(path);
+    return _ContourNavigator._(
+      path: path,
+      metric: metric,
+      offsets: _buildOffsets(contour, clockwise: true, totalLength: metric?.length ?? 0.0),
+    );
+  }
+
+  factory _ContourNavigator.counterClockwise(BorderContour contour) {
+    final path = contour.toPath(clockwise: false);
+    final metric = _ContourWalker._firstMetric(path);
+    return _ContourNavigator._(
+      path: path,
+      metric: metric,
+      offsets: _buildOffsets(contour, clockwise: false, totalLength: metric?.length ?? 0.0),
+    );
+  }
+
+  static Map<_CheckpointKey, double> _buildOffsets(
+    BorderContour contour, {
+    required bool clockwise,
+    required double totalLength,
+  }) {
+    final topRightHalf = _ContourWalker._halfCornerLength(contour, CornerPosition.topRight);
+    final bottomRightHalf = _ContourWalker._halfCornerLength(contour, CornerPosition.bottomRight);
+    final bottomLeftHalf = _ContourWalker._halfCornerLength(contour, CornerPosition.bottomLeft);
+    final topLeftHalf = _ContourWalker._halfCornerLength(contour, CornerPosition.topLeft);
+
+    final topRightCornerLength = topRightHalf * 2.0;
+    final bottomRightCornerLength = bottomRightHalf * 2.0;
+    final bottomLeftCornerLength = bottomLeftHalf * 2.0;
+    final topLeftCornerLength = topLeftHalf * 2.0;
+
+    final topRightSide = (contour.topMiddle - contour.topEnd()).distance;
+    final rightTopSide = (contour.rightMiddle - contour.rightStart()).distance;
+    final rightBottomSide = (contour.rightEnd() - contour.rightMiddle).distance;
+    final bottomRightSide = (contour.bottomStart() - contour.bottomMiddle).distance;
+    final bottomLeftSide = (contour.bottomMiddle - contour.bottomEnd()).distance;
+    final leftBottomSide = (contour.leftStart() - contour.leftMiddle).distance;
+    final leftTopSide = (contour.leftMiddle - contour.leftEnd()).distance;
+    final topLeftSide = (contour.topStart() - contour.topMiddle).distance;
+
+    if (clockwise) {
+      final split1 = topRightSide + topRightHalf;
+      final sideRight = split1 + topRightHalf + rightTopSide;
+      final split3 = sideRight + rightBottomSide + bottomRightHalf;
+      final sideBottom = split3 + bottomRightHalf + bottomRightSide;
+      final split5 = sideBottom + bottomLeftSide + bottomLeftHalf;
+      final sideLeft = split5 + bottomLeftHalf + leftBottomSide;
+      final split7 = sideLeft + leftTopSide + topLeftHalf;
+
+      return {
+        _CheckpointKey(ContourVariant.side, ContourPoint.topCenter): 0.0,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.topRight): topRightSide,
+        _CheckpointKey(ContourVariant.split, ContourPoint.topRight): split1,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.rightTop): topRightSide + topRightCornerLength,
+        _CheckpointKey(ContourVariant.side, ContourPoint.rightCenter): sideRight,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.rightBottom): sideRight + rightBottomSide,
+        _CheckpointKey(ContourVariant.split, ContourPoint.rightBottom): split3,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.bottomRight): sideRight + rightBottomSide + bottomRightCornerLength,
+        _CheckpointKey(ContourVariant.side, ContourPoint.bottomCenter): sideBottom,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.bottomLeft): sideBottom + bottomLeftSide,
+        _CheckpointKey(ContourVariant.split, ContourPoint.bottomLeft): split5,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.leftBottom): sideBottom + bottomLeftSide + bottomLeftCornerLength,
+        _CheckpointKey(ContourVariant.side, ContourPoint.leftCenter): sideLeft,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.leftTop): sideLeft + leftTopSide,
+        _CheckpointKey(ContourVariant.split, ContourPoint.topLeft): split7,
+        _CheckpointKey(ContourVariant.corner, ContourPoint.topLeft): totalLength - topLeftSide,
+      };
+    }
+
+    final split1 = topLeftSide + topLeftHalf;
+    final sideLeft = split1 + topLeftHalf + leftTopSide;
+    final split3 = sideLeft + leftBottomSide + bottomLeftHalf;
+    final sideBottom = split3 + bottomLeftHalf + bottomLeftSide;
+    final split5 = sideBottom + bottomRightSide + bottomRightHalf;
+    final sideRight = split5 + bottomRightHalf + rightBottomSide;
+    final split7 = sideRight + rightTopSide + topRightHalf;
+
+    return {
+      _CheckpointKey(ContourVariant.side, ContourPoint.topCenter): 0.0,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.topLeft): topLeftSide,
+      _CheckpointKey(ContourVariant.split, ContourPoint.topLeft): split1,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.leftTop): topLeftSide + topLeftCornerLength,
+      _CheckpointKey(ContourVariant.side, ContourPoint.leftCenter): sideLeft,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.leftBottom): sideLeft + leftBottomSide,
+      _CheckpointKey(ContourVariant.split, ContourPoint.bottomLeft): split3,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.bottomLeft): sideLeft + leftBottomSide + bottomLeftCornerLength,
+      _CheckpointKey(ContourVariant.side, ContourPoint.bottomCenter): sideBottom,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.bottomRight): sideBottom + bottomRightSide,
+      _CheckpointKey(ContourVariant.split, ContourPoint.bottomRight): split5,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.rightBottom): sideBottom + bottomRightSide + bottomRightCornerLength,
+      _CheckpointKey(ContourVariant.side, ContourPoint.rightCenter): sideRight,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.rightTop): sideRight + rightTopSide,
+      _CheckpointKey(ContourVariant.split, ContourPoint.topRight): split7,
+      _CheckpointKey(ContourVariant.corner, ContourPoint.topRight): sideRight + rightTopSide + topRightCornerLength,
+    };
+  }
+
+  double segmentLength(ContourCheckpoint start, ContourCheckpoint end) {
+    final m = metric;
+    if (m == null) return double.infinity;
+    final startOffset = offsets[_CheckpointKey(start.variant, start.point)]!;
+    final endOffset = offsets[_CheckpointKey(end.variant, end.point)]!;
+    if (endOffset >= startOffset) {
+      return endOffset - startOffset;
+    }
+    return (m.length - startOffset) + endOffset;
+  }
+
+  Offset pointFor(ContourCheckpoint checkpoint) {
+    final m = metric;
+    if (m == null) return Offset.zero;
+    final offset = offsets[_CheckpointKey(checkpoint.variant, checkpoint.point)]!;
+    return m.getTangentForOffset(offset)?.position ?? Offset.zero;
+  }
+
+  void appendSegment(Path out, ContourCheckpoint start, ContourCheckpoint end) {
+    final m = metric;
+    if (m == null) return;
+    final startOffset = offsets[_CheckpointKey(start.variant, start.point)]!;
+    final endOffset = offsets[_CheckpointKey(end.variant, end.point)]!;
+    if (endOffset >= startOffset) {
+      out.addPath(
+        m.extractPath(startOffset, endOffset, startWithMoveTo: false),
+        Offset.zero,
+      );
+      return;
+    }
+    out.addPath(
+      m.extractPath(startOffset, m.length, startWithMoveTo: false),
+      Offset.zero,
+    );
+    out.addPath(
+      m.extractPath(0.0, endOffset, startWithMoveTo: false),
+      Offset.zero,
+    );
+  }
+}
+
+class _CheckpointKey {
+  final ContourVariant variant;
+  final ContourPoint point;
+
+  const _CheckpointKey(this.variant, this.point);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _CheckpointKey && other.variant == variant && other.point == point;
+
+  @override
+  int get hashCode => Object.hash(variant, point);
 }
