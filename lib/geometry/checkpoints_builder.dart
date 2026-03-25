@@ -49,38 +49,27 @@ class CheckpointsBuilder {
       );
     }
 
-    final selectedSides = _selectedSides(normalized);
+    final requestedRuns = _requestedRuns(normalized);
+    if (requestedRuns.isEmpty) return const [];
 
-    if (selectedSides.isEmpty) return const [];
-
-    if (selectedSides.length == 4) {
+    if (requestedRuns.length == 1 &&
+        requestedRuns.first.length == 4 &&
+        requestedRuns.first.every((side) => _hasSide(side.target))) {
       final resolvedBase = base ?? AnyShapeBase.outerBorder;
       return _buildFullContour(_positionForShapeBase(resolvedBase));
     }
 
-    final runs = _contiguousRuns(selectedSides);
-
-    if (runs.isEmpty) return const [];
-
-    if (runs.length == 1) {
-      return _buildBorderRun(runs.first);
-    }
-
     final result = <ContourCheckpoint>[];
-    for (final run in runs) {
-      if (result.isNotEmpty) {
-        result.addAll(_buildBorderRun(run));
-      } else {
-        result.addAll(_buildBorderRun(run));
-      }
+    for (final run in requestedRuns) {
+      result.addAll(_buildRequestedRun(run));
     }
     return result;
   }
 
   List<ContourCheckpoint> _buildBackgroundMergedContour(
-    Set<ContourTarget> targets, {
-    required AnyShapeBase base,
-  }) {
+      Set<ContourTarget> targets, {
+        required AnyShapeBase base,
+      }) {
     final basePosition = _positionForShapeBase(base);
     final result = <ContourCheckpoint>[];
 
@@ -115,47 +104,125 @@ class CheckpointsBuilder {
     return result;
   }
 
-  List<ContourCheckpoint> _buildBorderRun(List<_SideSpec> run) {
+  List<ContourCheckpoint> _buildRequestedRun(List<_SideSpec> requestedRun) {
+    final result = <ContourCheckpoint>[];
+
+    var index = 0;
+    while (index < requestedRun.length) {
+      while (index < requestedRun.length && !_hasSide(requestedRun[index].target)) {
+        index++;
+      }
+      if (index >= requestedRun.length) break;
+
+      final start = index;
+      while (index < requestedRun.length && _hasSide(requestedRun[index].target)) {
+        index++;
+      }
+      final end = index - 1;
+
+      final visibleSequence = requestedRun.sublist(start, end + 1);
+
+      final startCap = start == 0
+          ? const _BoundaryCap.split()
+          : _BoundaryCap.bridgeMissing(requestedRun[start - 1]);
+
+      final endCap = end == requestedRun.length - 1
+          ? const _BoundaryCap.split()
+          : _BoundaryCap.bridgeMissing(requestedRun[end + 1]);
+
+      result.addAll(
+        _buildVisibleSequence(
+          visibleSequence,
+          startCap: startCap,
+          endCap: endCap,
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  List<ContourCheckpoint> _buildVisibleSequence(
+      List<_SideSpec> run, {
+        required _BoundaryCap startCap,
+        required _BoundaryCap endCap,
+      }) {
     final result = <ContourCheckpoint>[];
     final first = run.first;
+    final last = run.last;
 
     result.add(_side(first.middle, ContourPosition.outer));
 
-    for (var i = 0; i < run.length; i++) {
+    for (var i = 0; i < run.length - 1; i++) {
       final current = run[i];
-      final hasNextInRun = i < run.length - 1;
-
-      if (hasNextInRun) {
-        final next = run[i + 1];
-        result.add(_corner(current.endCorner, ContourPosition.outer));
-        result.add(_corner(next.startCorner, ContourPosition.outer));
-        result.add(_side(next.middle, ContourPosition.outer));
-      } else {
-        result.add(_corner(current.endCorner, ContourPosition.outer));
-        result.add(_split(current.endSplit, ContourPosition.outer));
-        result.add(_split(current.endSplit, ContourPosition.inner));
-        result.add(_corner(current.endCorner, ContourPosition.inner));
-      }
+      final next = run[i + 1];
+      result.add(_corner(current.endCorner, ContourPosition.outer));
+      result.add(_corner(next.startCorner, ContourPosition.outer));
+      result.add(_side(next.middle, ContourPosition.outer));
     }
+
+    _appendEndCap(
+      result,
+      side: last,
+      cap: endCap,
+    );
 
     for (var i = run.length - 1; i >= 0; i--) {
       final current = run[i];
       result.add(_side(current.middle, ContourPosition.inner));
 
-      final hasPrevInRun = i > 0;
-      if (hasPrevInRun) {
+      if (i > 0) {
         final previous = run[i - 1];
         result.add(_corner(current.startCorner, ContourPosition.inner));
         result.add(_corner(previous.endCorner, ContourPosition.inner));
       } else {
-        result.add(_corner(current.startCorner, ContourPosition.inner));
-        result.add(_split(current.startSplit, ContourPosition.inner));
-        result.add(_split(current.startSplit, ContourPosition.outer));
-        result.add(_corner(current.startCorner, ContourPosition.outer));
+        _appendStartCap(
+          result,
+          side: current,
+          cap: startCap,
+        );
       }
     }
 
     return result;
+  }
+
+  void _appendEndCap(
+      List<ContourCheckpoint> out, {
+        required _SideSpec side,
+        required _BoundaryCap cap,
+      }) {
+    out.add(_corner(side.endCorner, ContourPosition.outer));
+
+    if (cap.missingNeighbor == null) {
+      out.add(_split(side.endSplit, ContourPosition.outer));
+      out.add(_split(side.endSplit, ContourPosition.inner));
+      out.add(_corner(side.endCorner, ContourPosition.inner));
+      return;
+    }
+
+    final next = cap.missingNeighbor!;
+    out.add(_corner(next.startCorner, ContourPosition.outer));
+    out.add(_corner(side.endCorner, ContourPosition.inner));
+  }
+
+  void _appendStartCap(
+      List<ContourCheckpoint> out, {
+        required _SideSpec side,
+        required _BoundaryCap cap,
+      }) {
+    out.add(_corner(side.startCorner, ContourPosition.inner));
+
+    if (cap.missingNeighbor == null) {
+      out.add(_split(side.startSplit, ContourPosition.inner));
+      out.add(_split(side.startSplit, ContourPosition.outer));
+      out.add(_corner(side.startCorner, ContourPosition.outer));
+      return;
+    }
+
+    final previous = cap.missingNeighbor!;
+    out.add(_corner(previous.endCorner, ContourPosition.outer));
+    out.add(_corner(side.startCorner, ContourPosition.outer));
   }
 
   List<ContourCheckpoint> _buildFullContour(ContourPosition position) {
@@ -170,33 +237,22 @@ class CheckpointsBuilder {
     return result;
   }
 
-  List<_SideSpec> _selectedSides(Set<ContourTarget> targets) {
-    final result = <_SideSpec>[];
+  List<List<_SideSpec>> _requestedRuns(Set<ContourTarget> targets) {
+    final requested = _order.where((side) => targets.contains(side.target)).toList();
+    if (requested.isEmpty) return const [];
 
-    for (final side in _order) {
-      if (!targets.contains(side.target)) continue;
-      if (!_hasSide(side.target)) continue;
-      result.add(side);
-    }
-
-    return result;
-  }
-
-  List<List<_SideSpec>> _contiguousRuns(List<_SideSpec> selected) {
-    if (selected.isEmpty) return const [];
-
-    final selectedSet = selected.map((e) => e.target).toSet();
+    final requestedSet = requested.map((e) => e.target).toSet();
     final starts = <_SideSpec>[];
 
-    for (final side in selected) {
-      if (!selectedSet.contains(side.previous.target)) {
+    for (final side in requested) {
+      if (!requestedSet.contains(side.previous.target)) {
         starts.add(side);
       }
     }
 
     if (starts.isEmpty) {
       return <List<_SideSpec>>[
-        List<_SideSpec>.from(_order.where((s) => selectedSet.contains(s.target))),
+        List<_SideSpec>.from(_order.where((s) => requestedSet.contains(s.target))),
       ];
     }
 
@@ -204,7 +260,7 @@ class CheckpointsBuilder {
     for (final start in starts) {
       final run = <_SideSpec>[start];
       var current = start;
-      while (selectedSet.contains(current.next.target)) {
+      while (requestedSet.contains(current.next.target)) {
         current = current.next;
         if (current.target == start.target) break;
         run.add(current);
@@ -216,10 +272,10 @@ class CheckpointsBuilder {
   }
 
   ContourPosition _effectivePositionForMergedSide(
-    ContourTarget side,
-    Set<ContourTarget> targets,
-    ContourPosition basePosition,
-  ) {
+      ContourTarget side,
+      Set<ContourTarget> targets,
+      ContourPosition basePosition,
+      ) {
     if (!targets.contains(side)) {
       return basePosition;
     }
@@ -300,9 +356,9 @@ class CheckpointsBuilder {
   }
 
   static ContourCheckpoint _side(
-    ContourPoint point,
-    ContourPosition position,
-  ) {
+      ContourPoint point,
+      ContourPosition position,
+      ) {
     return ContourCheckpoint(
       variant: ContourVariant.side,
       position: position,
@@ -311,9 +367,9 @@ class CheckpointsBuilder {
   }
 
   static ContourCheckpoint _corner(
-    ContourPoint point,
-    ContourPosition position,
-  ) {
+      ContourPoint point,
+      ContourPosition position,
+      ) {
     return ContourCheckpoint(
       variant: ContourVariant.corner,
       position: position,
@@ -322,9 +378,9 @@ class CheckpointsBuilder {
   }
 
   static ContourCheckpoint _split(
-    ContourPoint point,
-    ContourPosition position,
-  ) {
+      ContourPoint point,
+      ContourPosition position,
+      ) {
     return ContourCheckpoint(
       variant: ContourVariant.split,
       position: position,
@@ -396,4 +452,14 @@ class _SideSpec {
 
   _SideSpec get next => values[(index + 1) % values.length];
   _SideSpec get previous => values[(index + values.length - 1) % values.length];
+}
+
+class _BoundaryCap {
+  final _SideSpec? missingNeighbor;
+
+  const _BoundaryCap._(this.missingNeighbor);
+
+  const _BoundaryCap.split() : this._(null);
+
+  const _BoundaryCap.bridgeMissing(_SideSpec neighbor) : this._(neighbor);
 }

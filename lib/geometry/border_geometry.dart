@@ -632,7 +632,7 @@ class ContourCheckpoint {
 
   @override
   String toString() {
-    return 'cp:${position.name}:${point.name}:${variant.name}';
+    return '(position:ContourPosition.${position.name},point:ContourPoint.${point.name},variant:ContourVariant.${variant.name})';
   }
 }
 
@@ -710,29 +710,6 @@ class CheckpointsBuilder2 {
 
       }
 
-    }
-
-
-    if (targets.length == 1) {
-
-      if (targets.contains(ContourTarget.top)) {
-        assert(hasTop);
-        return const [
-          ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topCenter, variant: ContourVariant.side),
-
-          ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
-          ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.split),
-          ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.split),
-          ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.corner),
-
-          ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topCenter, variant: ContourVariant.side),
-
-          ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.corner),
-          ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.split),
-          ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.split),
-          ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.corner), // will be connected to first checkpoint
-        ];
-      }
     }
 
     if (targets.length == 2) {
