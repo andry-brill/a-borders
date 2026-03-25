@@ -2,7 +2,93 @@ import '../decoration/any_align.dart';
 import '../decoration/any_border.dart';
 import '../decoration/any_decoration.dart';
 import '../decoration/any_side.dart';
-import 'border_geometry.dart';
+
+
+enum ContourTarget {
+  background,
+  top,
+  right,
+  bottom,
+  left;
+
+  static const Set<ContourTarget> sides = { top, right, bottom, left };
+}
+
+
+/// if corner is AnyRoundedCorner
+/// side + corner == line
+/// corner + split == partial arc (depends on sides widths)
+/// corner + corner == full arc
+/// split + split == line
+enum ContourVariant {
+
+  /// Point on the middle of the some side
+  side,
+  /// Start or end point of corner
+  corner,
+  /// Point that splits corner
+  split,
+
+}
+
+/// We have three positions for each ContourPoint
+///   Example, side = top, and width = 10 and align = center
+///     sideMiddle & inner => y position will be offset on 5 from bounds (5 - inside to center of bounds)
+///     sideMiddle & middle => y position will be on bounds
+///     sideMiddle & outer => y position will be offset on -5 from bounds (-5 - outside from center of bounds)
+enum ContourPosition {
+  inner,
+  middle,
+  outer
+}
+
+enum ContourPoint {
+
+  // top side
+
+  topLeft,
+  topCenter,
+  topRight,
+
+  // right side
+  rightTop,
+  rightCenter,
+  rightBottom,
+
+  // bottom side
+  bottomRight,
+  bottomCenter,
+  bottomLeft,
+
+  // left side
+  leftBottom,
+  leftCenter,
+  leftTop
+}
+
+class ContourCheckpoint {
+
+  final ContourPosition position;
+  final ContourPoint point;
+  final ContourVariant variant;
+
+  const ContourCheckpoint({required this.variant, required this.position, required this.point});
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! ContourCheckpoint) return false;
+    return other.position == position && other.variant == variant && other.point == point;
+  }
+
+  @override
+  int get hashCode => Object.hash(position, point, variant);
+
+  @override
+  String toString() {
+    return '(position:ContourPosition.${position.name},point:ContourPoint.${point.name},variant:ContourVariant.${variant.name})';
+  }
+}
+
 
 class CheckpointsBuilder {
 
@@ -463,3 +549,285 @@ class _BoundaryCap {
 
   const _BoundaryCap.bridgeMissing(_SideSpec neighbor) : this._(neighbor);
 }
+
+
+
+// class CheckpointsBuilder2 {
+//
+//   late final bool hasTop;
+//   late final bool hasRight;
+//   late final bool hasBottom;
+//   late final bool hasLeft;
+//   late final int hasBorders;
+//
+//   IAnyBorder _border;
+//   CheckpointsBuilder2(this._border) :
+//     hasTop = _border.top?.hasWidth == true,
+//     hasRight = _border.right?.hasWidth == true,
+//     hasBottom = _border.bottom?.hasWidth == true,
+//     hasLeft = _border.left?.hasWidth == true
+//   {
+//     int b = 0;
+//     if (hasTop) b++;
+//     if (hasRight) b++;
+//     if (hasBottom) b++;
+//     if (hasLeft) b++;
+//     hasBorders = b;
+//   }
+//
+//   static const noBorders = 0;
+//   static const allBorders = 0;
+//
+//   List<ContourCheckpoint> build(Set<ContourTarget> targets, {AnyShapeBase? base}) {
+//
+//     if (targets.isEmpty) return [];
+//
+//     if (targets.contains(ContourTarget.background)) {
+//
+//       final backBase = base ?? AnyShapeBase.zeroBorder;
+//       if (backBase == AnyShapeBase.innerBorder || backBase == AnyShapeBase.outerBorder) {
+//         targets = ContourTarget.sides;
+//       } else {
+//
+//         AnyShapeBase? simplifiedBase;
+//
+//         /// When no borders outline of zero borders will be used
+//         if (hasBorders == noBorders) {
+//           simplifiedBase = AnyShapeBase.outerBorder;
+//         }
+//
+//         /// Checking that all borders align inside or empty, then we can just build background as sides outlines
+//         if (simplifiedBase == null && (
+//             (!hasTop || _border.top!.align == AnyAlign.inside) &&
+//             (!hasRight || _border.right!.align == AnyAlign.inside) &&
+//             (!hasBottom || _border.bottom!.align == AnyAlign.inside) &&
+//             (!hasLeft || _border.left!.align == AnyAlign.inside))
+//         ) {
+//           simplifiedBase = AnyShapeBase.outerBorder;
+//         }
+//
+//         if (hasBorders == allBorders) {
+//           /// If all borders aligned in the same way
+//           final align = _border.top!.align;
+//           if (align == _border.right!.align && align == _border.bottom!.align && align == _border.left!.align) {
+//             simplifiedBase = AnyShapeBase.outerBorder;
+//           }
+//         }
+//
+//         if (simplifiedBase != null) {
+//           targets = ContourTarget.sides;
+//           base = AnyShapeBase.outerBorder;
+//         }
+//
+//       }
+//
+//     }
+//
+//     if (targets.length == 2) {
+//
+//       // This means that background has the same fill as top side and paths could be merged
+//       if (targets.contains(ContourTarget.background) && targets.contains(ContourTarget.top)) {
+//
+//         List<ContourCheckpoint> result = [
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//         ];
+//
+//         switch (_border.top!.align) {
+//
+//           case AnyAlign.inside:
+//             throw 'Should not be called, as it will be handled in other way';
+//           case AnyAlign.center:
+//             result.add(ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.split));
+//             result.add(ContourCheckpoint(position: ContourPosition.middle, point: ContourPoint.topRight, variant: ContourVariant.split));
+//           case AnyAlign.outside:
+//             result.add(ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.split));
+//             result.add(ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.split));
+//         }
+//
+//         // NB! We can you outer or inner here as all other borders will be treated as they has 0 width
+//         result.addAll([
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.split),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomRight, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomLeft, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftBottom, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftTop, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftTop, variant: ContourVariant.split),
+//
+//         ]);
+//
+//         switch (_border.top!.align) {
+//
+//           case AnyAlign.inside:
+//             throw 'Should not be called, as it will be handled in other way';
+//           case AnyAlign.center:
+//             result.add(ContourCheckpoint(position: ContourPosition.middle, point: ContourPoint.topLeft, variant: ContourVariant.split));
+//             result.add(ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.split));
+//           case AnyAlign.outside:
+//             result.add(ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.split));
+//             result.add(ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.split));
+//         }
+//
+//         result.add(ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.corner));
+//
+//         return result;
+//       }
+//
+//
+//       if (targets.contains(ContourTarget.top) && targets.contains(ContourTarget.right)) {
+//
+//         assert(hasTop || hasRight);
+//
+//         // If no border in top in that case we only drawing corner from top side (to visualize change), not full top side
+//         if (!hasTop) {
+//           return const [
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.split),
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightBottom, variant: ContourVariant.split),
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.corner), // will be connected to first checkpoint
+//
+//           ];
+//         }
+//
+//         // If no border in right in that case we only drawing corner from right side (to visualize change), not full right side
+//         if (!hasRight) {
+//           return const [
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.split),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.split),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.corner), // will be connected to first checkpoint
+//           ];
+//         }
+//
+//         return const [
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.split),
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightBottom, variant: ContourVariant.split),
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.corner),
+//           ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.split),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.split),
+//           ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.corner), // will be connected to first checkpoint
+//
+//         ];
+//       }
+//     }
+//
+//
+//     if (targets.length == 4) {
+//       if (targets.contains(ContourTarget.top) && targets.contains(ContourTarget.right) && targets.contains(ContourTarget.bottom) && targets.contains(ContourTarget.left)) {
+//
+//         if (hasBottom && hasLeft && hasRight && hasTop) {
+//
+//           assert(base != null);
+//
+//           if (base == AnyShapeBase.innerBorder) {
+//             return const [
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topLeft, variant: ContourVariant.corner),
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.leftTop, variant: ContourVariant.corner),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.leftCenter, variant: ContourVariant.side),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.leftBottom, variant: ContourVariant.corner),
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.bottomLeft, variant: ContourVariant.corner),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.bottomCenter, variant: ContourVariant.side),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.bottomRight, variant: ContourVariant.corner),
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//               ContourCheckpoint(position: ContourPosition.inner, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//
+//             ];
+//           }
+//
+//           assert(base == AnyShapeBase.outerBorder);
+//
+//           return const [
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topRight, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightTop, variant: ContourVariant.corner),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.rightBottom, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomRight, variant: ContourVariant.corner),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.bottomLeft, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftBottom, variant: ContourVariant.corner),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftCenter, variant: ContourVariant.side),
+//
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.leftTop, variant: ContourVariant.corner),
+//             ContourCheckpoint(position: ContourPosition.outer, point: ContourPoint.topLeft, variant: ContourVariant.corner),
+//
+//
+//           ];
+//
+//         }
+//
+//         throw 'TODO';
+//       }
+//     }
+//
+//     throw 'Missing case for $targets';
+//   }
+//
+//
+// }
