@@ -8,6 +8,10 @@ abstract class IAnySide implements IAnyFill {
   AnyAlign get align;
 }
 
+extension EAnySide on IAnySide {
+  bool get hasWidth => width > 0.0;
+}
+
 class AnySide with MAnyFill implements IAnySide {
   static AnyAlign alignBase = AnyAlign.inside;
 
