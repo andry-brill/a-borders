@@ -73,7 +73,7 @@ void main() {
   test('no background and border sides inside red', () {
 
     final decoration = AnyDecoration(
-        border: AnyBorder(sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.inside)),
+        border: AnyBorder(sides: AnySide(width: 10, color: Colors.blue, align: AnyAlign.inside)),
     );
 
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
@@ -131,7 +131,7 @@ void main() {
   test('no background and border sides center red', () {
     final decoration = AnyDecoration(
       border: AnyBorder(
-        sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.center),
+        sides: AnySide(width: 10, color: Colors.blue, align: AnyAlign.center),
       ),
     );
 
@@ -191,7 +191,7 @@ void main() {
 
     final decoration = AnyDecoration(
       border: AnyBorder(
-        sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.outside),
+        sides: AnySide(width: 10, color: Colors.blue, align: AnyAlign.outside),
       ),
     );
 
@@ -254,7 +254,7 @@ void main() {
 
     final decorationDiff = AnyDecoration(
       border: AnyBorder(
-        sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.outside),
+        sides: AnySide(width: 10, color: Colors.blueAccent, align: AnyAlign.outside),
       ),
       color: Colors.blue
     );
@@ -266,18 +266,24 @@ void main() {
 
     final decorationSame = AnyDecoration(
         border: AnyBorder(
-          sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.outside),
+          sides: AnySide(width: 10, color: Colors.blue, align: AnyAlign.outside),
         ),
-        color: Colors.red
+        color: Colors.blue
     );
 
     final geometrySame = BorderGeometry.resolve(bounds, decorationSame.border);
     final regionsSame = geometrySame.buildVisibleRegions(decorationSame);
     expect(regionsSame.length, equals(1));
 
+    final boundsSame = bounds.inflate(10);
     final border = regionsSame.first;
     expect(border.debugLabel, allOf(contains('background'), contains('top'), contains('left'), contains('bottom'), contains('right')));
-    expect(border.path.getBounds(), equals(bounds.inflate(10)));
+    expect(border.path.getBounds(), equals(boundsSame));
+
+    expect(border.path.contains(boundsSame.center), isTrue);
+    expect(border.path.contains(boundsSame.topLeft), isTrue);
+    expect(border.path.contains(boundsSame.bottomRight), isTrue);
+
 
   });
 }

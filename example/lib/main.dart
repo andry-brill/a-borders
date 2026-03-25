@@ -33,19 +33,72 @@ class _ExamplePage extends StatefulWidget {
 
 class _ExamplePageState extends State<_ExamplePage> {
 
+  static List<List<AnyDecoration>> examples = [
+    [
+      AnyDecoration(
+        border: AnyBorder(
+            sides: AnySide(width: 10.0, color: Colors.blue)
+        ),
+        color: Colors.lightBlueAccent
+      ),
+      AnyDecoration(
+          border: AnyBorder(
+              sides: AnySide(width: 10.0, color: Colors.blue)
+          ),
+          color: Colors.blue
+      ),
+      AnyDecoration(
+          border: AnyBorder(
+              sides: AnySide(width: 10.0, color: Colors.blue)
+          ),
+      )
+    ],
+    [
+      AnyDecoration(
+          border: AnyBorder(
+              sides: AnySide(width: 10.0, color: Colors.blue),
+              corners: AnyRoundedCorner(Radius.circular(20))
+          ),
+          color: Colors.lightBlueAccent
+      ),
+      AnyDecoration(
+          border: AnyBorder(
+              sides: AnySide(width: 10.0, color: Colors.blue),
+              corners: AnyRoundedCorner(Radius.circular(20))
+          ),
+          color: Colors.blue
+      ),
+      AnyDecoration(
+        border: AnyBorder(
+            sides: AnySide(width: 10.0, color: Colors.blue),
+            corners: AnyRoundedCorner(Radius.circular(20))
+        ),
+      )
+    ]
+  ];
+
+  Widget row(List<AnyDecoration> decorations) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      spacing: 20,
+      children: decorations.map((el) => Container(
+        constraints: BoxConstraints.tightFor(width: 200, height: 100),
+        decoration: el,
+        child: Center(child: Text("AnyBorder", style: TextStyle(color: Colors.black12),)),
+      )).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-          child: Container(
-            constraints: BoxConstraints.tightFor(width: 200, height: 100),
-            decoration: AnyDecoration(
-                border: AnyBorder(
-                  sides: AnySide(width: 5.0, color: Colors.redAccent)
-                ),
-                color: Colors.blue
-            ),
-            child: Text("Hello!"),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 30,
+              children: examples.map(row).toList(),
           ),
         ),
     );

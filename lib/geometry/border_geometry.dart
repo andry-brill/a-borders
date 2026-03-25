@@ -279,6 +279,7 @@ class BorderGeometry {
 
     for (final segment in segments) {
       final piece = _buildHalfBorderSegmentPath(segment);
+      if (piece == null) continue;
       result = result == null ? piece : Path.combine(PathOperation.union, result, piece);
     }
 
@@ -305,9 +306,11 @@ class BorderGeometry {
     }
   }
 
-  Path _buildHalfBorderSegmentPath(int segmentIndex) {
+  Path? _buildHalfBorderSegmentPath(int segmentIndex) {
     final outer = _ContourWalker.clockwise(outerContour);
     final inner = _ContourWalker.counterClockwise(innerContour);
+
+    if (!outer.isUsable || !inner.isUsable) return null;
 
     final path = Path();
     final startOuter = outer.splitPoint(segmentIndex);
@@ -345,9 +348,11 @@ class _ContourWalker {
   });
 
   final Path path;
-  final PathMetric metric;
+  final PathMetric? metric;
   final List<double> splitOffsets;
   final List<int> reverseMap;
+
+  bool get isUsable => metric != null;
 
   factory _ContourWalker.clockwise(BorderContour contour) {
     final path = contour.toPath();
@@ -375,7 +380,8 @@ class _ContourWalker {
     splitOffsets.add(splitOffsets.last + bottomLeftSide + bottomLeftHalf);
     splitOffsets.add(splitOffsets.last + bottomLeftHalf + leftBottomSide);
     splitOffsets.add(splitOffsets.last + leftTopSide + topLeftHalf);
-    splitOffsets.add(metric.length);
+    // Keep the split table shape stable even for degenerate paths.
+    splitOffsets.add(metric?.length ?? splitOffsets.last);
 
     return _ContourWalker._(
       path: path,
@@ -411,7 +417,8 @@ class _ContourWalker {
     splitOffsets.add(splitOffsets.last + bottomRightSide + bottomRightHalf);
     splitOffsets.add(splitOffsets.last + bottomRightHalf + rightBottomSide);
     splitOffsets.add(splitOffsets.last + rightTopSide + topRightHalf);
-    splitOffsets.add(metric.length);
+    // Keep the split table shape stable even for degenerate paths.
+    splitOffsets.add(metric?.length ?? splitOffsets.last);
 
     return _ContourWalker._(
       path: path,
@@ -449,23 +456,26 @@ class _ContourWalker {
     return metric.first.length / 2.0;
   }
 
-  static PathMetric _firstMetric(Path path) {
-    final metrics = path.computeMetrics();
-    if (metrics.isEmpty) {
-      final empty = Path()..moveTo(0, 0);
-      return empty.computeMetrics().first;
-    }
+  static PathMetric? _firstMetric(Path path) {
+    // `Path.computeMetrics()` returns an iterable that may be one-shot.
+    // Materialize it once to safely inspect.
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isEmpty) return null;
     return metrics.first;
   }
 
   Offset splitPoint(int index) {
+    final m = metric;
+    if (m == null) return Offset.zero;
     final clamped = index < 0 ? 0 : (index > 8 ? 8 : index);
-    final tangent = metric.getTangentForOffset(splitOffsets[clamped]);
+    final tangent = m.getTangentForOffset(splitOffsets[clamped]);
     return tangent?.position ?? Offset.zero;
   }
 
   void appendSegment(Path out, int segmentIndex) {
-    final subPath = metric.extractPath(
+    final m = metric;
+    if (m == null) return;
+    final subPath = m.extractPath(
       splitOffsets[segmentIndex],
       splitOffsets[segmentIndex + 1],
       startWithMoveTo: false,
@@ -474,8 +484,10 @@ class _ContourWalker {
   }
 
   void appendSegmentReverse(Path out, int segmentIndex) {
+    final m = metric;
+    if (m == null) return;
     final reverseIndex = reverseMap[segmentIndex];
-    final subPath = metric.extractPath(
+    final subPath = m.extractPath(
       splitOffsets[reverseIndex],
       splitOffsets[reverseIndex + 1],
       startWithMoveTo: false,
