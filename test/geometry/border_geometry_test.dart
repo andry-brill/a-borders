@@ -107,7 +107,7 @@ void main() {
     final Map<AnyShapeBase, (Rect, double)> expecting = {
       AnyShapeBase.zeroBorder: (bounds, 600),
       AnyShapeBase.outerBorder: (bounds, 600),
-      AnyShapeBase.innerBorder: (Rect.fromLTRB(10.0, 10.0, 190.0, 90.0), 520),
+      AnyShapeBase.innerBorder: (bounds.inflate(-10), 520),
     };
 
     for (var entry in expecting.entries) {
@@ -168,8 +168,8 @@ void main() {
 
     final Map<AnyShapeBase, (Rect, double)> expecting = {
       AnyShapeBase.zeroBorder: (bounds, 600),
-      AnyShapeBase.outerBorder: (Rect.fromLTRB(-5.0, -5.0, 205.0, 105.0), 640),
-      AnyShapeBase.innerBorder: (Rect.fromLTRB(5.0, 5.0, 195.0, 95.0), 560),
+      AnyShapeBase.outerBorder: (bounds.inflate(5), 640),
+      AnyShapeBase.innerBorder: (bounds.inflate(-5), 560),
     };
 
     for (var entry in expecting.entries) {
@@ -229,7 +229,7 @@ void main() {
 
     final Map<AnyShapeBase, (Rect, double)> expecting = {
       AnyShapeBase.zeroBorder: (bounds, 600),
-      AnyShapeBase.outerBorder: (Rect.fromLTRB(-10.0, -10.0, 210.0, 110.0), 680),
+      AnyShapeBase.outerBorder: (bounds.inflate(10), 680),
       AnyShapeBase.innerBorder: (bounds, 600),
     };
 
@@ -264,7 +264,6 @@ void main() {
     final regionsDiff = geometryDiff.buildVisibleRegions(decorationDiff);
     expect(regionsDiff.length, equals(2));
 
-
     final decorationSame = AnyDecoration(
         border: AnyBorder(
           sides: AnySide(width: 10, color: Colors.red, align: AnyAlign.outside),
@@ -275,6 +274,10 @@ void main() {
     final geometrySame = BorderGeometry.resolve(bounds, decorationSame.border);
     final regionsSame = geometrySame.buildVisibleRegions(decorationSame);
     expect(regionsSame.length, equals(1));
+
+    final border = regionsSame.first;
+    expect(border.debugLabel, allOf(contains('background'), contains('top'), contains('left'), contains('bottom'), contains('right')));
+    expect(border.path.getBounds(), equals(bounds.inflate(10)));
 
   });
 }
