@@ -10,6 +10,11 @@ abstract class IAnySide implements IAnyFill {
 
 extension EAnySide on IAnySide {
   bool get hasWidth => width > 0.0;
+  bool get isVisible => hasWidth && !isEmpty;
+}
+
+extension ESideFill on IAnyFill {
+  bool get isSide => this is IAnySide;
 }
 
 class AnySide with MAnyFill implements IAnySide {

@@ -5,7 +5,7 @@ import 'any_border.dart';
 import 'any_fill.dart';
 import 'any_shadow.dart';
 import '../geometry/border_geometry.dart';
-import '../geometry/path_region.dart';
+import '../geometry/fill_path.dart';
 
 enum AnyShapeBase {
   /// Shape of the element based on border corners but ignoring border side width.
@@ -65,7 +65,7 @@ class AnyDecoration extends Decoration with MAnyFill {
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {
     final geometry = BorderGeometry.resolve(rect, border);
-    return geometry.pathForShapeBase(clip);
+    return geometry.clipPath(clip);
   }
 
   @override
@@ -98,37 +98,37 @@ class _AnyBoxPainter extends BoxPainter {
     final rect = offset & size;
     final geometry = BorderGeometry.resolve(rect, decoration.border);
 
-    _paintShadows(canvas, geometry);
+    // _paintShadows(canvas, geometry);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     for (final region in regions) {
       _paintRegion(canvas, region, rect, configuration);
     }
   }
 
-  void _paintShadows(Canvas canvas, BorderGeometry geometry) {
-    final shadows = decoration.shadows;
-    if (shadows == null || shadows.isEmpty) return;
-
-    for (final rawShadow in shadows) {
-      if (rawShadow is! AnyShadow) continue;
-      final path = switch (rawShadow.align) {
-        AnyAlign.inside => geometry.innerContour.toPath(),
-        AnyAlign.center => geometry.baseContour.toPath(),
-        AnyAlign.outside => geometry.outerContour.toPath(),
-      };
-      canvas.drawShadow(
-        path.shift(rawShadow.offset),
-        rawShadow.color,
-        rawShadow.blurRadius + rawShadow.spreadRadius,
-        true,
-      );
-    }
-  }
+  // void _paintShadows(Canvas canvas, BorderGeometry geometry) {
+  //   final shadows = decoration.shadows;
+  //   if (shadows == null || shadows.isEmpty) return;
+  //
+  //   for (final rawShadow in shadows) {
+  //     if (rawShadow is! AnyShadow) continue;
+  //     final path = switch (rawShadow.align) {
+  //       AnyAlign.inside => geometry.innerContour.toPath(),
+  //       AnyAlign.center => geometry.baseContour.toPath(),
+  //       AnyAlign.outside => geometry.outerContour.toPath(),
+  //     };
+  //     canvas.drawShadow(
+  //       path.shift(rawShadow.offset),
+  //       rawShadow.color,
+  //       rawShadow.blurRadius + rawShadow.spreadRadius,
+  //       true,
+  //     );
+  //   }
+  // }
 
   void _paintRegion(
       Canvas canvas,
-      PathRegion region,
+      FillPath region,
       Rect rect,
       ImageConfiguration configuration,
       ) {

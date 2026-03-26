@@ -18,12 +18,12 @@ void main() {
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
     final geometry = BorderGeometry.resolve(bounds, decoration.border);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     expect(regions.length, equals(0));
 
     for (var clip in AnyShapeBase.values) {
 
-      final clipPath = geometry.pathForShapeBase(clip);
+      final clipPath = geometry.clipPath(clip);
       final metrics = clipPath.computeMetrics().toList();
       final bounds = clipPath.getBounds();
 
@@ -45,7 +45,7 @@ void main() {
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
     final geometry = BorderGeometry.resolve(bounds, decoration.border);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     expect(regions.length, equals(1));
 
     final background = regions.first;
@@ -59,7 +59,7 @@ void main() {
 
     for (var clip in AnyShapeBase.values) {
 
-      final clipPath = geometry.pathForShapeBase(clip);
+      final clipPath = geometry.clipPath(clip);
       final metrics = clipPath.computeMetrics().toList();
       final bounds = clipPath.getBounds();
 
@@ -80,7 +80,7 @@ void main() {
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
     final geometry = BorderGeometry.resolve(bounds, decoration.border);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     expect(regions.length, equals(1));
 
     final border = regions.first;
@@ -116,7 +116,7 @@ void main() {
       final clip = entry.key;
       final (bounds, length) = entry.value;
 
-      final clipPath = geometry.pathForShapeBase(clip);
+      final clipPath = geometry.clipPath(clip);
       final metrics = clipPath.computeMetrics().toList();
       final clipBounds = clipPath.getBounds();
 
@@ -139,7 +139,7 @@ void main() {
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
     final geometry = BorderGeometry.resolve(bounds, decoration.border);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     expect(regions.length, equals(1));
 
     final border = regions.first;
@@ -177,7 +177,7 @@ void main() {
       final clip = entry.key;
       final (bounds, length) = entry.value;
 
-      final clipPath = geometry.pathForShapeBase(clip);
+      final clipPath = geometry.clipPath(clip);
       final metrics = clipPath.computeMetrics().toList();
       final clipBounds = clipPath.getBounds();
 
@@ -199,7 +199,7 @@ void main() {
     final bounds = Rect.fromLTRB(0, 0, 200, 100);
     final geometry = BorderGeometry.resolve(bounds, decoration.border);
 
-    final regions = geometry.buildVisibleRegions(decoration);
+    final regions = geometry.build(decoration);
     expect(regions.length, equals(1));
 
     final border = regions.first;
@@ -238,7 +238,7 @@ void main() {
       final clip = entry.key;
       final (bounds, length) = entry.value;
 
-      final clipPath = geometry.pathForShapeBase(clip);
+      final clipPath = geometry.clipPath(clip);
       final metrics = clipPath.computeMetrics().toList();
       final clipBounds = clipPath.getBounds();
 
@@ -262,7 +262,7 @@ void main() {
 
     final geometryDiff = BorderGeometry.resolve(bounds, decorationDiff.border);
 
-    final regionsDiff = geometryDiff.buildVisibleRegions(decorationDiff);
+    final regionsDiff = geometryDiff.build(decorationDiff);
     expect(regionsDiff.length, equals(2));
 
     final decorationSame = AnyDecoration(
@@ -273,7 +273,7 @@ void main() {
     );
 
     final geometrySame = BorderGeometry.resolve(bounds, decorationSame.border);
-    final regionsSame = geometrySame.buildVisibleRegions(decorationSame);
+    final regionsSame = geometrySame.build(decorationSame);
     expect(regionsSame.length, equals(1));
 
     final boundsSame = bounds.inflate(10);

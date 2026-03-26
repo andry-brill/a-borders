@@ -11,6 +11,8 @@ abstract class IAnyBorder {
   IAnyCorner get topRight;
   IAnyCorner get bottomRight;
   IAnyCorner get bottomLeft;
+
+  IAnyBorder copyWithout({bool left = true, bool top = true, bool right = true, bool bottom = true});
 }
 
 class AnyBorder implements IAnyBorder {
@@ -75,4 +77,22 @@ class AnyBorder implements IAnyBorder {
         _topRight = topRight,
         _bottomRight = bottomRight,
         _bottomLeft = bottomLeft;
+
+  @override
+  IAnyBorder copyWithout({bool left = true, bool top = true, bool right = true, bool bottom = true}) {
+
+    if (!left && !top && !right && !bottom) return this;
+
+    // NB! Must be used separately (in case sides is set)
+    return AnyBorder(
+      left: left ? null : this.left,
+      top: top ? null : this.top,
+      right: right ? null : this.right,
+      bottom: bottom ? null : this.bottom,
+      topLeft: topLeft,
+      topRight: topRight,
+      bottomRight: bottomRight,
+      bottomLeft: bottomLeft,
+    );
+  }
 }

@@ -5,13 +5,69 @@ import '../decoration/any_side.dart';
 
 
 enum ContourTarget {
-  background,
-  top,
-  right,
-  bottom,
-  left;
+  background(-1, -1, false),
+  top(4, 2),
+  right(1, 3),
+  bottom(2, 4),
+  left(4, 1)
+  ;
+
+  final int before, after;
+  final bool isSide;
+  const ContourTarget(this.before, this.after, [this.isSide = true]);
 
   static const Set<ContourTarget> sides = { top, right, bottom, left };
+
+  static bool areAdjacent(ContourTarget a, ContourTarget b) {
+    if (a == background || b == background) return true;
+    return a.before == b.index || a.after == b.index;
+  }
+
+
+  ContourTarget get previousSide {
+    switch (this) {
+      case ContourTarget.top:
+        return ContourTarget.left;
+      case ContourTarget.right:
+        return ContourTarget.top;
+      case ContourTarget.bottom:
+        return ContourTarget.right;
+      case ContourTarget.left:
+        return ContourTarget.bottom;
+      case ContourTarget.background:
+        throw 'No previousSide for background';
+    }
+  }
+
+  ContourTarget get nextSide {
+    switch (this) {
+      case ContourTarget.top:
+        return ContourTarget.right;
+      case ContourTarget.right:
+        return ContourTarget.bottom;
+      case ContourTarget.bottom:
+        return ContourTarget.left;
+      case ContourTarget.left:
+        return ContourTarget.top;
+      case ContourTarget.background:
+        throw 'No nextSide for background';
+    }
+  }
+
+  IAnySide? sideOf(IAnyBorder border) {
+    switch (this) {
+      case ContourTarget.top:
+        return border.top;
+      case ContourTarget.right:
+        return border.right;
+      case ContourTarget.bottom:
+        return border.bottom;
+      case ContourTarget.left:
+        return border.left;
+      case ContourTarget.background:
+        throw 'No sideOf for background';
+    }
+  }
 }
 
 

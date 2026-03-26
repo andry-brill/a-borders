@@ -9,7 +9,7 @@ import '../decoration/any_fill.dart';
 import '../decoration/any_side.dart';
 import 'border_contour.dart';
 import 'checkpoints_builder.dart';
-import 'path_region.dart';
+import 'fill_path.dart';
 
 
 class _ResolvedSide {
@@ -137,285 +137,199 @@ class BorderGeometry {
     );
   }
 
-  Path pathForShapeBase(AnyShapeBase base) {
-    switch (base) {
-      case AnyShapeBase.zeroBorder:
-        return baseContour.toPath();
-      case AnyShapeBase.outerBorder:
-        return outerContour.toPath();
-      case AnyShapeBase.innerBorder:
-        return innerContour.toPath();
+  List<FillPath> build(AnyDecoration decoration) {
+
+    final paths = <FillPath>[];
+    final contours = _buildContours(decoration);
+
+    if (contours.isNotEmpty) {
+
+      final builder = CheckpointsBuilder(border);
+      final geometry = BorderCheckpointsGeometry(rect, border);
+
+      for (final contour in contours) {
+        final descriptor = buildFillPath(builder, geometry, contour, decoration);
+        if (descriptor == null) continue;
+        paths.add(descriptor);
+      }
+
     }
+
+
+    return paths;
   }
 
+  List<_FillContour> _buildContours(AnyDecoration decoration) {
 
-  List<PathRegion> buildVisibleRegions(AnyDecoration decoration) {
-    final regions = <PathRegion>[];
-    final components = _buildFillComponents(decoration);
+    final contours = <_FillContour>[];
 
-    for (final component in components) {
-      final descriptor = _buildComponentDescriptor(component, decoration);
-      if (descriptor == null) continue;
-      descriptor.path.fillType = PathFillType.evenOdd;
-      regions.add(descriptor);
-    }
-
-    return regions;
-  }
-
-  Path buildMergedBackgroundPath(AnyDecoration decoration) {
-    final components = _buildFillComponents(decoration);
-    final background = components.where((c) => c.includesBackground).toList();
-    if (background.isEmpty) {
-      return pathForShapeBase(decoration.background);
-    }
-
-    Path? merged;
-    for (final component in background) {
-      final region = _buildComponentDescriptor(component, decoration);
-      if (region == null) continue;
-      merged = merged == null
-          ? region.path
-          : Path.combine(PathOperation.union, merged, region.path);
-    }
-    return merged ?? pathForShapeBase(decoration.background);
-  }
-
-  List<_FillComponent> _buildFillComponents(AnyDecoration decoration) {
-    final nodes = <_RegionNode>[];
     if (!decoration.isEmpty) {
-      nodes.add(_RegionNode.background(decoration));
-    }
-
-    for (final entry in <_SideEntry>[
-      _SideEntry(_SideId.top, border.top),
-      _SideEntry(_SideId.right, border.right),
-      _SideEntry(_SideId.bottom, border.bottom),
-      _SideEntry(_SideId.left, border.left),
-    ]) {
-      if (_isVisibleSide(entry.side)) {
-        nodes.add(_RegionNode.side(entry.id, entry.side!));
-      }
-    }
-
-    final components = <_FillComponent>[];
-    final visited = <int>{};
-
-    for (var i = 0; i < nodes.length; i++) {
-      if (!visited.add(i)) continue;
-      final seed = nodes[i];
-      final queue = <int>[i];
-      final sideIds = <_SideId>[];
-      var includesBackground = false;
-
-      while (queue.isNotEmpty) {
-        final currentIndex = queue.removeLast();
-        final current = nodes[currentIndex];
-
-        if (current.kind == _RegionNodeKind.background) {
-          includesBackground = true;
-        } else if (current.sideId != null) {
-          sideIds.add(current.sideId!);
-        }
-
-        for (var j = 0; j < nodes.length; j++) {
-          if (visited.contains(j)) continue;
-          final other = nodes[j];
-          if (!current.fill.isSameAs(other.fill)) continue;
-          if (!_nodesAreConnected(current, other)) continue;
-          visited.add(j);
-          queue.add(j);
-        }
-      }
-
-      components.add(
-        _FillComponent(
-          fill: seed.fill,
-          includesBackground: includesBackground,
-          sideIds: sideIds,
+      contours.add(
+        _FillContour(
+          fill: decoration,
+          targets: const {ContourTarget.background},
         ),
       );
     }
 
-    return components;
-  }
-
-  bool _nodesAreConnected(_RegionNode a, _RegionNode b) {
-    if (a.kind == _RegionNodeKind.background || b.kind == _RegionNodeKind.background) {
-      final sideNode = a.kind == _RegionNodeKind.side
-          ? a
-          : b.kind == _RegionNodeKind.side
-              ? b
-              : null;
-      return sideNode != null;
+    for (var side in ContourTarget.sides) {
+      final borderSide = side.sideOf(border);
+      if (borderSide != null && borderSide.isVisible) {
+        contours.add(
+          _FillContour(
+            fill: borderSide,
+            targets: {side},
+          ),
+        );
+      }
     }
 
-    return _areAdjacent(a.sideId!, b.sideId!);
+    var changed = true;
+    while (changed) {
+
+      changed = false;
+
+      for (var i = 0; i < contours.length; i++) {
+        for (var j = i + 1; j < contours.length; j++) {
+          final a = contours[i];
+          final b = contours[j];
+
+          if (!_canMergeContours(a, b)) continue;
+
+          contours[i] = _mergeContours(a, b);
+          contours.removeAt(j);
+          changed = true;
+          break;
+        }
+
+        if (changed) break;
+      }
+    }
+
+    return contours;
   }
 
-  bool _isVisibleSide(IAnySide? side) {
-    return side != null && side.width > 0.0 && !side.isEmpty;
+  bool _canMergeContours(_FillContour a, _FillContour b) {
+
+    if (!a.fill.isSameAs(b.fill)) return false;
+
+    for (final ta in a.targets) {
+      for (final tb in b.targets) {
+        if (ContourTarget.areAdjacent(ta, tb)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
-  PathRegion? _buildComponentDescriptor(
-    _FillComponent component,
-    AnyDecoration decoration,
-  ) {
-    final targets = _targetsForComponent(component);
+  _FillContour _mergeContours(_FillContour a, _FillContour b) {
+    return _FillContour(
+      fill: a.fill,
+      targets: <ContourTarget>{
+        ...a.targets,
+        ...b.targets,
+      },
+    );
+  }
+
+  FillPath? buildFillPath(
+      CheckpointsBuilder builder,
+      BorderCheckpointsGeometry geometry,
+      _FillContour contour,
+      AnyDecoration decoration,
+      ) {
+
+    final targets = _targetsForContour(contour);
     if (targets.isEmpty) return null;
 
-    final geometry = BorderCheckpointsGeometry(rect, border);
-    final builder = CheckpointsBuilder(border);
-
     late final Path path;
-    final checkpointSets = <List<ContourCheckpoint>>[];
-    final bases = <AnyShapeBase>[];
 
-    if (!component.includesBackground && _isFullVisibleBorderComponent(component)) {
+    if (!contour.hasBackground && _isFullVisibleBorderComponent(contour)) {
+
       final outerCheckpoints = builder.build(ContourTarget.sides, base: AnyShapeBase.outerBorder);
       final innerCheckpoints = builder.build(ContourTarget.sides, base: AnyShapeBase.innerBorder);
-      checkpointSets..add(outerCheckpoints)..add(innerCheckpoints);
-      bases..add(AnyShapeBase.outerBorder)..add(AnyShapeBase.innerBorder);
+
       path = Path.combine(
         PathOperation.difference,
         geometry.build(outerCheckpoints),
         geometry.build(innerCheckpoints),
       );
     } else {
-      final base = component.includesBackground ? decoration.background : null;
-      if (base != null) {
-        bases.add(base);
-      }
+
+      final base = contour.hasBackground ? decoration.background : null;
+
       final checkpoints = builder.build(targets, base: base);
-      checkpointSets.add(checkpoints);
       path = geometry.build(checkpoints);
     }
 
-    return PathRegion(
+    return FillPath(
       path: path,
-      fill: component.fill,
-      debugLabel: component.debugLabel,
+      fill: contour.fill,
+      debugLabel: contour.debugLabel,
       targets: targets,
-      bases: bases,
-      checkpointSets: checkpointSets,
     );
   }
 
-  Set<ContourTarget> _targetsForComponent(_FillComponent component) {
-    final targets = <ContourTarget>{};
-    if (component.includesBackground) {
-      targets.add(ContourTarget.background);
-    }
+  Path clipPath(AnyShapeBase clip) {
+    IAnyBorder border = clip == AnyShapeBase.zeroBorder ? this.border.copyWithout() : this.border;
+    final builder = CheckpointsBuilder(border);
+    final geometry = BorderCheckpointsGeometry(rect, border);
+    final checkpoints = builder.build(const { ContourTarget.background }, base: clip);
+    return geometry.build(checkpoints);
+  }
 
-    final sideTargets = component.sideIds.map(_targetForSideId).toSet();
-    targets.addAll(sideTargets);
+  Set<ContourTarget> _targetsForContour(_FillContour contour) {
 
-    if (component.includesBackground) {
-      return targets;
-    }
+    final targets = <ContourTarget>{...contour.targets};
 
-    final ordered = [
-      _SideId.top,
-      _SideId.right,
-      _SideId.bottom,
-      _SideId.left,
+    final sideTargets = contour.targets.where((t) => t.isSide).toSet();
+
+    final ordered = <ContourTarget>[
+      ContourTarget.top,
+      ContourTarget.right,
+      ContourTarget.bottom,
+      ContourTarget.left,
     ].where(sideTargets.contains).toList();
 
     if (ordered.isEmpty) return targets;
 
     final targetSet = ordered.toSet();
-    for (final sideId in ordered) {
-      final previous = _previousSide(sideId);
-      final next = _nextSide(sideId);
+
+    for (final side in ordered) {
+      final previous = side.previousSide;
+      final next = side.nextSide;
+
       final hasPreviousInComponent = targetSet.contains(previous);
       final hasNextInComponent = targetSet.contains(next);
 
-      if (!hasPreviousInComponent && !_isVisibleSide(_sideForId(previous))) {
-        targets.add(_targetForSideId(previous));
+      if (!hasPreviousInComponent && previous.sideOf(border)?.isVisible != true) {
+        targets.add(previous);
       }
-      if (!hasNextInComponent && !_isVisibleSide(_sideForId(next))) {
-        targets.add(_targetForSideId(next));
+      if (!hasNextInComponent && next.sideOf(border)?.isVisible != true) {
+        targets.add(next);
       }
     }
 
     return targets;
   }
 
-  bool _isFullVisibleBorderComponent(_FillComponent component) {
-    return !component.includesBackground &&
-        component.sideIds.length == 4 &&
+  bool _isFullVisibleBorderComponent(_FillContour contour) {
+    return !contour.hasBackground &&
+        contour.targets.length == 4 &&
         _allVisibleSidesPresent();
   }
 
+
   bool _allVisibleSidesPresent() {
-    return _isVisibleSide(border.top) &&
-        _isVisibleSide(border.right) &&
-        _isVisibleSide(border.bottom) &&
-        _isVisibleSide(border.left);
+    return border.top?.isVisible == true &&
+        border.right?.isVisible == true &&
+        border.bottom?.isVisible == true &&
+        border.left?.isVisible == true;
   }
 
-  _SideId _previousSide(_SideId sideId) {
-    switch (sideId) {
-      case _SideId.top:
-        return _SideId.left;
-      case _SideId.right:
-        return _SideId.top;
-      case _SideId.bottom:
-        return _SideId.right;
-      case _SideId.left:
-        return _SideId.bottom;
-    }
-  }
 
-  _SideId _nextSide(_SideId sideId) {
-    switch (sideId) {
-      case _SideId.top:
-        return _SideId.right;
-      case _SideId.right:
-        return _SideId.bottom;
-      case _SideId.bottom:
-        return _SideId.left;
-      case _SideId.left:
-        return _SideId.top;
-    }
-  }
-
-  ContourTarget _targetForSideId(_SideId sideId) {
-    switch (sideId) {
-      case _SideId.top:
-        return ContourTarget.top;
-      case _SideId.right:
-        return ContourTarget.right;
-      case _SideId.bottom:
-        return ContourTarget.bottom;
-      case _SideId.left:
-        return ContourTarget.left;
-    }
-  }
-
-  IAnySide? _sideForId(_SideId sideId) {
-    switch (sideId) {
-      case _SideId.top:
-        return border.top;
-      case _SideId.right:
-        return border.right;
-      case _SideId.bottom:
-        return border.bottom;
-      case _SideId.left:
-        return border.left;
-    }
-  }
-
-  bool _areAdjacent(_SideId a, _SideId b) {
-    return (a == _SideId.top && b == _SideId.right) ||
-        (a == _SideId.right && b == _SideId.bottom) ||
-        (a == _SideId.bottom && b == _SideId.left) ||
-        (a == _SideId.left && b == _SideId.top) ||
-        (b == _SideId.top && a == _SideId.right) ||
-        (b == _SideId.right && a == _SideId.bottom) ||
-        (b == _SideId.bottom && a == _SideId.left) ||
-        (b == _SideId.left && a == _SideId.top);
-  }
 }
 
 class _ContourWalker {
@@ -502,59 +416,24 @@ class _ContourWalker {
   }
 }
 
-class _FillComponent {
-  const _FillComponent({
-    required this.fill,
-    required this.includesBackground,
-    required this.sideIds,
-  });
+class _FillContour {
 
   final IAnyFill fill;
-  final bool includesBackground;
-  final List<_SideId> sideIds;
+  final Set<ContourTarget> targets;
+  bool get hasBackground => targets.contains(ContourTarget.background);
+
+  const _FillContour({
+    required this.fill,
+    required this.targets,
+  });
 
   String get debugLabel {
     final parts = <String>[];
-    if (includesBackground) parts.add('background');
-    parts.addAll(sideIds.map((s) => s.name));
+    parts.addAll(targets.map((s) => s.name));
     return parts.join('+');
   }
+
 }
-
-enum _RegionNodeKind { background, side }
-
-class _RegionNode {
-  const _RegionNode._({
-    required this.kind,
-    required this.fill,
-    this.sideId,
-  });
-
-  factory _RegionNode.background(IAnyFill fill) {
-    return _RegionNode._(kind: _RegionNodeKind.background, fill: fill);
-  }
-
-  factory _RegionNode.side(_SideId sideId, IAnyFill fill) {
-    return _RegionNode._(
-      kind: _RegionNodeKind.side,
-      fill: fill,
-      sideId: sideId,
-    );
-  }
-
-  final _RegionNodeKind kind;
-  final IAnyFill fill;
-  final _SideId? sideId;
-}
-
-class _SideEntry {
-  const _SideEntry(this.id, this.side);
-
-  final _SideId id;
-  final IAnySide? side;
-}
-
-enum _SideId { top, right, bottom, left }
 
 
 
