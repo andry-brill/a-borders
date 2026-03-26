@@ -6,11 +6,14 @@ abstract class IAnyCorner {}
 
 abstract class AAnyCorner implements IAnyCorner {
   const AAnyCorner();
+
 }
 
 /// Standard 90 degree corner.
 class AnySquareCorner extends AAnyCorner {
   const AnySquareCorner();
+
+
 }
 
 abstract class AAnyRoundedCorner extends AAnyCorner {
@@ -29,18 +32,23 @@ abstract class AAnyRoundedCorner extends AAnyCorner {
 /// Standard rounded corner.
 class AnyRoundedCorner extends AAnyRoundedCorner {
   const AnyRoundedCorner(super.radius);
+
+
 }
 
 /// Rounded corner that looks inside (like a post mark notch).
 class AnyInnerRoundedCorner extends AAnyRoundedCorner {
   const AnyInnerRoundedCorner(super.radius);
+
 }
 
 /// Rounded corner that goes outside.
 ///
 /// Example: a tab-like edge where only one axis bulges.
 class AnySideRoundedCorner extends AAnyRoundedCorner {
+
   final bool horizontal;
   const AnySideRoundedCorner.horizontal(super.radius) : horizontal = true;
   const AnySideRoundedCorner.vertical(super.radius) : horizontal = false;
+
 }

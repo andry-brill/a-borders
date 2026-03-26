@@ -1,4 +1,5 @@
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:any_borders/any_borders.dart';
 
@@ -30,62 +31,46 @@ class _ExamplePage extends StatefulWidget {
   State<_ExamplePage> createState() => _ExamplePageState();
 }
 
+final c1 = Colors.blue[100];
+final c2 = Colors.blue[300];
+final c3 = Colors.blue[500];
+final c4 = Colors.blue[700];
+final c5 = Colors.blue[900];
+
+const w1 = 10.0;
+const w2 = 20.0;
+const w3 = 30.0;
+const w4 = 40.0;
 
 class _ExamplePageState extends State<_ExamplePage> {
 
-  static List<List<AnyDecoration>> examples = [
+  static List<(String,AnyDecoration)> examples =
     [
-      AnyDecoration(
-        border: AnyBorder(
-            sides: AnySide(width: 10.0, color: Colors.blue)
-        ),
-        color: Colors.lightBlueAccent
-      ),
-      AnyDecoration(
+      ('Empty', AnyDecoration(
+        border: AnyBorder(),
+      )),
+      ('Background', AnyDecoration(
+          border: AnyBorder(),
+          color: c1
+      )),
+      ('', AnyDecoration(
           border: AnyBorder(
               sides: AnySide(width: 10.0, color: Colors.blue)
           ),
-          color: Colors.blue
+
       ),
-      AnyDecoration(
-          border: AnyBorder(
-              sides: AnySide(width: 10.0, color: Colors.blue)
-          ),
       )
-    ],
-    [
-      AnyDecoration(
-          border: AnyBorder(
-              sides: AnySide(width: 10.0, color: Colors.blue),
-              corners: AnyRoundedCorner(Radius.circular(20))
-          ),
-          color: Colors.lightBlueAccent
-      ),
-      AnyDecoration(
-          border: AnyBorder(
-              sides: AnySide(width: 10.0, color: Colors.blue),
-              corners: AnyRoundedCorner(Radius.circular(20))
-          ),
-          color: Colors.blue
-      ),
-      AnyDecoration(
-        border: AnyBorder(
-            sides: AnySide(width: 10.0, color: Colors.blue),
-            corners: AnyRoundedCorner(Radius.circular(20))
-        ),
-      )
-    ]
   ];
 
-  Widget row(List<AnyDecoration> decorations) {
+  Widget row(List<(String, AnyDecoration)> decorations) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 20,
       children: decorations.map((el) => Container(
         constraints: BoxConstraints.tightFor(width: 200, height: 100),
-        decoration: el,
-        child: Center(child: Text("AnyBorder", style: TextStyle(color: Colors.black12),)),
+        decoration: el.$2,
+        child: Center(child: Text(el.$1, style: TextStyle(color: Colors.black12),)),
       )).toList(),
     );
   }
@@ -93,14 +78,12 @@ class _ExamplePageState extends State<_ExamplePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 30,
-              children: examples.map(row).toList(),
-          ),
-        ),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 30,
+          children: examples.slices(3).map(row).toList(),
+      ),
     );
   }
 }

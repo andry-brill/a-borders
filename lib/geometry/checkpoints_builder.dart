@@ -157,10 +157,10 @@ class CheckpointsBuilder {
   final IAnyBorder _border;
 
   CheckpointsBuilder(this._border)
-      : hasTop = _border.top?.hasWidth == true,
-        hasRight = _border.right?.hasWidth == true,
-        hasBottom = _border.bottom?.hasWidth == true,
-        hasLeft = _border.left?.hasWidth == true {
+      : hasTop = _border.top.hasWidth,
+        hasRight = _border.right.hasWidth,
+        hasBottom = _border.bottom.hasWidth,
+        hasLeft = _border.left.hasWidth {
     var count = 0;
     if (hasTop) count++;
     if (hasRight) count++;
@@ -430,7 +430,9 @@ class CheckpointsBuilder {
   ContourPosition _positionForShapeBase(AnyShapeBase base) {
     switch (base) {
       case AnyShapeBase.zeroBorder:
-        return ContourPosition.middle;
+        /// In case of border to merge we need to use outer
+        /// In other cases for zero borders position is not important
+        return ContourPosition.outer;
       case AnyShapeBase.outerBorder:
         return ContourPosition.outer;
       case AnyShapeBase.innerBorder:
@@ -438,7 +440,7 @@ class CheckpointsBuilder {
     }
   }
 
-  ContourPosition _outerExtentPositionForAlign(AnyAlign? align) {
+  ContourPosition _outerExtentPositionForAlign(AnyAlign align) {
     switch (align) {
       case AnyAlign.inside:
         return ContourPosition.inner;
@@ -446,8 +448,6 @@ class CheckpointsBuilder {
         return ContourPosition.middle;
       case AnyAlign.outside:
         return ContourPosition.outer;
-      case null:
-        return ContourPosition.middle;
     }
   }
 
@@ -482,18 +482,18 @@ class CheckpointsBuilder {
     }
   }
 
-  AnyAlign? _alignForTarget(ContourTarget side) {
+  AnyAlign _alignForTarget(ContourTarget side) {
     switch (side) {
       case ContourTarget.top:
-        return _border.top?.align;
+        return _border.top.align;
       case ContourTarget.right:
-        return _border.right?.align;
+        return _border.right.align;
       case ContourTarget.bottom:
-        return _border.bottom?.align;
+        return _border.bottom.align;
       case ContourTarget.left:
-        return _border.left?.align;
+        return _border.left.align;
       case ContourTarget.background:
-        return null;
+        throw 'No align for ${side.name}';
     }
   }
 

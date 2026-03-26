@@ -1,11 +1,14 @@
-import 'any_corner.dart';
-import 'any_side.dart';
+import 'dart:ui';
+
+import 'package:any_borders/any_borders.dart';
+
 
 abstract class IAnyBorder {
-  IAnySide? get left;
-  IAnySide? get top;
-  IAnySide? get right;
-  IAnySide? get bottom;
+
+  IAnySide get left;
+  IAnySide get top;
+  IAnySide get right;
+  IAnySide get bottom;
 
   IAnyCorner get topLeft;
   IAnyCorner get topRight;
@@ -13,29 +16,32 @@ abstract class IAnyBorder {
   IAnyCorner get bottomLeft;
 
   IAnyBorder copyWithout({bool left = true, bool top = true, bool right = true, bool bottom = true});
+
 }
 
 class AnyBorder implements IAnyBorder {
 
+  static IAnySide zeroSide = const AnySide(width: 0, color: Color(0x00000000));
   static IAnyCorner cornersBase = const AnySquareCorner();
 
   final IAnySide? _left;
   @override
-  IAnySide? get left => _left ?? sides;
+  IAnySide get left => _left ?? sides;
 
   final IAnySide? _top;
   @override
-  IAnySide? get top => _top ?? sides;
+  IAnySide get top => _top ?? sides;
 
   final IAnySide? _right;
   @override
-  IAnySide? get right => _right ?? sides;
+  IAnySide get right => _right ?? sides;
 
   final IAnySide? _bottom;
   @override
-  IAnySide? get bottom => _bottom ?? sides;
+  IAnySide get bottom => _bottom ?? sides;
 
-  final IAnySide? sides;
+  final IAnySide? _sides;
+  IAnySide get sides => _sides ?? zeroSide;
 
   final IAnyCorner? _topLeft;
   @override
@@ -61,7 +67,7 @@ class AnyBorder implements IAnyBorder {
     IAnySide? top,
     IAnySide? right,
     IAnySide? bottom,
-    this.sides,
+    IAnySide? sides,
     IAnyCorner? topLeft,
     IAnyCorner? topRight,
     IAnyCorner? bottomRight,
@@ -69,6 +75,7 @@ class AnyBorder implements IAnyBorder {
     IAnyCorner? corners,
   })  :
         _corners = corners,
+        _sides = sides,
         _left = left,
         _top = top,
         _right = right,
@@ -85,14 +92,16 @@ class AnyBorder implements IAnyBorder {
 
     // NB! Must be used separately (in case sides is set)
     return AnyBorder(
-      left: left ? null : this.left,
-      top: top ? null : this.top,
-      right: right ? null : this.right,
-      bottom: bottom ? null : this.bottom,
+      left: left ? zeroSide : this.left,
+      top: top ? zeroSide : this.top,
+      right: right ? zeroSide : this.right,
+      bottom: bottom ? zeroSide : this.bottom,
       topLeft: topLeft,
       topRight: topRight,
       bottomRight: bottomRight,
       bottomLeft: bottomLeft,
     );
   }
+
+
 }
