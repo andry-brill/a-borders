@@ -103,5 +103,28 @@ class AnyBorder implements IAnyBorder {
     );
   }
 
+  @override
+  bool operator ==(Object other) {
+    return other is AnyBorder &&
+        other.left == left &&
+        other.top == top &&
+        other.right == right &&
+        other.bottom == bottom &&
+        other.topLeft == topLeft &&
+        other.topRight == topRight &&
+        other.bottomRight == bottomRight &&
+        other.bottomLeft == bottomLeft;
+  }
 
+  @override
+  int get hashCode => Object.hash(
+    left,
+    top,
+    right,
+    bottom,
+    topLeft,
+    topRight,
+    bottomRight,
+    bottomLeft,
+  );
 }

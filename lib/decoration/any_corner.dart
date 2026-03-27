@@ -11,8 +11,14 @@ abstract class AAnyCorner implements IAnyCorner {
 
 /// Standard 90 degree corner.
 class AnySquareCorner extends AAnyCorner {
+
   const AnySquareCorner();
 
+  @override
+  bool operator ==(Object other) => other is AnySquareCorner;
+
+  @override
+  int get hashCode => 31;
 
 }
 
@@ -33,13 +39,26 @@ abstract class AAnyRoundedCorner extends AAnyCorner {
 class AnyRoundedCorner extends AAnyRoundedCorner {
   const AnyRoundedCorner(super.radius);
 
+  @override
+  bool operator ==(Object other) {
+    return other is AnyRoundedCorner && other.radius == radius;
+  }
 
+  @override
+  int get hashCode => Object.hash(AnyRoundedCorner, radius);
 }
 
 /// Rounded corner that looks inside (like a post mark notch).
 class AnyInnerRoundedCorner extends AAnyRoundedCorner {
   const AnyInnerRoundedCorner(super.radius);
 
+  @override
+  bool operator ==(Object other) {
+    return other is AnyInnerRoundedCorner && other.radius == radius;
+  }
+
+  @override
+  int get hashCode => Object.hash(AnyInnerRoundedCorner, radius);
 }
 
 /// Rounded corner that goes outside.
@@ -51,4 +70,14 @@ class AnySideRoundedCorner extends AAnyRoundedCorner {
   const AnySideRoundedCorner.horizontal(super.radius) : horizontal = true;
   const AnySideRoundedCorner.vertical(super.radius) : horizontal = false;
 
+
+  @override
+  bool operator ==(Object other) {
+    return other is AnySideRoundedCorner &&
+        other.radius == radius &&
+        other.horizontal == horizontal;
+  }
+
+  @override
+  int get hashCode => Object.hash(AnySideRoundedCorner, radius, horizontal);
 }

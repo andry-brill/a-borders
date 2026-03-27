@@ -64,4 +64,26 @@ class AnySide with MAnyFill implements IAnySide {
       blendMode: blendMode ?? this.blendMode,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AnySide &&
+        other.width == width &&
+        other.align == align &&
+        other.color == color &&
+        other.gradient == gradient &&
+        other.image == image &&
+        other.blendMode == blendMode;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    width,
+    align,
+    color,
+    gradient,
+    image,
+    blendMode,
+  );
+
 }

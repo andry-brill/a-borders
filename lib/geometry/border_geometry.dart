@@ -276,7 +276,7 @@ class BorderCheckpointsGeometry {
 
   Path build(List<ContourCheckpoint> checkpoints) {
 
-    print('>>> build checkpoints ${checkpoints}');
+    // print('>>> build checkpoints ${checkpoints}');
 
     final path = Path()
       ..fillType = PathFillType.evenOdd;
@@ -310,7 +310,6 @@ class BorderCheckpointsGeometry {
     if (start.variant == ContourVariant.corner && end.variant == ContourVariant.corner) {
 
       if (start.point == ContourPoint.topRight && end.point == ContourPoint.rightTop) {
-        // print('> corner line to ${endPoint.dx}, ${startPoint.dy}');
         path.lineTo(endPoint.dx, startPoint.dy);
       } else if (start.point == ContourPoint.rightBottom && end.point == ContourPoint.bottomRight) {
         path.lineTo(startPoint.dx, endPoint.dy);
@@ -318,6 +317,12 @@ class BorderCheckpointsGeometry {
         path.lineTo(endPoint.dx, startPoint.dy);
       } else if (start.point == ContourPoint.leftTop && end.point == ContourPoint.topLeft) {
         path.lineTo(startPoint.dx, endPoint.dy);
+      } else if (start.point == ContourPoint.bottomRight && end.point == ContourPoint.rightBottom) {
+        path.lineTo(endPoint.dx, startPoint.dy);
+      } else if (start.point == ContourPoint.rightTop && end.point == ContourPoint.topRight) {
+        path.lineTo(startPoint.dx, endPoint.dy);
+      } else if (start.point == ContourPoint.topLeft && end.point == ContourPoint.leftTop) {
+        path.lineTo(endPoint.dx, startPoint.dy);
       } else {
         throw UnimplementedError(' from: ${start.point.name} to: ${end.point.name}');
       }

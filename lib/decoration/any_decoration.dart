@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 import 'any_border.dart';
@@ -76,11 +77,13 @@ class AnyDecoration extends Decoration with MAnyFill {
         other.image == image &&
         other.blendMode == blendMode &&
         other.clip == clip &&
-        other.background == background;
+        other.background == background &&
+        listEquals(other.shadows, shadows)
+    ;
   }
 
   @override
-  int get hashCode => Object.hash(border, color, gradient, image, blendMode, clip, background);
+  int get hashCode => Object.hash(border, color, gradient, image, blendMode, clip, background, shadows == null ? null : Object.hashAll(shadows!));
 }
 
 class _AnyBoxPainter extends BoxPainter {
