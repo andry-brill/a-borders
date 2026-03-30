@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:any_borders/helpers/path_debugger.dart';
+
 import '../decoration/any_align.dart';
 import '../decoration/any_border.dart';
 import '../decoration/any_decoration.dart';
@@ -163,6 +165,7 @@ class BorderGeometry {
         BorderCheckpointsGeometry backgroundGeometry = BorderCheckpointsGeometry(geometry._bounds, zeroBorder);
         path = backgroundGeometry.build(checkpoints);
       } else {
+        print('>>> $checkpoints');
         path = geometry.build(checkpoints);
       }
     }
@@ -278,14 +281,15 @@ class BorderCheckpointsGeometry {
 
     // print('>>> build checkpoints ${checkpoints}');
 
-    final path = Path()
+    Path path = Path()
       ..fillType = PathFillType.evenOdd;
 
     if (checkpoints.isEmpty) return path;
 
+    path = PathDebugger('>', path);
+
     Offset startPoint = _pointFor(checkpoints.first);
     path.moveTo(startPoint.dx, startPoint.dy);
-    // print('> move to $startPoint');
 
     for (var i = 0; i < checkpoints.length; i++) {
       final current = checkpoints[i];
@@ -294,7 +298,8 @@ class BorderCheckpointsGeometry {
     }
 
     path.close();
-    return path;
+
+    return PathDebugger.unwrap(path);
   }
 
   Offset _connect(Offset startPoint, Path path, ContourCheckpoint start, ContourCheckpoint end) {
@@ -305,7 +310,7 @@ class BorderCheckpointsGeometry {
       return startPoint;
     }
 
-    // print(': line for ${end}');
+    print('>> $end');
 
     if (start.variant == ContourVariant.corner && end.variant == ContourVariant.corner) {
 
@@ -327,12 +332,10 @@ class BorderCheckpointsGeometry {
         throw UnimplementedError(' from: ${start.point.name} to: ${end.point.name}');
       }
 
-      // print('> line to $endPoint');
       path.lineTo(endPoint.dx, endPoint.dy);
 
     } else {
       // NB! Implementing only squared corners for now
-      // print('> line to $endPoint');
       path.lineTo(endPoint.dx, endPoint.dy);
     }
     return endPoint;
@@ -463,9 +466,59 @@ class BorderCheckpointsGeometry {
           }
         }
 
-        if (checkpoint.point == ContourPoint.rightTop || checkpoint.point == ContourPoint.rightBottom) {
+        if (checkpoint.point == ContourPoint.rightTop) {
 
-          final origin = checkpoint.point == ContourPoint.rightTop ? bounds.topRight : bounds.bottomRight;
+          final origin = bounds.topRight;
+          final right = border.right;
+          final top = border.top;
+
+          double dy = 0;
+          if (right.align == AnyAlign.outside || top.align == AnyAlign.outside) {
+            dy = 0;
+          } else {
+            if (top.align == AnyAlign.center) {
+              dy = top.width / 2;
+            }
+            if (top.align == AnyAlign.inside) {
+              dy = top.width;
+            }
+          }
+
+
+          if (right.align == AnyAlign.outside && checkpoint.position == ContourPosition.outer) {
+            return Offset(origin.dx + right.width, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.outside && checkpoint.position == ContourPosition.middle) {
+            return Offset(origin.dx + right.width / 2, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.outside && checkpoint.position == ContourPosition.inner) {
+            return Offset(origin.dx, origin.dy + dy);
+          }
+
+          if (right.align == AnyAlign.center && checkpoint.position == ContourPosition.outer) {
+            return Offset(origin.dx + right.width / 2, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.center && checkpoint.position == ContourPosition.middle) {
+            return Offset(origin.dx, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.center && checkpoint.position == ContourPosition.inner) {
+            return Offset(origin.dx - right.width / 2, origin.dy + dy);
+          }
+
+          if (right.align == AnyAlign.inside && checkpoint.position == ContourPosition.outer) {
+            return Offset(origin.dx, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.inside && checkpoint.position == ContourPosition.middle) {
+            return Offset(origin.dx - right.width / 2, origin.dy + dy);
+          }
+          if (right.align == AnyAlign.inside && checkpoint.position == ContourPosition.inner) {
+            return Offset(origin.dx - right.width, origin.dy + dy);
+          }
+        }
+
+        if (checkpoint.point == ContourPoint.rightBottom) {
+
+          final origin = bounds.bottomRight;
           final side = border.right;
           if (side.align == AnyAlign.outside && checkpoint.position == ContourPosition.outer) {
             return Offset(origin.dx + side.width, origin.dy);

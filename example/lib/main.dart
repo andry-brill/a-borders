@@ -1,8 +1,7 @@
 
 import 'package:collection/collection.dart';
-import 'package:example/helpers/builders.dart';
+import 'package:example/polygon_stroke_regions.dart';
 import 'package:flutter/material.dart';
-import 'package:any_borders/any_borders.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,33 +48,33 @@ final generator = ExampleGenerator([
   ChangeGroup('BACK', [Change('N', (d) => d.color = null), Change('C', (d) => d.color = c)]),
 
   ChangeGroup('TOP', [
-    Change('ALG:INN', (d) => d.border.top.align = AnyAlign.inside),
-    Change('ALG:CEN', (d) => d.border.top.align = AnyAlign.center),
-    Change('ALG:OUT', (d) => d.border.top.align = AnyAlign.outside),
+    Change('INN', (d) => d.top.align = AnySide.alignInside),
+    Change('CEN', (d) => d.top.align = AnySide.alignCenter),
+    Change('OUT', (d) => d.top.align = AnySide.alignOutside),
   ]),
   ChangeGroup('TOP', [
-    Change('W0', (d) => d.border.top.width = w0),
-    Change('W1', (d) => d.border.top.width = w1),
+    Change('W0', (d) => d.top.width = w0),
+    Change('W1', (d) => d.top.width = w1),
   ]),
   ChangeGroup('TOP', [
-    Change('C', (d) => d.border.top.color = c),
-    Change('CT', (d) => d.border.top.color = ct),
+    Change('C', (d) => d.top.color = c),
+    Change('CT', (d) => d.top.color = ct),
   ]),
 
   ChangeGroup('RIGHT', [
-    Change('ALG:INN', (d) => d.border.right.align = AnyAlign.inside),
-    Change('ALG:CEN', (d) => d.border.right.align = AnyAlign.center),
-    Change('ALG:OUT', (d) => d.border.right.align = AnyAlign.outside),
+    Change('INN', (d) => d.right.align = AnySide.alignInside),
+    Change('CEN', (d) => d.right.align = AnySide.alignCenter),
+    Change('OUT', (d) => d.right.align = AnySide.alignOutside),
   ]),
   ChangeGroup('RIGHT', [
-    Change('W0', (d) => d.border.right.width = w0),
-    Change('W1', (d) => d.border.right.width = w1),
-    Change('W2', (d) => d.border.right.width = w2),
+    Change('W0', (d) => d.right.width = w0),
+    Change('W1', (d) => d.right.width = w1),
+    Change('W2', (d) => d.right.width = w2),
   ]),
   ChangeGroup('RIGHT', [
-    Change('C', (d) => d.border.right.color = c),
-    Change('CT', (d) => d.border.right.color = ct),
-    Change('CR', (d) => d.border.right.color = cr),
+    Change('C', (d) => d.right.color = c),
+    Change('CT', (d) => d.right.color = ct),
+    Change('CR', (d) => d.right.color = cr),
   ]),
 ]);
 
@@ -85,222 +84,241 @@ class _ExamplePageState extends State<_ExamplePage> {
   final examples = generator.build();
 
   // TODO add nice examples instead of
-  static List<(String,AnyDecoration)> nice =
-    [
-      ('empty', AnyDecoration(
-        border: AnyBorder(),
-      )),
-
-      ('border-all', AnyDecoration(
-        border: AnyBorder(
-            sides: AnySide(width: w1, color:c)
-        ),
-      )),
-
-      ('back', AnyDecoration(
-          border: AnyBorder(),
-          color: c
-      )),
-
-
-      ('border-top', AnyDecoration(
-        border: AnyBorder(
-            top: AnySide(width: w1, color:ct)
-        ),
-        color: c
-      )),
-      ('border-top-center', AnyDecoration(
-        border: AnyBorder(
-            top: AnySide(width: w1, color:ct, align: AnyAlign.center)
-        ),
-        color: c
-      )),
-      ('border-top-outside', AnyDecoration(
-        border: AnyBorder(
-            top: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-        ),
-        color: c
-      )),
-
-      ('back-border-top', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct)
-          ),
-          color: ct
-      )),
-      ('back-border-top-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: ct
-      )),
-      ('back-border-top-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: ct
-      )),
-
-      // line
-
-      ('border-top-right', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: c
-      )),
-      ('border-top-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: c
-      )),
-      ('border-top-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: c
-      )),
-
-      ('border-top-inside-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: c
-      )),
-      ('border-top-inside-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: c
-      )),
-
-      ('border-top-center-right-inside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: c
-      )),
-
-      ('border-top-center-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: c
-      )),
-
-      ('border-top-outside-right-inside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: c
-      )),
-
-      ('border-top-outside-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: c
-      )),
-
-
-      ('back-border-top-right', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: ct
-      )),
-      ('back-border-top-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: ct
-      )),
-      ('back-border-top-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: ct
-      )),
-
-      ('back-border-top-inside-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: ct
-      )),
-      ('back-border-top-inside-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: ct
-      )),
-
-      ('back-border-top-center-right-inside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: ct
-      )),
-
-      ('back-border-top-center-right-outside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.center),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.outside)
-          ),
-          color: ct
-      )),
-
-      ('back-border-top-outside-right-inside', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct)
-          ),
-          color: ct
-      )),
-
-      ('back-border-top-outside-right-center', AnyDecoration(
-          border: AnyBorder(
-              top: AnySide(width: w1, color:ct, align: AnyAlign.outside),
-              right: AnySide(width: w1, color:ct, align: AnyAlign.center)
-          ),
-          color: ct
-      )),
-
-
-    ];
+  // static List<(String,AnyDecoration)> nice =
+  //   [
+  //     ('empty', AnyDecoration(
+  //       border: AnyBorder(),
+  //     )),
+  //
+  //     ('border-all', AnyDecoration(
+  //       border: AnyBorder(
+  //           sides: AnySide(width: w1, color:c)
+  //       ),
+  //     )),
+  //
+  //     ('back', AnyDecoration(
+  //         border: AnyBorder(),
+  //         color: c
+  //     )),
+  //
+  //
+  //     ('border-top', AnyDecoration(
+  //       border: AnyBorder(
+  //           top: AnySide(width: w1, color:ct)
+  //       ),
+  //       color: c
+  //     )),
+  //     ('border-top-center', AnyDecoration(
+  //       border: AnyBorder(
+  //           top: AnySide(width: w1, color:ct, align: AnySide.center)
+  //       ),
+  //       color: c
+  //     )),
+  //     ('border-top-outside', AnyDecoration(
+  //       border: AnyBorder(
+  //           top: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //       ),
+  //       color: c
+  //     )),
+  //
+  //     ('back-border-top', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: ct
+  //     )),
+  //     ('back-border-top-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: ct
+  //     )),
+  //     ('back-border-top-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     // line
+  //
+  //     ('border-top-right', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: c
+  //     )),
+  //     ('border-top-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: c
+  //     )),
+  //     ('border-top-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //     ('border-top-inside-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: c
+  //     )),
+  //     ('border-top-inside-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //     ('border-top-center-right-inside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //     ('border-top-center-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //     ('border-top-outside-right-inside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //     ('border-top-outside-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: c
+  //     )),
+  //
+  //
+  //     ('back-border-top-right', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: ct
+  //     )),
+  //     ('back-border-top-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: ct
+  //     )),
+  //     ('back-border-top-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     ('back-border-top-inside-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: ct
+  //     )),
+  //     ('back-border-top-inside-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     ('back-border-top-center-right-inside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     ('back-border-top-center-right-outside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.center),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.outside)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     ('back-border-top-outside-right-inside', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //     ('back-border-top-outside-right-center', AnyDecoration(
+  //         border: AnyBorder(
+  //             top: AnySide(width: w1, color:ct, align: AnySide.outside),
+  //             right: AnySide(width: w1, color:ct, align: AnySide.center)
+  //         ),
+  //         color: ct
+  //     )),
+  //
+  //
+  //   ];
 
   Widget row(List<(String, AnyDecoration)> decorations) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: w4,
-      children: decorations.map((el) => Container(
-        constraints: BoxConstraints.tightFor(width: 200, height: 100),
-        decoration: el.$2,
-        child: Center(child: Text(el.$1, style: const TextStyle(color: Colors.black45),)),
-      )).toList(),
+      children: decorations.map((el) => Stack(
+       children: [
+         Container(
+           constraints: BoxConstraints.tightFor(width: 200, height: 100),
+           decoration: el.$2,
+           child: Center(child: Text('#${index++} ${el.$1}', style: const TextStyle(color: Colors.black45),)),
+         ),
+         Positioned(child: Container(
+           constraints: BoxConstraints.tightFor(width: 200, height: 100),
+           decoration: BoxDecoration(
+             border: Border.all(color: Colors.black12)
+           ),
+         ))
+       ])
+      ).toList(),
     );
   }
+
+  int index = 0;
+  List<int> filterTo = [391, 392, 394, 395, 400, 403];
 
   @override
   Widget build(BuildContext context) {
 
+    index = 0;
+
+    var ex = examples;
+    if (filterTo.isNotEmpty) {
+      ex = filterTo.map((i) => examples[i]).toList();
+    }
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -309,7 +327,7 @@ class _ExamplePageState extends State<_ExamplePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: w4,
-              children: examples.slices(4).map(row).toList(),
+              children: ex.slices(4).map(row).toList(),
         ))
       ),
     );

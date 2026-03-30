@@ -25,6 +25,8 @@ class AnySide with MAnyFill implements IAnySide {
   @override
   final double width;
   final AnyAlign? _align;
+
+  /// Align means align relative to correspondent side (not to the whole shape of the object)
   @override
   AnyAlign get align => _align ?? alignBase;
 
