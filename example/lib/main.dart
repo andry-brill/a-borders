@@ -1,6 +1,6 @@
 
 import 'package:collection/collection.dart';
-import 'package:example/polygon_stroke_regions.dart';
+import 'package:example/polygon_stroke_regions_rounded.dart';
 import 'package:flutter/material.dart';
 
 void main() {
