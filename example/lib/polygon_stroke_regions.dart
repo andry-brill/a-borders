@@ -154,15 +154,22 @@ class Polygon {
     return (total - (2 * pi)).abs() <= 0.00001;
   }
 
-  List<StrokeRegion> buildMergedStrokeRegions(PolygonSetup setup, {
-    /// Event if background doesn't have a fill, must be return
-    bool backgroundOnly = true,
-    /// Override for background
-    AnyShapeBase? backgroundBase
-  }) {
+  List<StrokeRegion> buildMergedStrokeRegions(
+      PolygonSetup setup, {
+        /// Build only background region.
+        /// Useful for clip path building.
+        bool backgroundOnly = false,
+
+        /// Override background shape base while building.
+        AnyShapeBase? backgroundBase,
+      }) {
     final geometry = _PolygonGeometry.fromCommands(commands);
-    // TODO add filter option to build only background, also possibility to override backgroundBase during build
-    return _StrokeRegionBuilder(geometry, setup).build();
+    return _StrokeRegionBuilder(
+      geometry,
+      setup,
+      backgroundOnly: backgroundOnly,
+      backgroundBase: backgroundBase,
+    ).build();
   }
 }
 
@@ -557,17 +564,58 @@ class _SideRun {
 class _StrokeRegionBuilder {
   final _PolygonGeometry geometry;
   final PolygonSetup setup;
+  final bool backgroundOnly;
+  final AnyShapeBase? backgroundBase;
 
+  late final Map<Enum, _ResolvedSide> _resolvedSides = _resolveSides();
   late final Map<Enum, _ResolvedSide> _activeSides = _resolveActiveSides();
   late final _BackgroundEntry? _background = _resolveBackground();
 
-  _StrokeRegionBuilder(this.geometry, this.setup) {
+  _StrokeRegionBuilder(this.geometry, this.setup, {
+    this.backgroundOnly = false,
+    this.backgroundBase,
+  }) {
     _validateSetup();
   }
 
+  AnyShapeBase get _effectiveBackgroundBase =>
+      backgroundBase ?? _background!.background.shapeBase;
+
   List<StrokeRegion> build() {
+
+    if (backgroundOnly) {
+      final background = _background;
+      if (background == null) {
+        return const <StrokeRegion>[];
+      }
+
+      return <StrokeRegion>[
+        StrokeRegion(
+          [background.key],
+          background.fill,
+          _buildBackgroundOnlyPath(),
+        ),
+      ];
+    }
+
     final groups = _buildPaintGroups();
     return groups.map(_buildRegion).toList(growable: false);
+  }
+
+  Path _buildBackgroundOnlyPath() {
+    final offsets = <Enum, double>{};
+
+    for (final frame in geometry.sides) {
+      final side = _resolvedSides[frame.key]!;
+
+      offsets[frame.key] = switch (_effectiveBackgroundBase) {
+        AnyShapeBase.zeroBorder => 0.0,
+        AnyShapeBase.outerBorder => -side.outside,
+        AnyShapeBase.innerBorder => side.inside,
+      };
+    }
+
+    return geometry.buildContourPath(offsets);
   }
 
   void _validateSetup() {
@@ -585,20 +633,26 @@ class _StrokeRegionBuilder {
     }
   }
 
-  Map<Enum, _ResolvedSide> _resolveActiveSides() {
+  Map<Enum, _ResolvedSide> _resolveSides() {
     final result = <Enum, _ResolvedSide>{};
-    for (final entry in setup.sides.entries) {
-      final frame = geometry.sideByKey[entry.key]!;
-      final resolved = _ResolvedSide(
-        key: entry.key,
-        side: entry.value,
+
+    for (final frame in geometry.sides) {
+      final side = setup.sides[frame.key] ?? const AnySide();
+      result[frame.key] = _ResolvedSide(
+        key: frame.key,
+        side: side,
         frame: frame,
       );
-      if (resolved.isPainted) {
-        result[entry.key] = resolved;
-      }
     }
+
     return result;
+  }
+
+  Map<Enum, _ResolvedSide> _resolveActiveSides() {
+    return {
+      for (final entry in _resolvedSides.entries)
+        if (entry.value.isPainted) entry.key: entry.value,
+    };
   }
 
   _BackgroundEntry? _resolveBackground() {
@@ -608,6 +662,169 @@ class _StrokeRegionBuilder {
 
     final entry = setup.background.entries.single;
     return _BackgroundEntry(entry.key, entry.value);
+  }
+
+  _ResolvedSide _sideAt(int sideIndex) {
+    final key = geometry.sideAt(sideIndex).key;
+    return _resolvedSides[key]!;
+  }
+
+  bool _isMergedSide(Set<Enum> mergedSideKeys, int sideIndex) {
+    return mergedSideKeys.contains(geometry.sideAt(sideIndex).key);
+  }
+
+  _SideRun _collectMergedRunFrom(int startIndex, Set<Enum> mergedSideKeys) {
+    var length = 1;
+    while (
+    length < geometry.length &&
+        _isMergedSide(mergedSideKeys, startIndex + length)
+    ) {
+      length++;
+    }
+
+    return _SideRun(
+      startIndex: startIndex,
+      length: length,
+      sideCount: geometry.length,
+    );
+  }
+
+  _SideRun _collectBackgroundSpanFrom(int startIndex, Set<Enum> mergedSideKeys) {
+    var length = 1;
+    while (
+    length < geometry.length &&
+        !_isMergedSide(mergedSideKeys, startIndex + length)
+    ) {
+      length++;
+    }
+
+    return _SideRun(
+      startIndex: startIndex,
+      length: length,
+      sideCount: geometry.length,
+    );
+  }
+
+  double _backgroundOffsetForSide(_ResolvedSide side) {
+    if (side.isPainted) {
+      // Background must share exact edge with a differently painted side.
+      return side.inside;
+    }
+
+    return switch (_background!.background.shapeBase) {
+      AnyShapeBase.zeroBorder => 0.0,
+      AnyShapeBase.outerBorder => -side.outside,
+      AnyShapeBase.innerBorder => side.inside,
+    };
+  }
+
+  Offset _buildBackgroundSpanStart(
+      _SideRun span,
+      Set<Enum> mergedSideKeys,
+      ) {
+    final current = _sideAt(span.startIndex);
+    final previous = _sideAt(span.startIndex - 1);
+    final currentOffset = _backgroundOffsetForSide(current);
+
+    if (!_isMergedSide(mergedSideKeys, span.startIndex - 1)) {
+      return geometry.intersectOffsetLines(
+        previous.frame,
+        _backgroundOffsetForSide(previous),
+        current.frame,
+        currentOffset,
+      );
+    }
+
+    return geometry.intersectOffsetLines(
+      previous.frame,
+      current.isPainted ? previous.inside : -previous.outside,
+      current.frame,
+      currentOffset,
+    );
+  }
+
+  Offset _buildBackgroundSpanEnd(
+      _SideRun span,
+      Set<Enum> mergedSideKeys,
+      ) {
+    final current = _sideAt(span.endIndex);
+    final next = _sideAt(span.endIndex + 1);
+    final currentOffset = _backgroundOffsetForSide(current);
+
+    if (!_isMergedSide(mergedSideKeys, span.endIndex + 1)) {
+      return geometry.intersectOffsetLines(
+        current.frame,
+        currentOffset,
+        next.frame,
+        _backgroundOffsetForSide(next),
+      );
+    }
+
+    return geometry.intersectOffsetLines(
+      current.frame,
+      currentOffset,
+      next.frame,
+      current.isPainted ? next.inside : -next.outside,
+    );
+  }
+
+  List<Offset> _buildBackgroundSpanChain(
+      _SideRun span,
+      Set<Enum> mergedSideKeys,
+      ) {
+    final points = <Offset>[];
+
+    _appendPoint(points, _buildBackgroundSpanStart(span, mergedSideKeys));
+
+    for (var step = 0; step < span.length - 1; step++) {
+      final current = _sideAt(span.sideIndexAt(step));
+      final next = _sideAt(span.sideIndexAt(step + 1));
+
+      _appendPoint(
+        points,
+        geometry.intersectOffsetLines(
+          current.frame,
+          _backgroundOffsetForSide(current),
+          next.frame,
+          _backgroundOffsetForSide(next),
+        ),
+      );
+    }
+
+    _appendPoint(points, _buildBackgroundSpanEnd(span, mergedSideKeys));
+    return points;
+  }
+
+  List<Offset> _buildBackgroundRunTrace(
+      _SideRun run,
+      Set<Enum> mergedSideKeys,
+      ) {
+    final points = <Offset>[];
+    final innerChain = _buildRunChain(run, isInner: true);
+    final outerChain = _buildRunChain(run, isInner: false);
+
+    final previousIsMerged = _isMergedSide(mergedSideKeys, run.startIndex - 1);
+    final nextIsMerged = _isMergedSide(mergedSideKeys, run.endIndex + 1);
+
+    if (!previousIsMerged) {
+      final previous = _sideAt(run.startIndex - 1);
+      if (previous.isPainted) {
+        // Start on background inner contour, then diagonal to outer contour.
+        _appendPoint(points, innerChain.first);
+      }
+    }
+
+    _appendPoints(points, outerChain);
+
+    if (!nextIsMerged) {
+      final next = _sideAt(run.endIndex + 1);
+      if (next.isPainted) {
+        // Close the merged side against the neighbour's inner contour.
+        _appendPoint(points, innerChain.last);
+      }
+    }
+
+    return points;
   }
 
   List<_FillGroup> _buildPaintGroups() {
@@ -769,102 +986,43 @@ class _StrokeRegionBuilder {
   }
 
   Path _buildBackgroundGroupPath(_FillGroup group) {
-    final runs = _collectSideRuns(group.sideKeys);
+    final mergedSideKeys = group.sideKeys;
 
-    if (runs.isNotEmpty && runs.single.isFullCycle) {
+    if (mergedSideKeys.length == geometry.length) {
       final outerOffsets = <Enum, double>{};
       for (final frame in geometry.sides) {
-        final side = _activeSides[frame.key]!;
+        final side = _resolvedSides[frame.key]!;
         outerOffsets[frame.key] = -side.outside;
       }
       return geometry.buildContourPath(outerOffsets);
     }
 
-    final baseOffsets = _buildBackgroundBaseOffsets(group.sideKeys);
-    final baseVertices = geometry.buildContourVertices(baseOffsets);
-
-    if (runs.isEmpty) {
-      return Path()..addPolygon(baseVertices, true);
-    }
-
-    final runByStart = <int, _SideRun>{
-      for (final run in runs) run.startIndex: run,
-    };
-
-    final inGroup = <bool>[
-      for (final frame in geometry.sides) group.sideKeys.contains(frame.key),
-    ];
-
-    final startSide =
-        List<int>.generate(geometry.length, (index) => index).firstWhere(
-      (index) => !inGroup[index],
+    final startSide = List<int>.generate(geometry.length, (i) => i).firstWhere(
+          (i) => !_isMergedSide(mergedSideKeys, i),
       orElse: () => 0,
     );
 
     final points = <Offset>[];
-    _appendPoint(
-      points,
-      baseVertices[(startSide - 1 + geometry.length) % geometry.length],
-    );
-
-    var processedSides = 0;
+    var processed = 0;
     var sideIndex = startSide;
 
-    while (processedSides < geometry.length) {
-      final run = runByStart[sideIndex];
-      if (run != null) {
-        final protrusion = _buildBackgroundRunProtrusion(run, baseVertices);
-        _appendPoints(points, protrusion.skip(1));
-        processedSides += run.length;
+    while (processed < geometry.length) {
+      if (_isMergedSide(mergedSideKeys, sideIndex)) {
+        final run = _collectMergedRunFrom(sideIndex, mergedSideKeys);
+        _appendPoints(points, _buildBackgroundRunTrace(run, mergedSideKeys));
+        processed += run.length;
         sideIndex = (run.endIndex + 1) % geometry.length;
-        continue;
+      } else {
+        final span = _collectBackgroundSpanFrom(sideIndex, mergedSideKeys);
+        _appendPoints(points, _buildBackgroundSpanChain(span, mergedSideKeys));
+        processed += span.length;
+        sideIndex = (span.endIndex + 1) % geometry.length;
       }
-
-      _appendPoint(points, baseVertices[sideIndex]);
-      processedSides += 1;
-      sideIndex = (sideIndex + 1) % geometry.length;
     }
 
     final path = Path();
     _addPolygon(path, points);
     return path;
-  }
-
-  Map<Enum, double> _buildBackgroundBaseOffsets(Set<Enum> mergedSideKeys) {
-    final background = _background!.background;
-    final offsets = <Enum, double>{};
-
-    for (final frame in geometry.sides) {
-      final side = _activeSides[frame.key];
-      if (side == null || mergedSideKeys.contains(frame.key)) {
-        offsets[frame.key] = 0.0;
-        continue;
-      }
-
-      offsets[frame.key] = switch (background.shapeBase) {
-        AnyShapeBase.zeroBorder => 0.0,
-        AnyShapeBase.outerBorder => -side.outside,
-        AnyShapeBase.innerBorder => side.inside,
-      };
-    }
-
-    return offsets;
-  }
-
-  List<Offset> _buildBackgroundRunProtrusion(
-    _SideRun run,
-    List<Offset> baseVertices,
-  ) {
-    final startBase =
-        baseVertices[(run.startIndex - 1 + geometry.length) % geometry.length];
-    final endBase = baseVertices[run.endIndex];
-    final outerChain = _buildRunChain(run, isInner: false);
-
-    return <Offset>[
-      startBase,
-      ...outerChain,
-      endBase,
-    ];
   }
 
   List<_SideRun> _collectSideRuns(Set<Enum> sideKeys) {
@@ -1098,7 +1256,7 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
   Path getClipPath(Rect rect, TextDirection textDirection) {
     final (shape, setup) = polygon(rect, textDirection);
     final background = shape.buildMergedStrokeRegions(setup, backgroundOnly: true, backgroundBase: clip);
-    return background.first.path;
+    return background.first.path.shift(rect.topLeft);
   }
 
 }

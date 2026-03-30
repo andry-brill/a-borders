@@ -308,7 +308,7 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 
   int index = 0;
-  List<int> filterTo = [391, 392, 394, 395, 400, 403];
+  List<int> filterTo = [];
 
   @override
   Widget build(BuildContext context) {
