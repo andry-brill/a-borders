@@ -278,16 +278,81 @@ class AnyBackground extends AnySide {
 
 }
 
-/// Describes how this corner should be rendered:
-/// - `radius == 0`: a sharp square corner.
-/// - `radius.x > 0 && radius.y > 0`: a regular rounded corner,
-///   using the smaller corner radius between the two sides.
-/// - `radius.x < 0 && radius.y < 0`: an outer arc,
-///   using the larger corner radius between the two sides.
-/// - If the sides are parallel, the corner is also rendered
-///   as a long outer arc.
+/// Describes how this corner is rendered.
+///
+/// Rendering modes:
+/// - `radius == Radius.zero`: a sharp corner.
+/// - `radius.x > 0 && radius.y > 0`: an inner rounded corner,
+///   using the smaller effective radius from the two sides.
+/// - `radius.x < 0 && radius.y < 0`: an outer rounded corner,
+///   using the larger effective radius from the two sides.
+/// - If the adjacent sides are parallel, the corner is rendered
+///   as an extended outer arc.
+///
+/// Note:
+/// `radius.x` and `radius.y` do not match Flutter's default
+/// `Radius` semantics.
+///
+/// In this class:
+/// - `radius.x` is the perpendicular distance to the side before
+///   the corner, measured along that side's inward normal.
+/// - `radius.y` is the perpendicular distance to the side after
+///   the corner, measured along that side's inward normal.
+///
+/// Corner construction:
+/// - Compute the unit direction vectors of the two adjacent sides.
+/// - Compute their inward normals.
+/// - Represent points using signed perpendicular distances to both sides.
+/// - Define the corner curve by `(d1 / x)^2 + (d2 / y)^2 = 1`.
+/// - Build the rendered arc from that curve.
+///
+/// Side constraint:
+/// For a side `S` between corners `L` and `R`, the two corner arcs must not
+/// overlap on that side.
+///
+/// The consumed length on `S` is:
+/// - from `L`: `abs(L.radius.x) / sin(angleL)`
+/// - from `R`: `abs(R.radius.y) / sin(angleR)`
+///
+/// Therefore:
+/// `abs(L.radius.x) / sin(angleL) + abs(R.radius.y) / sin(angleR) <= length(S)`
+///
+/// Automatic normalization:
+/// If the consumed length is greater than `length(S)`, both values should be
+/// scaled proportionally so they exactly fit the side while preserving their
+/// relative weights.
+///
+/// Let:
+/// - `a = abs(L.radius.x) / sin(angleL)`
+/// - `b = abs(R.radius.y) / sin(angleR)`
+///
+/// If `a + b > length(S)`, compute:
+/// `k = length(S) / (a + b)`
+///
+/// Then apply:
+/// - `L.radius.x *= k`
+/// - `R.radius.y *= k`
+///
+/// This preserves the sign of each radius component and guarantees that the
+/// two corners exactly fit on the side without overlap.
+///
+/// Join handling for adjacent sides with different widths or fills:
+/// - If the two adjacent sides share the same fill, they can be merged into a
+///   single solid [Path]. In this case, the corner is rendered as one joined
+///   shape, and both the outer and inner corner boundaries are rounded by
+///   their corresponding arcs.
+/// - If the two adjacent sides have different fills, they must remain separate.
+///   In this case, the corner transition cannot be rendered as a single merged
+///   shape. Instead, the corner arc must be split at the boundary between the
+///   two side regions, producing two arc segments: one belonging to the
+///   previous side and one belonging to the next side.
+///
+/// This is especially relevant when adjacent sides have different stroke
+/// widths. For example, if one side has width `10` and the next has width `20`,
+/// the inner and outer corner offsets differ for each side, so the split point
+/// must be chosen consistently to keep both side regions continuous and
+/// visually aligned through the corner.
 class AnyCorner {
-
   final Radius radius;
   const AnyCorner([this.radius = Radius.zero]);
 
