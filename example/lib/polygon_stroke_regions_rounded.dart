@@ -45,6 +45,8 @@ extension _OffsetMath on Offset {
 
   double cross(Offset other) => (dx * other.dy) - (dy * other.dx);
 
+  double dot(Offset other) => (dx * other.dx) + (dy * other.dy);
+
   Offset get normalized {
     final length = distance;
     if (_nearZero(length)) {
@@ -269,31 +271,30 @@ class AnyBackground extends AnySide {
 
 /// Describes how this corner is rendered.
 ///
+/// `radius.x` and `radius.y` do not follow Flutter's built-in [Radius]
+/// semantics. Here they are geometric distances measured in the local corner
+/// coordinate system:
+/// - `radius.x` is the perpendicular distance to the side **before** the
+///   corner, measured along that side's inward normal.
+/// - `radius.y` is the perpendicular distance to the side **after** the
+///   corner, measured along that side's inward normal.
+///
+/// The rounded corner is built in signed-distance coordinates to the two
+/// adjacent sides. From there it is mapped back to world coordinates.
+///
 /// Rendering modes:
 /// - `radius == Radius.zero`: a sharp corner.
-/// - `radius.x > 0 && radius.y > 0`: an inner rounded corner,
-///   using the smaller effective radius from the two sides.
-/// - `radius.x < 0 && radius.y < 0`: an outer rounded corner,
-///   using the larger effective radius from the two sides.
-/// - If the adjacent sides are parallel, the corner is rendered
-///   as an extended outer arc.
-///
-/// Note:
-/// `radius.x` and `radius.y` do not match Flutter's default
-/// `Radius` semantics.
-///
-/// In this class:
-/// - `radius.x` is the perpendicular distance to the side before
-///   the corner, measured along that side's inward normal.
-/// - `radius.y` is the perpendicular distance to the side after
-///   the corner, measured along that side's inward normal.
-///
-/// Corner construction:
-/// - Compute the unit direction vectors of the two adjacent sides.
-/// - Compute their inward normals.
-/// - Represent points using signed perpendicular distances to both sides.
-/// - Define the corner curve by `(d1 / x)^2 + (d2 / y)^2 = 1`.
-/// - Build the rendered arc from that curve.
+/// - `radius.x > 0 && radius.y > 0`: build an ellipse that is tangent to both
+///   sides and use the **smaller** elliptic arc between the tangent points.
+///   This is the standard inset rounded corner.
+/// - `radius.x < 0 && radius.y < 0`: build an ellipse whose center lies on the
+///   two side lines and use the **smaller** elliptic arc between the tangent
+///   points. This produces an inward notch, similar to a postmark cut.
+/// - `radius.x` and `radius.y` with different signs: build the same
+///   side-centered ellipse, but use the **larger** elliptic arc between the
+///   tangent points. This produces the outer arc variant.
+/// - If the adjacent sides are parallel, the corner falls back to a sharp
+///   connection for now.
 ///
 /// Side constraint:
 /// For a side `S` between corners `L` and `R`, the two corner arcs must not
@@ -666,20 +667,19 @@ class _ResolvedCorner {
     required this.afterRadius,
   });
 
-  bool get isSharp =>
-      _nearZero(beforeRadius) || _nearZero(afterRadius) || curvatureSign == 0;
+  bool get hasZeroRadiusComponent =>
+      _nearZero(beforeRadius) || _nearZero(afterRadius);
 
-  bool get isInnerRounded => beforeRadius > _epsilon && afterRadius > _epsilon;
+  bool get isInsetRounded => beforeRadius > _epsilon && afterRadius > _epsilon;
 
-  bool get isOuterRounded => beforeRadius < -_epsilon && afterRadius < -_epsilon;
+  bool get isNotchRounded => beforeRadius < -_epsilon && afterRadius < -_epsilon;
 
-  int get curvatureSign => isInnerRounded
-      ? 1
-      : isOuterRounded
-      ? -1
-      : 0;
+  bool get isOuterArcRounded =>
+      !_nearZero(beforeRadius) &&
+          !_nearZero(afterRadius) &&
+          (beforeRadius.sign != afterRadius.sign);
 
-  int get mode => curvatureSign;
+  bool get isSharp => hasZeroRadiusComponent;
 
   double get beforeAbs => beforeRadius.abs();
 
@@ -691,7 +691,7 @@ class _ResolvedCorner {
 
   bool get isParallel => sinTurn <= _epsilon;
 
-  bool get hasExactQuarterConic => !isSharp && !isParallel;
+  bool get hasExactConic => !isSharp && !isParallel;
 
   Offset get vertex => frame.vertex;
 
@@ -717,16 +717,13 @@ class _ResolvedCorner {
   }
 }
 
-/// Exact quarter-conic representation of one resolved corner for a specific
-/// pair of adjacent side offsets.
+/// Exact conic representation of one resolved corner for a specific pair of
+/// adjacent side offsets.
 ///
 /// Local coordinates are signed perpendicular distances to the previous and
-/// next side. The corner curve is represented exactly as a rational quadratic,
-/// so later tracing code can use [Path.conicTo] without sampling.
+/// next side. Depending on the radius signs, the primitive uses either the
+/// small tangent-to-tangent arc or the large one.
 class _CornerPrimitive {
-  static const double startAngle = pi;
-  static const double endAngle = 1.5 * pi;
-
   final _ResolvedCorner corner;
   final double previousOffset;
   final double nextOffset;
@@ -741,21 +738,48 @@ class _CornerPrimitive {
 
   bool get isParallel => corner.isParallel;
 
-  int get curvatureSign => corner.curvatureSign;
+  bool get isInsetRounded => corner.isInsetRounded;
+
+  bool get isNotchRounded => corner.isNotchRounded;
+
+  bool get isOuterArcRounded => corner.isOuterArcRounded;
 
   double get beforeRadius => corner.beforeAbs;
 
   double get afterRadius => corner.afterAbs;
 
   bool get canBuildExactConic =>
-      corner.hasExactQuarterConic &&
+      corner.hasExactConic &&
           beforeRadius > _epsilon &&
           afterRadius > _epsilon;
 
-  Offset get localCenter => Offset(
-    previousOffset + (curvatureSign * beforeRadius),
-    nextOffset + (curvatureSign * afterRadius),
-  );
+  Offset get localCenter {
+    if (isInsetRounded) {
+      return Offset(
+        previousOffset + beforeRadius,
+        nextOffset + afterRadius,
+      );
+    }
+
+    return Offset(previousOffset, nextOffset);
+  }
+
+  double get startAngle {
+    if (isInsetRounded) {
+      return pi;
+    }
+    return pi / 2.0;
+  }
+
+  double get endAngle {
+    if (isInsetRounded) {
+      return 1.5 * pi;
+    }
+    if (isNotchRounded) {
+      return 0.0;
+    }
+    return 2.0 * pi;
+  }
 
   double angleAt(double t) => _lerpDouble(startAngle, endAngle, t);
 
@@ -787,6 +811,34 @@ class _CornerPrimitive {
     if (angle < 0.0) {
       angle += 2.0 * pi;
     }
+    return canonicalizeAngleToSweep(angle);
+  }
+
+  double canonicalizeAngleToSweep(double angle) {
+    if (endAngle >= startAngle) {
+      var normalized = angle;
+      while (normalized < startAngle - _epsilon) {
+        normalized += 2.0 * pi;
+      }
+      while (normalized > endAngle + _epsilon &&
+          normalized - 2.0 * pi >= startAngle - _epsilon) {
+        normalized -= 2.0 * pi;
+      }
+      if (normalized < startAngle) {
+        return startAngle;
+      }
+      if (normalized > endAngle) {
+        return endAngle;
+      }
+      return normalized;
+    }
+
+    if (angle < endAngle) {
+      return endAngle;
+    }
+    if (angle > startAngle) {
+      return startAngle;
+    }
     return angle;
   }
 
@@ -815,6 +867,41 @@ class _CornerPrimitive {
     final x = ((d * previousDistance) - (b * nextDistance)) / determinant;
     final y = ((-c * previousDistance) + (a * nextDistance)) / determinant;
     return corner.vertex + Offset(x, y);
+  }
+
+  Iterable<_ConicArcSegment> conicSegments({
+    required double fromAngle,
+    required double toAngle,
+  }) sync* {
+    if (!canBuildExactConic) {
+      throw StateError(
+        'Corner ${corner.key} does not support exact conic construction.',
+      );
+    }
+
+    final delta = toAngle - fromAngle;
+    if (_nearZero(delta)) {
+      final point = worldPointAtAngle(fromAngle);
+      yield _ConicArcSegment(
+        start: point,
+        control: point,
+        end: point,
+        weight: 1.0,
+      );
+      return;
+    }
+
+    final segmentCount = max(1, (delta.abs() / (pi / 2.0 - 1.0e-5)).ceil());
+    for (var index = 0; index < segmentCount; index++) {
+      final t0 = index / segmentCount;
+      final t1 = (index + 1) / segmentCount;
+      final segmentFrom = fromAngle + (delta * t0);
+      final segmentTo = fromAngle + (delta * t1);
+      yield conicSegment(
+        fromAngle: segmentFrom,
+        toAngle: segmentTo,
+      );
+    }
   }
 
   _ConicArcSegment conicSegment({
@@ -869,16 +956,17 @@ class _CornerPrimitive {
     );
   }
 
-  _ConicArcSegment fullQuarterSegment() =>
-      conicSegment(fromAngle: startAngle, toAngle: endAngle);
-
   void appendConic(
       Path path, {
         required double fromAngle,
         required double toAngle,
       }) {
-    final segment = conicSegment(fromAngle: fromAngle, toAngle: toAngle);
-    segment.appendTo(path);
+    for (final segment in conicSegments(
+      fromAngle: fromAngle,
+      toAngle: toAngle,
+    )) {
+      segment.appendTo(path);
+    }
   }
 }
 
@@ -1270,13 +1358,13 @@ class _StrokeRegionBuilder {
 
       final rx = resolved.radius.x;
       final ry = resolved.radius.y;
-      final validSigns =
+      final validShape =
           (_nearZero(rx) && _nearZero(ry)) ||
-              (!_nearZero(rx) && !_nearZero(ry) && rx.sign == ry.sign);
+              (!_nearZero(rx) && !_nearZero(ry));
 
-      if (!validSigns) {
+      if (!validShape) {
         throw ArgumentError(
-          'Corner ${corner.key} must use Radius.zero, both positive values, or both negative values.',
+          'Corner ${corner.key} must use Radius.zero or two non-zero radius components.',
         );
       }
     }
@@ -1356,6 +1444,8 @@ class _StrokeRegionBuilder {
         required double oNext,
       }) {
     final corner = _cornerAfter(previousSideIndex);
+    final previousSide = _sideAt(previousSideIndex);
+    final nextSide = _sideAt(previousSideIndex + 1);
     return corner.primitive(
       previousOffset: oPrev,
       nextOffset: oNext,
@@ -1590,6 +1680,17 @@ class _StrokeRegionBuilder {
       fragments.add(_buildBackgroundCornerFragmentPlan(i, group.sideKeys));
     }
     return _buildClosedContourPlanFromFragments(fragments);
+  }
+
+  ContourPathPlan _buildSideOnlyPlan(Set<Enum> sideKeys) {
+    final runs = _collectSideRuns(sideKeys);
+    if (runs.isEmpty) {
+      return ContourPathPlan(nodes: const <ContourNode>[], edges: const <ContourEdge>[], isClosed: false);
+    }
+    if (runs.length > 1) {
+      throw StateError('Side-only plan is only defined for a single contiguous run.');
+    }
+    return _buildSideRunPlan(runs.single);
   }
 
   ContourPathPlan _buildSideRunPlan(_SideRun run) {
@@ -1892,7 +1993,7 @@ class _StrokeRegionBuilder {
       final point = _pointFromDistanceCoordinates(corner, oPrev, oNext);
       final node = _cornerNode(
         corner: corner,
-        angle: _CornerPrimitive.startAngle,
+        angle: corner.primitive(previousOffset: oPrev, nextOffset: oNext).startAngle,
         band: band,
         point: point,
         kind: slice == _CornerSlice.full
@@ -1919,20 +2020,20 @@ class _StrokeRegionBuilder {
 
     final (startAngle, endAngle, startKind, endKind) = switch (slice) {
       _CornerSlice.full => (
-      _CornerPrimitive.startAngle,
-      _CornerPrimitive.endAngle,
+      primitive.startAngle,
+      primitive.endAngle,
       ContourNodeKind.cornerTangent,
       ContourNodeKind.cornerTangent,
       ),
       _CornerSlice.prevToSplit => (
-      _CornerPrimitive.startAngle,
+      primitive.startAngle,
       splitAngle!,
       ContourNodeKind.cornerTangent,
       ContourNodeKind.cornerSplit,
       ),
       _CornerSlice.splitToNext => (
       splitAngle!,
-      _CornerPrimitive.endAngle,
+      primitive.endAngle,
       ContourNodeKind.cornerSplit,
       ContourNodeKind.cornerTangent,
       ),
@@ -1998,9 +2099,13 @@ class _StrokeRegionBuilder {
       innerNextOffset,
     );
 
+    final anglePrimitive = corner.primitive(
+      previousOffset: outerPrevOffset,
+      nextOffset: outerNextOffset,
+    );
     final angle = zeroOnPreviousSide
-        ? _CornerPrimitive.startAngle
-        : _CornerPrimitive.endAngle;
+        ? anglePrimitive.startAngle
+        : anglePrimitive.endAngle;
 
     final outerNode = _cornerNode(
       corner: corner,
@@ -2063,7 +2168,11 @@ class _StrokeRegionBuilder {
       );
       return _cornerNode(
         corner: corner,
-        angle: _CornerPrimitive.startAngle,
+        angle: _primitiveForCornerOffsets(
+          previousSideIndex,
+          oPrev: -previousSide.outside,
+          oNext: -nextSide.outside,
+        ).startAngle,
         band: ContourBand.outer,
         point: _pointFromDistanceCoordinates(
           corner,
@@ -2105,7 +2214,11 @@ class _StrokeRegionBuilder {
       );
       return _cornerNode(
         corner: corner,
-        angle: _CornerPrimitive.startAngle,
+        angle: _primitiveForCornerOffsets(
+          previousSideIndex,
+          oPrev: previousSide.inside,
+          oNext: nextSide.inside,
+        ).startAngle,
         band: ContourBand.inner,
         point: _pointFromDistanceCoordinates(
           corner,
@@ -2152,7 +2265,7 @@ class _StrokeRegionBuilder {
   }
 
   bool _cornerCanRound(int previousSideIndex, _ResolvedCorner corner, double oPrev, double oNext) {
-    if (corner.mode == 0 || corner.isParallel) {
+    if (corner.isSharp || corner.isParallel) {
       return false;
     }
 
@@ -2169,7 +2282,7 @@ class _StrokeRegionBuilder {
   }
 
   double _midArcSplitAngle(_CornerPrimitive primitive) {
-    return (_CornerPrimitive.startAngle + _CornerPrimitive.endAngle) / 2.0;
+    return (primitive.startAngle + primitive.endAngle) / 2.0;
   }
 
   double _splitAngle(
@@ -2190,14 +2303,7 @@ class _StrokeRegionBuilder {
       oPrev,
       oNext,
     );
-    final angle = primitive.angleForDistancePoint(distancePoint);
-    if (angle < _CornerPrimitive.startAngle) {
-      return _CornerPrimitive.startAngle;
-    }
-    if (angle > _CornerPrimitive.endAngle) {
-      return _CornerPrimitive.endAngle;
-    }
-    return angle;
+    return primitive.angleForDistancePoint(distancePoint);
   }
 
   Offset _buildCornerSplitPointInDistanceSpace(
@@ -2220,15 +2326,20 @@ class _StrokeRegionBuilder {
       return Offset(oPrev, oNext);
     }
 
-    final s = corner.mode.toDouble();
-    final a = corner.beforeAbs;
-    final b = corner.afterAbs;
+    final primitive = _primitiveForCornerOffsets(
+      previousSideIndex,
+      oPrev: oPrev,
+      oNext: oNext,
+    );
+    final a = primitive.beforeRadius;
+    final b = primitive.afterRadius;
     if (a <= _epsilon || b <= _epsilon) {
       return Offset(oPrev, oNext);
     }
 
-    final centerX = oPrev + (s * a);
-    final centerY = oNext + (s * b);
+    final center = primitive.localCenter;
+    final centerX = center.dx;
+    final centerY = center.dy;
     final x0 = lineStart.dx - centerX;
     final y0 = lineStart.dy - centerY;
     final ux = direction.dx;
@@ -2255,6 +2366,13 @@ class _StrokeRegionBuilder {
 
     for (final root in roots) {
       if (root < -0.0001 || root > 1.0001) {
+        continue;
+      }
+
+      final candidate = lineStart + direction.scaled(root);
+      final angle = primitive.angleForDistancePoint(candidate);
+      final projected = primitive.localPointAtAngle(angle);
+      if ((projected - candidate).distance > 1.0e-4) {
         continue;
       }
 
@@ -2420,17 +2538,18 @@ class _StrokeRegionBuilder {
       }
 
       if (edge is CornerContourEdge) {
-        final segment = edge.corner.conicSegment(
+        for (final segment in edge.corner.conicSegments(
           fromAngle: edge.t0,
           toAngle: edge.t1,
-        );
-        path.conicTo(
-          segment.control.dx,
-          segment.control.dy,
-          segment.end.dx,
-          segment.end.dy,
-          segment.weight,
-        );
+        )) {
+          path.conicTo(
+            segment.control.dx,
+            segment.control.dy,
+            segment.end.dx,
+            segment.end.dy,
+            segment.weight,
+          );
+        }
         continue;
       }
 
@@ -2792,7 +2911,7 @@ class AnyDecorationBuilder {
       right: right.buildOrNull(),
       bottom: bottom.buildOrNull(),
       sides: sides.buildOrNull(),
-      topRight: AnyCorner(Radius.circular(20)),
+      topRight: AnyCorner(Radius.elliptical(-4, 4)),
       shadows: shadows,
       color: color,
       gradient: gradient,
