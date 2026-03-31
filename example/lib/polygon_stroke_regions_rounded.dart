@@ -28,18 +28,9 @@ extension EAnyFill on IAnyFill {
 }
 
 const double _epsilon = 1.0e-6;
-const double _arcSampleStep = 6.0;
-const int _minArcSamples = 4;
-const int _maxArcSamples = 48;
 
 bool _nearZero(double value, [double epsilon = _epsilon]) =>
     value.abs() <= epsilon;
-
-double _clampDouble(double value, double minValue, double maxValue) {
-  if (value < minValue) return minValue;
-  if (value > maxValue) return maxValue;
-  return value;
-}
 
 double _lerpDouble(double a, double b, double t) => a + ((b - a) * t);
 
@@ -53,8 +44,6 @@ extension _OffsetMath on Offset {
   Offset scaled(double value) => Offset(dx * value, dy * value);
 
   double cross(Offset other) => (dx * other.dy) - (dy * other.dx);
-
-  double dot(Offset other) => (dx * other.dx) + (dy * other.dy);
 
   Offset get normalized {
     final length = distance;
@@ -161,11 +150,7 @@ class Polygon {
 
   List<StrokeRegion> buildMergedStrokeRegions(
       PolygonSetup setup, {
-        /// Build only background region.
-        /// Useful for clip path building.
         bool backgroundOnly = false,
-
-        /// Override background shape base while building.
         AnyShapeBase? backgroundBase,
       }) {
     final geometry = _PolygonGeometry.fromCommands(commands);
@@ -205,7 +190,6 @@ class AnySide with MAnyFill {
   static double alignBase = alignInside;
 
   final double width;
-
   final double? _align;
 
   /// Align means align relative to the corresponding side, not the whole shape.
@@ -483,11 +467,10 @@ class _PolygonGeometry {
 
   _SideFrame sideAt(int index) => sides[index % sides.length];
 
-  _CornerFrame cornerAfterSide(int sideIndex) =>
-      corners[sideIndex % corners.length];
+  _CornerFrame cornerAfterSide(int index) => corners[index % corners.length];
 
-  _CornerFrame cornerBeforeSide(int sideIndex) =>
-      corners[(sideIndex - 1 + corners.length) % corners.length];
+  _CornerFrame cornerBeforeSide(int index) =>
+      corners[(index - 1 + corners.length) % corners.length];
 
   Offset intersectOffsetLines(
       _SideFrame first,
@@ -552,11 +535,26 @@ class _ResolvedSide {
     required this.frame,
   });
 
-  bool get isPainted => side.hasFill && side.width > _epsilon;
+  bool get hasWidth => side.width > _epsilon;
+  bool get isPainted => side.hasFill && hasWidth;
   IAnyFill get fill => side;
 
   double get inside => side.width * (1.0 - side.align) / 2.0;
   double get outside => side.width * (1.0 + side.align) / 2.0;
+
+  /// Center line of the painted strip relative to the base polygon side.
+  ///
+  /// Corner construction should be based on the strip width, not on align.
+  /// So most corner math is performed in coordinates centered on this line.
+  double get stripCenterOffset => (inside - outside) / 2.0;
+
+  double get halfWidth => side.width / 2.0;
+
+  double centeredOffsetForActual(double actualOffset) =>
+      actualOffset - stripCenterOffset;
+
+  double actualOffsetForCentered(double centeredOffset) =>
+      stripCenterOffset + centeredOffset;
 }
 
 class _ResolvedCornerRadii {
@@ -608,13 +606,16 @@ class _ResolvedCornerRadii {
       final endConsumption = normalizedBefore[endCorner.key]!.abs() / endSin;
       final totalConsumption = startConsumption + endConsumption;
 
-      if (totalConsumption <= side.length + _epsilon || _nearZero(totalConsumption)) {
+      if (totalConsumption <= side.length + _epsilon ||
+          _nearZero(totalConsumption)) {
         continue;
       }
 
       final scale = side.length / totalConsumption;
-      normalizedAfter[startCorner.key] = normalizedAfter[startCorner.key]! * scale;
-      normalizedBefore[endCorner.key] = normalizedBefore[endCorner.key]! * scale;
+      normalizedAfter[startCorner.key] =
+          normalizedAfter[startCorner.key]! * scale;
+      normalizedBefore[endCorner.key] =
+          normalizedBefore[endCorner.key]! * scale;
     }
 
     return _ResolvedCornerRadii(
@@ -698,9 +699,11 @@ class _ResolvedCorner {
 
   Offset get nextNormal => nextSide.insideNormal;
 
-  double get consumedOnPreviousSide => isParallel ? double.infinity : afterAbs / sinTurn;
+  double get consumedOnPreviousSide =>
+      isParallel ? double.infinity : afterAbs / sinTurn;
 
-  double get consumedOnNextSide => isParallel ? double.infinity : beforeAbs / sinTurn;
+  double get consumedOnNextSide =>
+      isParallel ? double.infinity : beforeAbs / sinTurn;
 
   _CornerPrimitive primitive({
     required double previousOffset,
@@ -738,13 +741,16 @@ class _CornerPrimitive {
 
   bool get isParallel => corner.isParallel;
 
-  bool get canBuildExactConic => corner.hasExactQuarterConic;
-
   int get curvatureSign => corner.curvatureSign;
 
   double get beforeRadius => corner.beforeAbs;
 
   double get afterRadius => corner.afterAbs;
+
+  bool get canBuildExactConic =>
+      corner.hasExactQuarterConic &&
+          beforeRadius > _epsilon &&
+          afterRadius > _epsilon;
 
   Offset get localCenter => Offset(
     previousOffset + (curvatureSign * beforeRadius),
@@ -762,9 +768,26 @@ class _CornerPrimitive {
 
     final center = localCenter;
     return Offset(
-      center.dx + (curvatureSign * beforeRadius * cos(angle)),
-      center.dy + (curvatureSign * afterRadius * sin(angle)),
+      center.dx + (beforeRadius * cos(angle)),
+      center.dy + (afterRadius * sin(angle)),
     );
+  }
+
+  double angleForDistancePoint(Offset distancePoint) {
+    if (!canBuildExactConic) {
+      throw StateError(
+        'Corner ${corner.key} does not support exact conic construction.',
+      );
+    }
+
+    final center = localCenter;
+    final x = (distancePoint.dx - center.dx) / beforeRadius;
+    final y = (distancePoint.dy - center.dy) / afterRadius;
+    var angle = atan2(y, x);
+    if (angle < 0.0) {
+      angle += 2.0 * pi;
+    }
+    return angle;
   }
 
   Offset worldPointAtAngle(double angle) {
@@ -834,8 +857,8 @@ class _CornerPrimitive {
     final endLocal = localPointAtAngle(toAngle);
     final center = localCenter;
     final controlLocal = Offset(
-      center.dx + (curvatureSign * beforeRadius * cos(middleAngle) / weight),
-      center.dy + (curvatureSign * afterRadius * sin(middleAngle) / weight),
+      center.dx + (beforeRadius * cos(middleAngle) / weight),
+      center.dy + (afterRadius * sin(middleAngle) / weight),
     );
 
     return _ConicArcSegment(
@@ -902,10 +925,291 @@ class _SideRun {
   int sideIndexAt(int offset) => (startIndex + offset) % sideCount;
 }
 
-enum _CornerSlice {
-  full,
-  prevToSplit,
-  splitToNext,
+enum _CornerSlice { full, prevToSplit, splitToNext }
+
+enum ContourBand {
+  /// Contour traced along the outer extent of painted sides.
+  outer,
+
+  /// Contour traced along the inner extent of painted sides.
+  inner,
+
+  /// Contour traced along the base/background shape.
+  base,
+}
+
+enum ContourNodeKind {
+  /// A point that lies on a side span (typically some anchor/middle/tangent point).
+  sideAnchor,
+
+  /// A tangent point where a contour enters or leaves a rounded corner.
+  cornerTangent,
+
+  /// A split point on a rounded corner, used when the corner ownership
+  /// changes between two differently painted adjacent regions.
+  cornerSplit,
+}
+
+/// One resolved geometric checkpoint in a contour itinerary.
+///
+/// This is intentionally more semantic than a raw [Offset]:
+/// - side anchors identify which side they belong to
+/// - corner points identify which corner primitive and which local parameter `t`
+///   they correspond to
+///
+/// Later, the tracer can connect two nodes either by a straight segment or by an
+/// exact conic segment, depending on the edge type between them.
+class ContourNode {
+  final ContourNodeKind kind;
+  final ContourBand band;
+  final Offset point;
+
+  /// Present for nodes that lie on a side-driven span.
+  final int? sideIndex;
+
+  /// Present for nodes that lie on a corner-driven span.
+  final int? cornerIndex;
+
+  /// Present for corner nodes only.
+  final _CornerPrimitive? corner;
+
+  /// Local corner parameter for corner nodes only.
+  ///
+  /// The exact meaning of `t` is defined by [_CornerPrimitive]. The intended
+  /// convention is the quarter-conic parameter used to build exact `conicTo`
+  /// segments.
+  final double? t;
+
+  const ContourNode._({
+    required this.kind,
+    required this.band,
+    required this.point,
+    this.sideIndex,
+    this.cornerIndex,
+    this.corner,
+    this.t,
+  })  : assert(
+  (kind == ContourNodeKind.sideAnchor) == (sideIndex != null),
+  'sideAnchor nodes must have sideIndex, and only sideAnchor nodes may have it.',
+  ),
+        assert(
+        kind == ContourNodeKind.sideAnchor ||
+            (cornerIndex != null && corner != null && t != null),
+        'corner nodes must have cornerIndex, corner primitive and t.',
+        );
+
+  const ContourNode.sideAnchor({
+    required int sideIndex,
+    required ContourBand band,
+    required Offset point,
+  }) : this._(
+    kind: ContourNodeKind.sideAnchor,
+    band: band,
+    point: point,
+    sideIndex: sideIndex,
+  );
+
+  const ContourNode.cornerTangent({
+    required int cornerIndex,
+    required _CornerPrimitive corner,
+    required double t,
+    required ContourBand band,
+    required Offset point,
+  }) : this._(
+    kind: ContourNodeKind.cornerTangent,
+    band: band,
+    point: point,
+    cornerIndex: cornerIndex,
+    corner: corner,
+    t: t,
+  );
+
+  const ContourNode.cornerSplit({
+    required int cornerIndex,
+    required _CornerPrimitive corner,
+    required double t,
+    required ContourBand band,
+    required Offset point,
+  }) : this._(
+    kind: ContourNodeKind.cornerSplit,
+    band: band,
+    point: point,
+    cornerIndex: cornerIndex,
+    corner: corner,
+    t: t,
+  );
+
+  bool get isSideAnchor => kind == ContourNodeKind.sideAnchor;
+  bool get isCornerNode => !isSideAnchor;
+  bool get isCornerTangent => kind == ContourNodeKind.cornerTangent;
+  bool get isCornerSplit => kind == ContourNodeKind.cornerSplit;
+
+  @override
+  String toString() {
+    final buffer = StringBuffer('ContourNode(')
+      ..write('kind:${kind.name}, ')
+      ..write('band:${band.name}, ')
+      ..write('point:$point');
+    if (sideIndex != null) {
+      buffer.write(', sideIndex:$sideIndex');
+    }
+    if (cornerIndex != null) {
+      buffer.write(', cornerIndex:$cornerIndex, t:$t');
+    }
+    buffer.write(')');
+    return buffer.toString();
+  }
+}
+
+/// Topological edge between two contour nodes.
+///
+/// Geometry is not encoded here beyond the edge subtype. The later path builder
+/// decides how to turn each edge into `lineTo` / `conicTo`.
+abstract class ContourEdge {
+  final ContourNode from;
+  final ContourNode to;
+
+  const ContourEdge(this.from, this.to);
+
+  bool get isDegenerate => _samePoint(from.point, to.point);
+}
+
+/// Straight segment between two contour nodes.
+class LineContourEdge extends ContourEdge {
+  const LineContourEdge(super.from, super.to);
+
+  @override
+  String toString() => 'LineContourEdge(from:$from, to:$to)';
+}
+
+/// Exact conic segment along one resolved rounded corner.
+///
+/// Both endpoints must belong to the same [_CornerPrimitive], and `t0` / `t1`
+/// define the exact partial corner segment to render.
+class CornerContourEdge extends ContourEdge {
+  final _CornerPrimitive corner;
+  final double t0;
+  final double t1;
+
+  CornerContourEdge({
+    required ContourNode from,
+    required ContourNode to,
+    required this.corner,
+    required this.t0,
+    required this.t1,
+  })  : assert(
+  from.cornerIndex != null &&
+      to.cornerIndex != null &&
+      from.cornerIndex == to.cornerIndex,
+  'CornerContourEdge endpoints must belong to the same corner.',
+  ),
+        assert(
+        from.corner == corner && to.corner == corner,
+        'CornerContourEdge endpoints must reference the same corner primitive.',
+        ),
+        super(from, to);
+
+  bool get isReversed => t1 < t0;
+
+  @override
+  String toString() {
+    return 'CornerContourEdge('
+        'corner:${from.cornerIndex}, '
+        't0:$t0, '
+        't1:$t1, '
+        'from:$from, '
+        'to:$to'
+        ')';
+  }
+}
+
+/// Ordered closed/open contour itinerary, independent from [Path].
+///
+/// The future tracer can build these first, inspect/debug them, and only then
+/// convert them into Flutter path commands.
+class ContourPathPlan {
+  final List<ContourNode> nodes;
+  final List<ContourEdge> edges;
+  final bool isClosed;
+
+  ContourPathPlan({
+    required this.nodes,
+    required this.edges,
+    required this.isClosed,
+  }) : assert(
+  nodes.length >= 2 || edges.isEmpty,
+  'A non-empty contour plan should contain at least two nodes.',
+  );
+
+  bool get isEmpty => nodes.isEmpty;
+  ContourNode get firstNode => nodes.first;
+  ContourNode get lastNode => nodes.last;
+
+  @override
+  String toString() {
+    return 'ContourPathPlan('
+        'nodes:${nodes.length}, '
+        'edges:${edges.length}, '
+        'isClosed:$isClosed'
+        ')';
+  }
+}
+
+/// Mutable helper for building a [ContourPathPlan] while keeping edge creation
+/// explicit and easy to debug.
+class ContourPathPlanBuilder {
+  final List<ContourNode> _nodes = <ContourNode>[];
+  final List<ContourEdge> _edges = <ContourEdge>[];
+
+  ContourNode? get lastNode => _nodes.isEmpty ? null : _nodes.last;
+  bool get isEmpty => _nodes.isEmpty;
+
+  void addNode(ContourNode node) {
+    _nodes.add(node);
+  }
+
+  void addLineTo(ContourNode node) {
+    final previous = lastNode;
+    if (previous == null) {
+      addNode(node);
+      return;
+    }
+
+    _edges.add(LineContourEdge(previous, node));
+    _nodes.add(node);
+  }
+
+  void addCornerTo(
+      ContourNode node, {
+        required _CornerPrimitive corner,
+        required double t0,
+        required double t1,
+      }) {
+    final previous = lastNode;
+    if (previous == null) {
+      addNode(node);
+      return;
+    }
+
+    _edges.add(
+      CornerContourEdge(
+        from: previous,
+        to: node,
+        corner: corner,
+        t0: t0,
+        t1: t1,
+      ),
+    );
+    _nodes.add(node);
+  }
+
+  ContourPathPlan build({required bool close}) {
+    return ContourPathPlan(
+      nodes: List<ContourNode>.unmodifiable(_nodes),
+      edges: List<ContourEdge>.unmodifiable(_edges),
+      isClosed: close,
+    );
+  }
 }
 
 class _StrokeRegionBuilder {
@@ -942,7 +1246,7 @@ class _StrokeRegionBuilder {
         StrokeRegion(
           [background.key],
           background.fill,
-          _pathFromClosedPoints(_buildBackgroundOnlyPoints()),
+          _buildBackgroundOnlyPath(),
         ),
       ];
     }
@@ -963,11 +1267,14 @@ class _StrokeRegionBuilder {
       if (resolved == null) {
         throw ArgumentError('Missing corner setup for ${corner.key}.');
       }
+
       final rx = resolved.radius.x;
       final ry = resolved.radius.y;
-      final sameSign =
-          (_nearZero(rx) && _nearZero(ry)) || (rx.sign == ry.sign && !_nearZero(rx) && !_nearZero(ry));
-      if (!sameSign) {
+      final validSigns =
+          (_nearZero(rx) && _nearZero(ry)) ||
+              (!_nearZero(rx) && !_nearZero(ry) && rx.sign == ry.sign);
+
+      if (!validSigns) {
         throw ArgumentError(
           'Corner ${corner.key} must use Radius.zero, both positive values, or both negative values.',
         );
@@ -1004,6 +1311,7 @@ class _StrokeRegionBuilder {
     for (final cornerFrame in geometry.corners) {
       final previousSide = geometry.sideAt(cornerFrame.index);
       final nextSide = geometry.sideAt(cornerFrame.index + 1);
+
       result[cornerFrame.key] = _ResolvedCorner(
         key: cornerFrame.key,
         corner: setup.corners[cornerFrame.key]!,
@@ -1032,9 +1340,26 @@ class _StrokeRegionBuilder {
     return _resolvedSides[key]!;
   }
 
-  _ResolvedCorner _cornerAfter(int prevSideIndex) {
-    final key = geometry.cornerAfterSide(prevSideIndex).key;
+  _ResolvedSide _activeSideAt(int sideIndex) {
+    final key = geometry.sideAt(sideIndex).key;
+    return _activeSides[key]!;
+  }
+
+  _ResolvedCorner _cornerAfter(int previousSideIndex) {
+    final key = geometry.cornerAfterSide(previousSideIndex).key;
     return _resolvedCorners[key]!;
+  }
+
+  _CornerPrimitive _primitiveForCornerOffsets(
+      int previousSideIndex, {
+        required double oPrev,
+        required double oNext,
+      }) {
+    final corner = _cornerAfter(previousSideIndex);
+    return corner.primitive(
+      previousOffset: oPrev,
+      nextOffset: oNext,
+    );
   }
 
   bool _isMergedSide(Set<Enum> mergedSideKeys, int sideIndex) {
@@ -1056,9 +1381,11 @@ class _StrokeRegionBuilder {
       final secondKey = geometry.sideAt(i + 1).key;
       final firstSide = _activeSides[firstKey];
       final secondSide = _activeSides[secondKey];
+
       if (firstSide == null || secondSide == null) {
         continue;
       }
+
       if (firstSide.fill.isSameAs(secondSide.fill)) {
         adjacency[firstKey]!.add(secondKey);
         adjacency[secondKey]!.add(firstKey);
@@ -1166,79 +1493,6 @@ class _StrokeRegionBuilder {
     return !_background!.fill.isSameAs(firstPaint);
   }
 
-  Path _buildRingPath(_FillGroup group) {
-    final outerOffsets = <Enum, double>{};
-    final innerOffsets = <Enum, double>{};
-
-    for (final frame in geometry.sides) {
-      final side = _activeSides[frame.key]!;
-      outerOffsets[frame.key] = -side.outside;
-      innerOffsets[frame.key] = side.inside;
-    }
-
-    final outerPoints = _buildClosedContourPoints(outerOffsets);
-    final innerPoints = _buildClosedContourPoints(innerOffsets);
-
-    final path = Path()..fillType = PathFillType.evenOdd;
-    _addClosedPolyline(path, outerPoints);
-    _addClosedPolyline(path, innerPoints.reversed.toList(growable: false));
-    return path;
-  }
-
-  Path _buildSideOnlyPath(Set<Enum> sideKeys) {
-    final path = Path();
-
-    for (final run in _collectSideRuns(sideKeys)) {
-      final polygon = _buildSideRunPolygon(run);
-      _addClosedPolyline(path, polygon);
-    }
-
-    return path;
-  }
-
-  Path _buildBackgroundGroupPath(_FillGroup group) {
-    final mergedSideKeys = group.sideKeys;
-
-    if (mergedSideKeys.length == geometry.length) {
-      final offsets = <Enum, double>{};
-      for (final frame in geometry.sides) {
-        offsets[frame.key] = -_resolvedSides[frame.key]!.outside;
-      }
-      return _pathFromClosedPoints(_buildClosedContourPoints(offsets));
-    }
-
-    final points = _buildBackgroundGroupPoints(mergedSideKeys);
-    return _pathFromClosedPoints(points);
-  }
-
-  List<Offset> _buildBackgroundOnlyPoints() {
-    final offsets = <Enum, double>{};
-
-    for (final frame in geometry.sides) {
-      final side = _resolvedSides[frame.key]!;
-      offsets[frame.key] = switch (_effectiveBackgroundBase) {
-        AnyShapeBase.zeroBorder => 0.0,
-        AnyShapeBase.outerBorder => -side.outside,
-        AnyShapeBase.innerBorder => side.inside,
-      };
-    }
-
-    return _buildClosedContourPoints(offsets);
-  }
-
-  double _backgroundOffsetForSide(_ResolvedSide side) {
-    if (side.isPainted) {
-      // Background must share exact edge with a differently painted side.
-      return side.inside;
-    }
-
-    return switch (_effectiveBackgroundBase) {
-      AnyShapeBase.zeroBorder => 0.0,
-      AnyShapeBase.outerBorder => -side.outside,
-      AnyShapeBase.innerBorder => side.inside,
-    };
-  }
-
   List<_SideRun> _collectSideRuns(Set<Enum> sideKeys) {
     if (sideKeys.isEmpty) {
       return const <_SideRun>[];
@@ -1280,264 +1534,684 @@ class _StrokeRegionBuilder {
     return runs;
   }
 
-  List<Offset> _buildSideRunPolygon(_SideRun run) {
-    final startCap = _buildRunStartCap(run);
-    final endCap = _buildRunEndCap(run);
+  Path _buildBackgroundOnlyPath() => _pathFromPlan(_buildBackgroundOnlyPlan());
 
-    final points = <Offset>[];
-    _appendPoints(points, startCap);
+  Path _buildBackgroundGroupPath(_FillGroup group) =>
+      _pathFromPlan(_buildBackgroundGroupPlan(group));
 
-    // Outer boundary.
-    for (var step = 0; step < run.length; step++) {
-      final sideIndex = run.sideIndexAt(step);
-      if (step == run.length - 1) {
-        _appendPoint(points, endCap.first);
-        continue;
-      }
+  Path _buildSideOnlyPath(Set<Enum> sideKeys) {
+    final path = Path();
+    for (final run in _collectSideRuns(sideKeys)) {
+      _appendPlanToPath(path, _buildSideRunPlan(run));
+    }
+    return path;
+  }
 
-      final current = _resolvedSideAt(sideIndex);
-      final next = _resolvedSideAt(sideIndex + 1);
-      final fragment = _buildCornerContourSlice(
-        sideIndex,
-        oPrev: -current.outside,
-        oNext: -next.outside,
-        slice: _CornerSlice.full,
-      );
-      _appendPoints(points, fragment);
+  Path _buildRingPath(_FillGroup group) {
+    final outerOffsets = <Enum, double>{};
+    final innerOffsets = <Enum, double>{};
+
+    for (final frame in geometry.sides) {
+      final side = _activeSides[frame.key]!;
+      outerOffsets[frame.key] = -side.outside;
+      innerOffsets[frame.key] = side.inside;
     }
 
-    _appendPoints(points, endCap.skip(1));
+    final path = Path()..fillType = PathFillType.evenOdd;
+    _appendPlanToPath(
+      path,
+      _buildClosedContourPlan(outerOffsets, band: ContourBand.outer),
+    );
+    _appendPlanToPath(
+      path,
+      _buildClosedContourPlan(innerOffsets, band: ContourBand.inner),
+    );
+    return path;
+  }
 
-    // Inner boundary in reverse.
-    for (var step = run.length - 1; step >= 0; step--) {
-      final sideIndex = run.sideIndexAt(step);
-      if (step == 0) {
-        _appendPoint(points, startCap.first);
-        continue;
-      }
+  ContourPathPlan _buildBackgroundOnlyPlan() {
+    final offsets = <Enum, double>{};
 
-      final previous = _resolvedSideAt(sideIndex - 1);
-      final current = _resolvedSideAt(sideIndex);
-      final fragment = _buildCornerContourSlice(
-        sideIndex - 1,
-        oPrev: previous.inside,
-        oNext: current.inside,
-        slice: _CornerSlice.full,
-      ).reversed;
-      _appendPoints(points, fragment);
+    for (final frame in geometry.sides) {
+      final side = _resolvedSides[frame.key]!;
+      offsets[frame.key] = switch (_effectiveBackgroundBase) {
+        AnyShapeBase.zeroBorder => 0.0,
+        AnyShapeBase.outerBorder => -side.outside,
+        AnyShapeBase.innerBorder => side.inside,
+      };
     }
 
-    return points;
+    return _buildClosedContourPlan(offsets, band: ContourBand.base);
   }
 
-  List<Offset> _buildRunStartCap(_SideRun run) {
-    final previous = _sideAt(run.startIndex - 1);
-    final current = _resolvedSideAt(run.startIndex);
-    final cornerIndex = run.startIndex - 1;
-
-    final inner = _buildCornerContourSlice(
-      cornerIndex,
-      oPrev: previous.inside,
-      oNext: current.inside,
-      slice: _CornerSlice.splitToNext,
-    ).reversed.toList(growable: false);
-
-    final connector =
-    _buildCornerSplitConnector(cornerIndex, outerToInner: false);
-
-    final outer = _buildCornerContourSlice(
-      cornerIndex,
-      oPrev: -previous.outside,
-      oNext: -current.outside,
-      slice: _CornerSlice.splitToNext,
-    );
-
-    final points = <Offset>[];
-    _appendPoints(points, inner);
-    _appendPoints(points, connector.skip(1));
-    _appendPoints(points, outer.skip(1));
-    return points;
-  }
-
-  List<Offset> _buildRunEndCap(_SideRun run) {
-    final current = _resolvedSideAt(run.endIndex);
-    final next = _sideAt(run.endIndex + 1);
-    final cornerIndex = run.endIndex;
-
-    final outer = _buildCornerContourSlice(
-      cornerIndex,
-      oPrev: -current.outside,
-      oNext: -next.outside,
-      slice: _CornerSlice.prevToSplit,
-    );
-
-    final connector =
-    _buildCornerSplitConnector(cornerIndex, outerToInner: true);
-
-    final inner = _buildCornerContourSlice(
-      cornerIndex,
-      oPrev: current.inside,
-      oNext: next.inside,
-      slice: _CornerSlice.prevToSplit,
-    ).reversed.toList(growable: false);
-
-    final points = <Offset>[];
-    _appendPoints(points, outer);
-    _appendPoints(points, connector.skip(1));
-    _appendPoints(points, inner.skip(1));
-    return points;
-  }
-
-  List<Offset> _buildBackgroundGroupPoints(Set<Enum> mergedSideKeys) {
-    final fragments = <List<Offset>>[];
-
+  ContourPathPlan _buildBackgroundGroupPlan(_FillGroup group) {
+    final fragments = <ContourPathPlan>[];
     for (var i = 0; i < geometry.length; i++) {
-      fragments.add(_buildBackgroundCornerFragment(i, mergedSideKeys));
+      fragments.add(_buildBackgroundCornerFragmentPlan(i, group.sideKeys));
     }
-
-    final points = <Offset>[];
-    _appendPoint(points, fragments.last.last);
-    for (final fragment in fragments) {
-      _appendPoints(points, fragment);
-    }
-    return points;
+    return _buildClosedContourPlanFromFragments(fragments);
   }
 
-  List<Offset> _buildBackgroundCornerFragment(
-      int prevSideIndex,
-      Set<Enum> mergedSideKeys,
-      ) {
-    final current = _sideAt(prevSideIndex);
-    final next = _sideAt(prevSideIndex + 1);
-    final currentMerged = _isMergedSide(mergedSideKeys, prevSideIndex);
-    final nextMerged = _isMergedSide(mergedSideKeys, prevSideIndex + 1);
+  ContourPathPlan _buildSideRunPlan(_SideRun run) {
+    final fragments = <ContourPathPlan>[];
+    fragments.add(_buildRunStartCapPlan(run));
 
-    if (currentMerged && !nextMerged && next.isPainted) {
-      final outerPart = _buildCornerContourSlice(
-        prevSideIndex,
-        oPrev: -current.outside,
-        oNext: -next.outside,
-        slice: _CornerSlice.prevToSplit,
-      );
-      final connector =
-      _buildCornerSplitConnector(prevSideIndex, outerToInner: true);
-      final innerPart = _buildCornerContourSlice(
-        prevSideIndex,
-        oPrev: current.inside,
-        oNext: next.inside,
-        slice: _CornerSlice.splitToNext,
-      );
-
-      final points = <Offset>[];
-      _appendPoints(points, outerPart);
-      _appendPoints(points, connector.skip(1));
-      _appendPoints(points, innerPart.skip(1));
-      return points;
-    }
-
-    if (!currentMerged && current.isPainted && nextMerged) {
-      final innerPart = _buildCornerContourSlice(
-        prevSideIndex,
-        oPrev: current.inside,
-        oNext: next.inside,
-        slice: _CornerSlice.prevToSplit,
-      );
-      final connector =
-      _buildCornerSplitConnector(prevSideIndex, outerToInner: false);
-      final outerPart = _buildCornerContourSlice(
-        prevSideIndex,
-        oPrev: -current.outside,
-        oNext: -next.outside,
-        slice: _CornerSlice.splitToNext,
-      );
-
-      final points = <Offset>[];
-      _appendPoints(points, innerPart);
-      _appendPoints(points, connector.skip(1));
-      _appendPoints(points, outerPart.skip(1));
-      return points;
-    }
-
-    final currentOffset = currentMerged ? -current.outside : _backgroundOffsetForSide(current);
-    final nextOffset = nextMerged ? -next.outside : _backgroundOffsetForSide(next);
-
-    return _buildCornerContourSlice(
-      prevSideIndex,
-      oPrev: currentOffset,
-      oNext: nextOffset,
-      slice: _CornerSlice.full,
-    );
-  }
-
-  List<Offset> _buildClosedContourPoints(Map<Enum, double> offsets) {
-    if (geometry.length == 0) {
-      return const <Offset>[];
-    }
-
-    final fragments = <List<Offset>>[];
-    for (var i = 0; i < geometry.length; i++) {
-      final current = _sideAt(i);
-      final next = _sideAt(i + 1);
+    for (var step = 0; step < run.length - 1; step++) {
+      final sideIndex = run.sideIndexAt(step);
+      final current = _activeSideAt(sideIndex);
+      final next = _activeSideAt(sideIndex + 1);
       fragments.add(
-        _buildCornerContourSlice(
-          i,
-          oPrev: offsets[current.key] ?? 0.0,
-          oNext: offsets[next.key] ?? 0.0,
+        _buildCornerSlicePlan(
+          sideIndex,
+          oPrev: -current.outside,
+          oNext: -next.outside,
           slice: _CornerSlice.full,
+          band: ContourBand.outer,
         ),
       );
     }
 
-    final points = <Offset>[];
-    _appendPoint(points, fragments.last.last);
-    for (final fragment in fragments) {
-      _appendPoints(points, fragment);
+    fragments.add(_buildRunEndCapPlan(run));
+
+    for (var step = run.length - 2; step >= 0; step--) {
+      final sideIndex = run.sideIndexAt(step);
+      final current = _activeSideAt(sideIndex);
+      final next = _activeSideAt(sideIndex + 1);
+      final inner = _buildCornerSlicePlan(
+        sideIndex,
+        oPrev: current.inside,
+        oNext: next.inside,
+        slice: _CornerSlice.full,
+        band: ContourBand.inner,
+      );
+      fragments.add(_reverseOpenPlan(inner));
     }
-    return points;
+
+    return _buildClosedContourPlanFromFragments(fragments);
   }
 
-  List<Offset> _buildCornerSplitConnector(
-      int prevSideIndex, {
-        required bool outerToInner,
+  ContourPathPlan _buildRunStartCapPlan(_SideRun run) {
+    final previous = _sideAt(run.startIndex - 1);
+    final current = _activeSideAt(run.startIndex);
+    final cornerIndex = run.startIndex - 1;
+
+    if (!previous.hasWidth && current.hasWidth) {
+      final inner = _reverseOpenPlan(
+        _buildCornerSlicePlan(
+          cornerIndex,
+          oPrev: previous.inside,
+          oNext: current.inside,
+          slice: _CornerSlice.full,
+          band: ContourBand.inner,
+        ),
+      );
+
+      final connector = _buildZeroWidthNeighborConnectorPlan(
+        cornerIndex,
+        zeroOnPreviousSide: true,
+        outerToInner: false,
+        outerPrevOffset: -previous.outside,
+        outerNextOffset: -current.outside,
+        innerPrevOffset: previous.inside,
+        innerNextOffset: current.inside,
+      );
+
+      final outer = _buildCornerSlicePlan(
+        cornerIndex,
+        oPrev: -previous.outside,
+        oNext: -current.outside,
+        slice: _CornerSlice.full,
+        band: ContourBand.outer,
+      );
+
+      return _concatenateOpenPlans([inner, connector, outer]);
+    }
+
+    final inner = _reverseOpenPlan(
+      _buildCornerSlicePlan(
+        cornerIndex,
+        oPrev: previous.inside,
+        oNext: current.inside,
+        slice: _CornerSlice.splitToNext,
+        band: ContourBand.inner,
+      ),
+    );
+
+    final connector = _buildCornerSplitConnectorPlan(
+      cornerIndex,
+      outerToInner: false,
+      previousSide: previous,
+      nextSide: current,
+    );
+
+    final outer = _buildCornerSlicePlan(
+      cornerIndex,
+      oPrev: -previous.outside,
+      oNext: -current.outside,
+      slice: _CornerSlice.splitToNext,
+      band: ContourBand.outer,
+    );
+
+    return _concatenateOpenPlans([inner, connector, outer]);
+  }
+
+  ContourPathPlan _buildRunEndCapPlan(_SideRun run) {
+    final current = _activeSideAt(run.endIndex);
+    final next = _sideAt(run.endIndex + 1);
+    final cornerIndex = run.endIndex;
+
+    if (current.hasWidth && !next.hasWidth) {
+      final outer = _buildCornerSlicePlan(
+        cornerIndex,
+        oPrev: -current.outside,
+        oNext: -next.outside,
+        slice: _CornerSlice.full,
+        band: ContourBand.outer,
+      );
+
+      final connector = _buildZeroWidthNeighborConnectorPlan(
+        cornerIndex,
+        zeroOnPreviousSide: false,
+        outerToInner: true,
+        outerPrevOffset: -current.outside,
+        outerNextOffset: -next.outside,
+        innerPrevOffset: current.inside,
+        innerNextOffset: next.inside,
+      );
+
+      final inner = _reverseOpenPlan(
+        _buildCornerSlicePlan(
+          cornerIndex,
+          oPrev: current.inside,
+          oNext: next.inside,
+          slice: _CornerSlice.full,
+          band: ContourBand.inner,
+        ),
+      );
+
+      return _concatenateOpenPlans([outer, connector, inner]);
+    }
+
+    final outer = _buildCornerSlicePlan(
+      cornerIndex,
+      oPrev: -current.outside,
+      oNext: -next.outside,
+      slice: _CornerSlice.prevToSplit,
+      band: ContourBand.outer,
+    );
+
+    final connector = _buildCornerSplitConnectorPlan(
+      cornerIndex,
+      outerToInner: true,
+      previousSide: current,
+      nextSide: next,
+    );
+
+    final inner = _reverseOpenPlan(
+      _buildCornerSlicePlan(
+        cornerIndex,
+        oPrev: current.inside,
+        oNext: next.inside,
+        slice: _CornerSlice.prevToSplit,
+        band: ContourBand.inner,
+      ),
+    );
+
+    return _concatenateOpenPlans([outer, connector, inner]);
+  }
+
+  ContourPathPlan _buildBackgroundCornerFragmentPlan(
+      int previousSideIndex,
+      Set<Enum> mergedSideKeys,
+      ) {
+    final current = _sideAt(previousSideIndex);
+    final next = _sideAt(previousSideIndex + 1);
+    final currentMerged = _isMergedSide(mergedSideKeys, previousSideIndex);
+    final nextMerged = _isMergedSide(mergedSideKeys, previousSideIndex + 1);
+
+    if (currentMerged && !nextMerged && next.isPainted) {
+      final outer = _buildCornerSlicePlan(
+        previousSideIndex,
+        oPrev: -current.outside,
+        oNext: -next.outside,
+        slice: _CornerSlice.prevToSplit,
+        band: ContourBand.outer,
+      );
+      final connector = _buildCornerSplitConnectorPlan(
+        previousSideIndex,
+        outerToInner: true,
+        previousSide: current,
+        nextSide: next,
+      );
+      final inner = _buildCornerSlicePlan(
+        previousSideIndex,
+        oPrev: current.inside,
+        oNext: next.inside,
+        slice: _CornerSlice.splitToNext,
+        band: ContourBand.base,
+      );
+      return _concatenateOpenPlans([outer, connector, inner]);
+    }
+
+    if (!currentMerged && current.isPainted && nextMerged) {
+      final inner = _buildCornerSlicePlan(
+        previousSideIndex,
+        oPrev: current.inside,
+        oNext: next.inside,
+        slice: _CornerSlice.prevToSplit,
+        band: ContourBand.base,
+      );
+      final connector = _buildCornerSplitConnectorPlan(
+        previousSideIndex,
+        outerToInner: false,
+        previousSide: current,
+        nextSide: next,
+      );
+      final outer = _buildCornerSlicePlan(
+        previousSideIndex,
+        oPrev: -current.outside,
+        oNext: -next.outside,
+        slice: _CornerSlice.splitToNext,
+        band: ContourBand.outer,
+      );
+      return _concatenateOpenPlans([inner, connector, outer]);
+    }
+
+    final currentOffset =
+    currentMerged ? -current.outside : _backgroundOffsetForSide(current);
+    final nextOffset = nextMerged ? -next.outside : _backgroundOffsetForSide(next);
+
+    return _buildCornerSlicePlan(
+      previousSideIndex,
+      oPrev: currentOffset,
+      oNext: nextOffset,
+      slice: _CornerSlice.full,
+      band: currentMerged || nextMerged ? ContourBand.outer : ContourBand.base,
+    );
+  }
+
+  double _backgroundOffsetForSide(_ResolvedSide side) {
+    if (side.isPainted) {
+      return side.inside;
+    }
+
+    return switch (_effectiveBackgroundBase) {
+      AnyShapeBase.zeroBorder => 0.0,
+      AnyShapeBase.outerBorder => -side.outside,
+      AnyShapeBase.innerBorder => side.inside,
+    };
+  }
+
+  ContourPathPlan _buildClosedContourPlan(
+      Map<Enum, double> offsets, {
+        required ContourBand band,
       }) {
-    final previous = _sideAt(prevSideIndex);
-    final next = _sideAt(prevSideIndex + 1);
-    final corner = _cornerAfter(prevSideIndex);
-
-    final samples = _connectorSampleCount(previous, next, corner);
-    final points = <Offset>[];
-
-    for (var i = 0; i <= samples; i++) {
-      final rawT = i / samples;
-      final t = outerToInner ? rawT : (1.0 - rawT);
-
-      final oPrev = _lerpDouble(-previous.outside, previous.inside, t);
-      final oNext = _lerpDouble(-next.outside, next.inside, t);
-      final point = _buildCornerSplitPoint(prevSideIndex, oPrev, oNext);
-      _appendPoint(points, point);
+    final fragments = <ContourPathPlan>[];
+    for (var i = 0; i < geometry.length; i++) {
+      final current = _sideAt(i);
+      final next = _sideAt(i + 1);
+      fragments.add(
+        _buildCornerSlicePlan(
+          i,
+          oPrev: offsets[current.key] ?? 0.0,
+          oNext: offsets[next.key] ?? 0.0,
+          slice: _CornerSlice.full,
+          band: band,
+        ),
+      );
     }
-
-    return points;
+    return _buildClosedContourPlanFromFragments(fragments);
   }
 
-  Offset _buildCornerSplitPoint(int prevSideIndex, double oPrev, double oNext) {
-    final dPoint = _buildCornerSplitPointInDistanceSpace(prevSideIndex, oPrev, oNext);
-    final corner = _cornerAfter(prevSideIndex);
-    return _pointFromDistanceCoordinates(corner, dPoint.dx, dPoint.dy);
+  ContourPathPlan _buildClosedContourPlanFromFragments(List<ContourPathPlan> fragments) {
+    if (fragments.isEmpty) {
+      return ContourPathPlan(
+        nodes: const <ContourNode>[],
+        edges: const <ContourEdge>[],
+        isClosed: true,
+      );
+    }
+
+    final builder = ContourPathPlanBuilder();
+    builder.addNode(fragments.last.lastNode);
+    for (final fragment in fragments) {
+      _appendOpenPlan(builder, fragment);
+    }
+    return builder.build(close: true);
+  }
+
+  ContourPathPlan _buildCornerSlicePlan(
+      int previousSideIndex, {
+        required double oPrev,
+        required double oNext,
+        required _CornerSlice slice,
+        required ContourBand band,
+      }) {
+    final corner = _cornerAfter(previousSideIndex);
+    if (!_cornerCanRound(previousSideIndex, corner, oPrev, oNext)) {
+      final point = _pointFromDistanceCoordinates(corner, oPrev, oNext);
+      final node = _cornerNode(
+        corner: corner,
+        angle: _CornerPrimitive.startAngle,
+        band: band,
+        point: point,
+        kind: slice == _CornerSlice.full
+            ? ContourNodeKind.cornerTangent
+            : ContourNodeKind.cornerSplit,
+      );
+      return ContourPathPlan(
+        nodes: <ContourNode>[node],
+        edges: const <ContourEdge>[],
+        isClosed: false,
+      );
+    }
+
+    final primitive = _primitiveForCornerOffsets(
+      previousSideIndex,
+      oPrev: oPrev,
+      oNext: oNext,
+    );
+    final splitAngle = switch (slice) {
+      _CornerSlice.full => null,
+      _CornerSlice.prevToSplit || _CornerSlice.splitToNext =>
+          _splitAngle(previousSideIndex, oPrev, oNext, primitive),
+    };
+
+    final (startAngle, endAngle, startKind, endKind) = switch (slice) {
+      _CornerSlice.full => (
+      _CornerPrimitive.startAngle,
+      _CornerPrimitive.endAngle,
+      ContourNodeKind.cornerTangent,
+      ContourNodeKind.cornerTangent,
+      ),
+      _CornerSlice.prevToSplit => (
+      _CornerPrimitive.startAngle,
+      splitAngle!,
+      ContourNodeKind.cornerTangent,
+      ContourNodeKind.cornerSplit,
+      ),
+      _CornerSlice.splitToNext => (
+      splitAngle!,
+      _CornerPrimitive.endAngle,
+      ContourNodeKind.cornerSplit,
+      ContourNodeKind.cornerTangent,
+      ),
+    };
+
+    final startNode = _cornerNode(
+      corner: corner,
+      angle: startAngle,
+      band: band,
+      point: primitive.worldPointAtAngle(startAngle),
+      kind: startKind,
+      primitive: primitive,
+    );
+
+    if (_nearZero(endAngle - startAngle)) {
+      return ContourPathPlan(
+        nodes: <ContourNode>[startNode],
+        edges: const <ContourEdge>[],
+        isClosed: false,
+      );
+    }
+
+    final endNode = _cornerNode(
+      corner: corner,
+      angle: endAngle,
+      band: band,
+      point: primitive.worldPointAtAngle(endAngle),
+      kind: endKind,
+      primitive: primitive,
+    );
+
+    final builder = ContourPathPlanBuilder();
+    builder.addNode(startNode);
+    builder.addCornerTo(
+      endNode,
+      corner: primitive,
+      t0: startAngle,
+      t1: endAngle,
+    );
+    return builder.build(close: false);
+  }
+
+
+  ContourPathPlan _buildZeroWidthNeighborConnectorPlan(
+      int previousSideIndex, {
+        required bool zeroOnPreviousSide,
+        required bool outerToInner,
+        required double outerPrevOffset,
+        required double outerNextOffset,
+        required double innerPrevOffset,
+        required double innerNextOffset,
+      }) {
+    final corner = _cornerAfter(previousSideIndex);
+
+    final outerPoint = _pointFromDistanceCoordinates(
+      corner,
+      outerPrevOffset,
+      outerNextOffset,
+    );
+    final innerPoint = _pointFromDistanceCoordinates(
+      corner,
+      innerPrevOffset,
+      innerNextOffset,
+    );
+
+    final angle = zeroOnPreviousSide
+        ? _CornerPrimitive.startAngle
+        : _CornerPrimitive.endAngle;
+
+    final outerNode = _cornerNode(
+      corner: corner,
+      angle: angle,
+      band: ContourBand.outer,
+      point: outerPoint,
+      kind: ContourNodeKind.cornerSplit,
+    );
+
+    final innerNode = _cornerNode(
+      corner: corner,
+      angle: angle,
+      band: ContourBand.inner,
+      point: innerPoint,
+      kind: ContourNodeKind.cornerSplit,
+    );
+
+    final builder = ContourPathPlanBuilder();
+    builder.addNode(outerToInner ? outerNode : innerNode);
+    builder.addLineTo(outerToInner ? innerNode : outerNode);
+    return builder.build(close: false);
+  }
+
+  ContourPathPlan _buildCornerSplitConnectorPlan(
+      int previousSideIndex, {
+        required bool outerToInner,
+        required _ResolvedSide previousSide,
+        required _ResolvedSide nextSide,
+      }) {
+    final corner = _cornerAfter(previousSideIndex);
+
+    final outerNode = () {
+      if (_usesMidArcSplit(previousSide, nextSide) &&
+          _cornerCanRound(
+            previousSideIndex,
+            corner,
+            -previousSide.outside,
+            -nextSide.outside,
+          )) {
+        final primitive = _primitiveForCornerOffsets(
+          previousSideIndex,
+          oPrev: -previousSide.outside,
+          oNext: -nextSide.outside,
+        );
+        final angle = _midArcSplitAngle(primitive);
+        return _cornerNode(
+          corner: corner,
+          angle: angle,
+          band: ContourBand.outer,
+          point: primitive.worldPointAtAngle(angle),
+          kind: ContourNodeKind.cornerSplit,
+          primitive: primitive,
+        );
+      }
+
+      final outerDistancePoint = _buildCornerSplitPointInDistanceSpace(
+        previousSideIndex,
+        -previousSide.outside,
+        -nextSide.outside,
+      );
+      return _cornerNode(
+        corner: corner,
+        angle: _CornerPrimitive.startAngle,
+        band: ContourBand.outer,
+        point: _pointFromDistanceCoordinates(
+          corner,
+          outerDistancePoint.dx,
+          outerDistancePoint.dy,
+        ),
+        kind: ContourNodeKind.cornerSplit,
+      );
+    }();
+
+    final innerNode = () {
+      if (_usesMidArcSplit(previousSide, nextSide) &&
+          _cornerCanRound(
+            previousSideIndex,
+            corner,
+            previousSide.inside,
+            nextSide.inside,
+          )) {
+        final primitive = _primitiveForCornerOffsets(
+          previousSideIndex,
+          oPrev: previousSide.inside,
+          oNext: nextSide.inside,
+        );
+        final angle = _midArcSplitAngle(primitive);
+        return _cornerNode(
+          corner: corner,
+          angle: angle,
+          band: ContourBand.inner,
+          point: primitive.worldPointAtAngle(angle),
+          kind: ContourNodeKind.cornerSplit,
+          primitive: primitive,
+        );
+      }
+
+      final innerDistancePoint = _buildCornerSplitPointInDistanceSpace(
+        previousSideIndex,
+        previousSide.inside,
+        nextSide.inside,
+      );
+      return _cornerNode(
+        corner: corner,
+        angle: _CornerPrimitive.startAngle,
+        band: ContourBand.inner,
+        point: _pointFromDistanceCoordinates(
+          corner,
+          innerDistancePoint.dx,
+          innerDistancePoint.dy,
+        ),
+        kind: ContourNodeKind.cornerSplit,
+      );
+    }();
+
+    final builder = ContourPathPlanBuilder();
+    builder.addNode(outerToInner ? outerNode : innerNode);
+    builder.addLineTo(outerToInner ? innerNode : outerNode);
+    return builder.build(close: false);
+  }
+
+  ContourNode _cornerNode({
+    required _ResolvedCorner corner,
+    required double angle,
+    required ContourBand band,
+    required Offset point,
+    required ContourNodeKind kind,
+    _CornerPrimitive? primitive,
+  }) {
+    final resolvedPrimitive = primitive ??
+        corner.primitive(previousOffset: 0.0, nextOffset: 0.0);
+    return switch (kind) {
+      ContourNodeKind.sideAnchor => throw ArgumentError('Use sideAnchor constructor for side nodes.'),
+      ContourNodeKind.cornerTangent => ContourNode.cornerTangent(
+        cornerIndex: corner.frame.index,
+        corner: resolvedPrimitive,
+        t: angle,
+        band: band,
+        point: point,
+      ),
+      ContourNodeKind.cornerSplit => ContourNode.cornerSplit(
+        cornerIndex: corner.frame.index,
+        corner: resolvedPrimitive,
+        t: angle,
+        band: band,
+        point: point,
+      ),
+    };
+  }
+
+  bool _cornerCanRound(int previousSideIndex, _ResolvedCorner corner, double oPrev, double oNext) {
+    if (corner.mode == 0 || corner.isParallel) {
+      return false;
+    }
+
+    final primitive = _primitiveForCornerOffsets(
+      previousSideIndex,
+      oPrev: oPrev,
+      oNext: oNext,
+    );
+    return primitive.canBuildExactConic;
+  }
+
+  bool _usesMidArcSplit(_ResolvedSide previousSide, _ResolvedSide nextSide) {
+    return previousSide.hasWidth && nextSide.hasWidth;
+  }
+
+  double _midArcSplitAngle(_CornerPrimitive primitive) {
+    return (_CornerPrimitive.startAngle + _CornerPrimitive.endAngle) / 2.0;
+  }
+
+  double _splitAngle(
+      int previousSideIndex,
+      double oPrev,
+      double oNext,
+      _CornerPrimitive primitive,
+      ) {
+    final previousSide = _sideAt(previousSideIndex);
+    final nextSide = _sideAt(previousSideIndex + 1);
+
+    if (_usesMidArcSplit(previousSide, nextSide)) {
+      return _midArcSplitAngle(primitive);
+    }
+
+    final distancePoint = _buildCornerSplitPointInDistanceSpace(
+      previousSideIndex,
+      oPrev,
+      oNext,
+    );
+    final angle = primitive.angleForDistancePoint(distancePoint);
+    if (angle < _CornerPrimitive.startAngle) {
+      return _CornerPrimitive.startAngle;
+    }
+    if (angle > _CornerPrimitive.endAngle) {
+      return _CornerPrimitive.endAngle;
+    }
+    return angle;
   }
 
   Offset _buildCornerSplitPointInDistanceSpace(
-      int prevSideIndex,
+      int previousSideIndex,
       double oPrev,
       double oNext,
       ) {
-    final corner = _cornerAfter(prevSideIndex);
-    if (!_cornerCanRound(corner, oPrev, oNext)) {
+    final corner = _cornerAfter(previousSideIndex);
+    if (!_cornerCanRound(previousSideIndex, corner, oPrev, oNext)) {
       return Offset(oPrev, oNext);
     }
 
-    final previous = _sideAt(prevSideIndex);
-    final next = _sideAt(prevSideIndex + 1);
+    final previous = _sideAt(previousSideIndex);
+    final next = _sideAt(previousSideIndex + 1);
 
     final lineStart = Offset(-previous.outside, -next.outside);
     final lineEnd = Offset(previous.inside, next.inside);
@@ -1549,27 +2223,26 @@ class _StrokeRegionBuilder {
     final s = corner.mode.toDouble();
     final a = corner.beforeAbs;
     final b = corner.afterAbs;
-    final rx = a - (s * oPrev);
-    final ry = b - (s * oNext);
-
-    if (rx <= _epsilon || ry <= _epsilon) {
+    if (a <= _epsilon || b <= _epsilon) {
       return Offset(oPrev, oNext);
     }
 
-    final x0 = lineStart.dx - (s * a);
-    final y0 = lineStart.dy - (s * b);
+    final centerX = oPrev + (s * a);
+    final centerY = oNext + (s * b);
+    final x0 = lineStart.dx - centerX;
+    final y0 = lineStart.dy - centerY;
     final ux = direction.dx;
     final uy = direction.dy;
 
-    final qa = ((ux * ux) / (rx * rx)) + ((uy * uy) / (ry * ry));
-    final qb = 2.0 * (((x0 * ux) / (rx * rx)) + ((y0 * uy) / (ry * ry)));
-    final qc = ((x0 * x0) / (rx * rx)) + ((y0 * y0) / (ry * ry)) - 1.0;
+    final qa = ((ux * ux) / (a * a)) + ((uy * uy) / (b * b));
+    final qb = 2.0 * (((x0 * ux) / (a * a)) + ((y0 * uy) / (b * b)));
+    final qc = ((x0 * x0) / (a * a)) + ((y0 * y0) / (b * b)) - 1.0;
 
-    final discriminant = max(0.0, (qb * qb) - (4.0 * qa * qc));
     if (_nearZero(qa)) {
       return Offset(oPrev, oNext);
     }
 
+    final discriminant = max(0.0, (qb * qb) - (4.0 * qa * qc));
     final sqrtDisc = sqrt(discriminant);
     final roots = <double>[
       (-qb - sqrtDisc) / (2.0 * qa),
@@ -1585,17 +2258,6 @@ class _StrokeRegionBuilder {
         continue;
       }
 
-      final candidate = lineStart + direction.scaled(root);
-      final phi = _contourPhiForDistancePoint(corner, oPrev, oNext, candidate);
-      if (phi == null) {
-        continue;
-      }
-
-      final range = _fullCornerPhiRange(corner);
-      if (phi < range.$1 - 0.0001 || phi > range.$2 + 0.0001) {
-        continue;
-      }
-
       final score = (root - expectedT).abs();
       if (score < chosenScore) {
         chosenScore = score;
@@ -1607,7 +2269,11 @@ class _StrokeRegionBuilder {
       return Offset(oPrev, oNext);
     }
 
-    return lineStart + direction.scaled(chosenRoot);
+    final centeredPoint = lineStart + direction.scaled(chosenRoot);
+    return Offset(
+      previous.actualOffsetForCentered(centeredPoint.dx),
+      next.actualOffsetForCentered(centeredPoint.dy),
+    );
   }
 
   double _expectedInterpolationT(
@@ -1616,194 +2282,21 @@ class _StrokeRegionBuilder {
       double oPrev,
       double oNext,
       ) {
-    final prevDenominator = previous.inside + previous.outside;
-    if (!_nearZero(prevDenominator)) {
-      return _clampDouble((oPrev + previous.outside) / prevDenominator, 0.0, 1.0);
+    if (previous.hasWidth) {
+      final t = (oPrev + previous.outside) / previous.side.width;
+      if (t < 0.0) return 0.0;
+      if (t > 1.0) return 1.0;
+      return t;
     }
 
-    final nextDenominator = next.inside + next.outside;
-    if (!_nearZero(nextDenominator)) {
-      return _clampDouble((oNext + next.outside) / nextDenominator, 0.0, 1.0);
+    if (next.hasWidth) {
+      final t = (oNext + next.outside) / next.side.width;
+      if (t < 0.0) return 0.0;
+      if (t > 1.0) return 1.0;
+      return t;
     }
 
     return 0.5;
-  }
-
-  List<Offset> _buildCornerContourSlice(
-      int prevSideIndex, {
-        required double oPrev,
-        required double oNext,
-        required _CornerSlice slice,
-      }) {
-    final corner = _cornerAfter(prevSideIndex);
-
-    if (!_cornerCanRound(corner, oPrev, oNext)) {
-      return <Offset>[
-        _pointFromDistanceCoordinates(corner, oPrev, oNext),
-      ];
-    }
-
-    final startEnd = switch (slice) {
-      _CornerSlice.full => _fullCornerPhiRange(corner),
-      _CornerSlice.prevToSplit => (
-      _fullCornerPhiRange(corner).$1,
-      _splitPhi(prevSideIndex, oPrev, oNext),
-      ),
-      _CornerSlice.splitToNext => (
-      _splitPhi(prevSideIndex, oPrev, oNext),
-      _fullCornerPhiRange(corner).$2,
-      ),
-    };
-
-    return _sampleCornerArc(
-      prevSideIndex,
-      oPrev: oPrev,
-      oNext: oNext,
-      phiStart: startEnd.$1,
-      phiEnd: startEnd.$2,
-    );
-  }
-
-  double _splitPhi(int prevSideIndex, double oPrev, double oNext) {
-    final corner = _cornerAfter(prevSideIndex);
-    final dPoint = _buildCornerSplitPointInDistanceSpace(prevSideIndex, oPrev, oNext);
-    final phi = _contourPhiForDistancePoint(corner, oPrev, oNext, dPoint);
-    if (phi == null) {
-      return _fullCornerPhiRange(corner).$1;
-    }
-    return phi;
-  }
-
-  (double, double) _fullCornerPhiRange(_ResolvedCorner corner) {
-    return corner.mode == 1 ? (pi, 1.5 * pi) : (0.0, 0.5 * pi);
-  }
-
-  bool _cornerCanRound(_ResolvedCorner corner, double oPrev, double oNext) {
-    if (corner.mode == 0 || corner.isParallel) {
-      return false;
-    }
-
-    final s = corner.mode.toDouble();
-    final rx = corner.beforeAbs - (s * oPrev);
-    final ry = corner.afterAbs - (s * oNext);
-    return rx > _epsilon && ry > _epsilon;
-  }
-
-  double? _contourPhiForDistancePoint(
-      _ResolvedCorner corner,
-      double oPrev,
-      double oNext,
-      Offset dPoint,
-      ) {
-    if (!_cornerCanRound(corner, oPrev, oNext)) {
-      return null;
-    }
-
-    final s = corner.mode.toDouble();
-    final rx = corner.beforeAbs - (s * oPrev);
-    final ry = corner.afterAbs - (s * oNext);
-    if (rx <= _epsilon || ry <= _epsilon) {
-      return null;
-    }
-
-    final cosValue = _clampDouble((dPoint.dx - (s * corner.beforeAbs)) / rx, -1.0, 1.0);
-    final sinValue = _clampDouble((dPoint.dy - (s * corner.afterAbs)) / ry, -1.0, 1.0);
-
-    var phi = atan2(sinValue, cosValue);
-    if (phi < 0.0) {
-      phi += 2 * pi;
-    }
-    if (corner.mode == 1 && phi < pi) {
-      phi += 2 * pi;
-    }
-    return phi;
-  }
-
-  List<Offset> _sampleCornerArc(
-      int prevSideIndex, {
-        required double oPrev,
-        required double oNext,
-        required double phiStart,
-        required double phiEnd,
-      }) {
-    final corner = _cornerAfter(prevSideIndex);
-    if (!_cornerCanRound(corner, oPrev, oNext)) {
-      return <Offset>[
-        _pointFromDistanceCoordinates(corner, oPrev, oNext),
-      ];
-    }
-
-    if ((phiEnd - phiStart).abs() <= _epsilon) {
-      return <Offset>[
-        _pointFromDistanceCoordinates(
-          corner,
-          _distancePointOnCornerArc(corner, oPrev, oNext, phiEnd).dx,
-          _distancePointOnCornerArc(corner, oPrev, oNext, phiEnd).dy,
-        ),
-      ];
-    }
-
-    final samples = _arcSampleCount(corner, oPrev, oNext, (phiEnd - phiStart).abs());
-    final points = <Offset>[];
-
-    for (var i = 0; i <= samples; i++) {
-      final t = i / samples;
-      final phi = _lerpDouble(phiStart, phiEnd, t);
-      final dPoint = _distancePointOnCornerArc(corner, oPrev, oNext, phi);
-      final point = _pointFromDistanceCoordinates(corner, dPoint.dx, dPoint.dy);
-      _appendPoint(points, point);
-    }
-
-    return points;
-  }
-
-  Offset _distancePointOnCornerArc(
-      _ResolvedCorner corner,
-      double oPrev,
-      double oNext,
-      double phi,
-      ) {
-    final s = corner.mode.toDouble();
-    final rx = corner.beforeAbs - (s * oPrev);
-    final ry = corner.afterAbs - (s * oNext);
-    return Offset(
-      (s * corner.beforeAbs) + (rx * cos(phi)),
-      (s * corner.afterAbs) + (ry * sin(phi)),
-    );
-  }
-
-  int _arcSampleCount(
-      _ResolvedCorner corner,
-      double oPrev,
-      double oNext,
-      double phiSpan,
-      ) {
-    final s = corner.mode.toDouble();
-    final rx = corner.beforeAbs - (s * oPrev);
-    final ry = corner.afterAbs - (s * oNext);
-    final worldScale = 1.0 / max(corner.sinTurn, 0.15);
-    final estimatedLength = max(rx, ry) * worldScale * phiSpan;
-    final samples = max(
-      _minArcSamples,
-      min(_maxArcSamples, (estimatedLength / _arcSampleStep).ceil()),
-    );
-    return samples;
-  }
-
-  int _connectorSampleCount(
-      _ResolvedSide previous,
-      _ResolvedSide next,
-      _ResolvedCorner corner,
-      ) {
-    final estimate = max(
-      previous.inside + previous.outside,
-      next.inside + next.outside,
-    );
-    final samples = max(
-      3,
-      min(_maxArcSamples, (estimate / _arcSampleStep).ceil()),
-    );
-    return max(samples, corner.isSharp ? 1 : 3);
   }
 
   Offset _pointFromDistanceCoordinates(
@@ -1811,15 +2304,11 @@ class _StrokeRegionBuilder {
       double dPrev,
       double dNext,
       ) {
-    // Conservative fallback for parallel adjacent sides.
-    // The main rounded-corner implementation is based on intersecting the two
-    // offset side lines. When the lines are parallel, that coordinate system no
-    // longer gives a unique point. In that case we keep a sharp connection.
     if (corner.isParallel) {
-      final previousPoint = corner.previousSide.end +
-          corner.previousSide.insideNormal.scaled(dPrev);
-      final nextPoint = corner.nextSide.start +
-          corner.nextSide.insideNormal.scaled(dNext);
+      final previousPoint =
+          corner.previousSide.end + corner.previousSide.insideNormal.scaled(dPrev);
+      final nextPoint =
+          corner.nextSide.start + corner.nextSide.insideNormal.scaled(dNext);
       return Offset(
         (previousPoint.dx + nextPoint.dx) / 2.0,
         (previousPoint.dy + nextPoint.dy) / 2.0,
@@ -1834,42 +2323,126 @@ class _StrokeRegionBuilder {
     );
   }
 
-  _ResolvedSide _resolvedSideAt(int sideIndex) {
-    final key = geometry.sideAt(sideIndex).key;
-    return _activeSides[key]!;
+  ContourPathPlan _concatenateOpenPlans(List<ContourPathPlan> plans) {
+    final builder = ContourPathPlanBuilder();
+    for (final plan in plans) {
+      _appendOpenPlan(builder, plan);
+    }
+    return builder.build(close: false);
   }
 
-  void _appendPoint(List<Offset> points, Offset point) {
-    if (points.isEmpty || !_samePoint(points.last, point)) {
-      points.add(point);
+  void _appendOpenPlan(ContourPathPlanBuilder builder, ContourPathPlan plan) {
+    if (plan.isEmpty) {
+      return;
+    }
+
+    if (builder.isEmpty) {
+      builder.addNode(plan.firstNode);
+    } else {
+      builder.addLineTo(plan.firstNode);
+    }
+
+    for (final edge in plan.edges) {
+      if (edge is LineContourEdge) {
+        builder.addLineTo(edge.to);
+      } else if (edge is CornerContourEdge) {
+        builder.addCornerTo(
+          edge.to,
+          corner: edge.corner,
+          t0: edge.t0,
+          t1: edge.t1,
+        );
+      } else {
+        throw StateError('Unsupported contour edge type: ${edge.runtimeType}.');
+      }
     }
   }
 
-  void _appendPoints(List<Offset> target, Iterable<Offset> points) {
-    for (final point in points) {
-      _appendPoint(target, point);
+  ContourPathPlan _reverseOpenPlan(ContourPathPlan plan) {
+    if (plan.isClosed) {
+      throw ArgumentError("Closed contour plans can't be reversed as open plans.");
+      }
+
+      if (plan.isEmpty) {
+        return plan;
+      }
+
+      final reversedNodes = plan.nodes.reversed.toList(growable: false);
+      final reversedEdges = <ContourEdge>[];
+
+      for (final edge in plan.edges.reversed) {
+        if (edge is LineContourEdge) {
+          reversedEdges.add(LineContourEdge(edge.to, edge.from));
+        } else if (edge is CornerContourEdge) {
+          reversedEdges.add(
+            CornerContourEdge(
+              from: edge.to,
+              to: edge.from,
+              corner: edge.corner,
+              t0: edge.t1,
+              t1: edge.t0,
+            ),
+          );
+        } else {
+          throw StateError('Unsupported contour edge type: ${edge.runtimeType}.');
+        }
+      }
+
+      return ContourPathPlan(
+        nodes: reversedNodes,
+        edges: reversedEdges,
+        isClosed: false,
+      );
     }
-  }
 
-  void _addClosedPolyline(Path path, List<Offset> rawPoints) {
-    final points = <Offset>[];
-    _appendPoints(points, rawPoints);
-
-    if (points.length >= 2 && _samePoint(points.first, points.last)) {
-      points.removeLast();
-    }
-
-    if (points.length >= 3) {
-      path.addPolygon(points, true);
-    }
-  }
-
-  Path _pathFromClosedPoints(List<Offset> points) {
+  Path _pathFromPlan(ContourPathPlan plan) {
     final path = Path();
-    _addClosedPolyline(path, points);
+    _appendPlanToPath(path, plan);
     return path;
   }
+
+  void _appendPlanToPath(Path path, ContourPathPlan plan) {
+    if (plan.isEmpty) {
+      return;
+    }
+
+    final first = plan.firstNode.point;
+    path.moveTo(first.dx, first.dy);
+
+    for (final edge in plan.edges) {
+      if (edge.isDegenerate) {
+        continue;
+      }
+
+      if (edge is LineContourEdge) {
+        path.lineTo(edge.to.point.dx, edge.to.point.dy);
+        continue;
+      }
+
+      if (edge is CornerContourEdge) {
+        final segment = edge.corner.conicSegment(
+          fromAngle: edge.t0,
+          toAngle: edge.t1,
+        );
+        path.conicTo(
+          segment.control.dx,
+          segment.control.dy,
+          segment.end.dx,
+          segment.end.dy,
+          segment.weight,
+        );
+        continue;
+      }
+
+      throw StateError('Unsupported contour edge type: ${edge.runtimeType}.');
+    }
+
+    if (plan.isClosed) {
+      path.close();
+    }
+  }
 }
+
 
 enum ShadowAlign {
   inside,
@@ -2219,6 +2792,7 @@ class AnyDecorationBuilder {
       right: right.buildOrNull(),
       bottom: bottom.buildOrNull(),
       sides: sides.buildOrNull(),
+      topRight: AnyCorner(Radius.circular(20)),
       shadows: shadows,
       color: color,
       gradient: gradient,
@@ -2350,291 +2924,5 @@ class ExampleGenerator {
     debugPrint('Built ${result.length} examples');
 
     return result;
-  }
-}
-
-
-enum ContourBand {
-  /// Contour traced along the outer extent of painted sides.
-  outer,
-
-  /// Contour traced along the inner extent of painted sides.
-  inner,
-
-  /// Contour traced along the base/background shape.
-  base,
-}
-
-enum ContourNodeKind {
-  /// A point that lies on a side span (typically some anchor/middle/tangent point).
-  sideAnchor,
-
-  /// A tangent point where a contour enters or leaves a rounded corner.
-  cornerTangent,
-
-  /// A split point on a rounded corner, used when the corner ownership
-  /// changes between two differently painted adjacent regions.
-  cornerSplit,
-}
-
-/// One resolved geometric checkpoint in a contour itinerary.
-///
-/// This is intentionally more semantic than a raw [Offset]:
-/// - side anchors identify which side they belong to
-/// - corner points identify which corner primitive and which local parameter `t`
-///   they correspond to
-///
-/// Later, the tracer can connect two nodes either by a straight segment or by an
-/// exact conic segment, depending on the edge type between them.
-class ContourNode {
-  final ContourNodeKind kind;
-  final ContourBand band;
-  final Offset point;
-
-  /// Present for nodes that lie on a side-driven span.
-  final int? sideIndex;
-
-  /// Present for nodes that lie on a corner-driven span.
-  final int? cornerIndex;
-
-  /// Present for corner nodes only.
-  final _CornerPrimitive? corner;
-
-  /// Local corner parameter for corner nodes only.
-  ///
-  /// The exact meaning of `t` is defined by [_CornerPrimitive]. The intended
-  /// convention is the quarter-conic parameter used to build exact `conicTo`
-  /// segments.
-  final double? t;
-
-  const ContourNode._({
-    required this.kind,
-    required this.band,
-    required this.point,
-    this.sideIndex,
-    this.cornerIndex,
-    this.corner,
-    this.t,
-  }) : assert(
-  (kind == ContourNodeKind.sideAnchor) == (sideIndex != null),
-  'sideAnchor nodes must have sideIndex, and only sideAnchor nodes may have it.',
-  ),
-        assert(
-        kind == ContourNodeKind.sideAnchor ||
-            (cornerIndex != null && corner != null && t != null),
-        'corner nodes must have cornerIndex, corner primitive and t.',
-        );
-
-  const ContourNode.sideAnchor({
-    required int sideIndex,
-    required ContourBand band,
-    required Offset point,
-  }) : this._(
-    kind: ContourNodeKind.sideAnchor,
-    band: band,
-    point: point,
-    sideIndex: sideIndex,
-  );
-
-  const ContourNode.cornerTangent({
-    required int cornerIndex,
-    required _CornerPrimitive corner,
-    required double t,
-    required ContourBand band,
-    required Offset point,
-  }) : this._(
-    kind: ContourNodeKind.cornerTangent,
-    band: band,
-    point: point,
-    cornerIndex: cornerIndex,
-    corner: corner,
-    t: t,
-  );
-
-  const ContourNode.cornerSplit({
-    required int cornerIndex,
-    required _CornerPrimitive corner,
-    required double t,
-    required ContourBand band,
-    required Offset point,
-  }) : this._(
-    kind: ContourNodeKind.cornerSplit,
-    band: band,
-    point: point,
-    cornerIndex: cornerIndex,
-    corner: corner,
-    t: t,
-  );
-
-  bool get isSideAnchor => kind == ContourNodeKind.sideAnchor;
-  bool get isCornerNode => !isSideAnchor;
-  bool get isCornerTangent => kind == ContourNodeKind.cornerTangent;
-  bool get isCornerSplit => kind == ContourNodeKind.cornerSplit;
-
-  @override
-  String toString() {
-    final buffer = StringBuffer('ContourNode(')
-      ..write('kind:${kind.name}, ')
-      ..write('band:${band.name}, ')
-      ..write('point:$point');
-    if (sideIndex != null) {
-      buffer.write(', sideIndex:$sideIndex');
-    }
-    if (cornerIndex != null) {
-      buffer.write(', cornerIndex:$cornerIndex, t:$t');
-    }
-    buffer.write(')');
-    return buffer.toString();
-  }
-}
-
-/// Topological edge between two contour nodes.
-///
-/// Geometry is not encoded here beyond the edge subtype. The later path builder
-/// decides how to turn each edge into `lineTo` / `conicTo`.
-abstract class ContourEdge {
-  final ContourNode from;
-  final ContourNode to;
-
-  const ContourEdge(this.from, this.to);
-
-  bool get isDegenerate => _samePoint(from.point, to.point);
-}
-
-/// Straight segment between two contour nodes.
-class LineContourEdge extends ContourEdge {
-  const LineContourEdge(super.from, super.to);
-
-  @override
-  String toString() => 'LineContourEdge(from:$from, to:$to)';
-}
-
-/// Exact conic segment along one resolved rounded corner.
-///
-/// Both endpoints must belong to the same [_CornerPrimitive], and `t0` / `t1`
-/// define the exact partial corner segment to render.
-class CornerContourEdge extends ContourEdge {
-  final _CornerPrimitive corner;
-  final double t0;
-  final double t1;
-
-  CornerContourEdge({
-    required ContourNode from,
-    required ContourNode to,
-    required this.corner,
-    required this.t0,
-    required this.t1,
-  })  : assert(
-  from.cornerIndex != null &&
-      to.cornerIndex != null &&
-      from.cornerIndex == to.cornerIndex,
-  'CornerContourEdge endpoints must belong to the same corner.',
-  ),
-        assert(
-        from.corner == corner && to.corner == corner,
-        'CornerContourEdge endpoints must reference the same corner primitive.',
-        ),
-        super(from, to);
-
-  bool get isReversed => t1 < t0;
-
-  @override
-  String toString() {
-    return 'CornerContourEdge('
-        'corner:${from.cornerIndex}, '
-        't0:$t0, '
-        't1:$t1, '
-        'from:$from, '
-        'to:$to'
-        ')';
-  }
-}
-
-/// Ordered closed/open contour itinerary, independent from [Path].
-///
-/// The future tracer can build these first, inspect/debug them, and only then
-/// convert them into Flutter path commands.
-class ContourPathPlan {
-  final List<ContourNode> nodes;
-  final List<ContourEdge> edges;
-  final bool isClosed;
-
-  ContourPathPlan({
-    required this.nodes,
-    required this.edges,
-    required this.isClosed,
-  }) : assert(
-  nodes.length >= 2 || edges.isEmpty,
-  'A non-empty contour plan should contain at least two nodes.',
-  );
-
-  bool get isEmpty => nodes.isEmpty;
-  ContourNode get firstNode => nodes.first;
-  ContourNode get lastNode => nodes.last;
-
-  @override
-  String toString() {
-    return 'ContourPathPlan('
-        'nodes:${nodes.length}, '
-        'edges:${edges.length}, '
-        'isClosed:$isClosed'
-        ')';
-  }
-}
-
-/// Mutable helper for building a [ContourPathPlan] while keeping edge creation
-/// explicit and easy to debug.
-class ContourPathPlanBuilder {
-  final List<ContourNode> _nodes = <ContourNode>[];
-  final List<ContourEdge> _edges = <ContourEdge>[];
-
-  ContourNode? get lastNode => _nodes.isEmpty ? null : _nodes.last;
-  bool get isEmpty => _nodes.isEmpty;
-
-  void addNode(ContourNode node) {
-    _nodes.add(node);
-  }
-
-  void addLineTo(ContourNode node) {
-    final previous = lastNode;
-    if (previous == null) {
-      addNode(node);
-      return;
-    }
-
-    _edges.add(LineContourEdge(previous, node));
-    _nodes.add(node);
-  }
-
-  void addCornerTo(
-      ContourNode node, {
-        required _CornerPrimitive corner,
-        required double t0,
-        required double t1,
-      }) {
-    final previous = lastNode;
-    if (previous == null) {
-      addNode(node);
-      return;
-    }
-
-    _edges.add(
-      CornerContourEdge(
-        from: previous,
-        to: node,
-        corner: corner,
-        t0: t0,
-        t1: t1,
-      ),
-    );
-    _nodes.add(node);
-  }
-
-  ContourPathPlan build({required bool close}) {
-    return ContourPathPlan(
-      nodes: List<ContourNode>.unmodifiable(_nodes),
-      edges: List<ContourEdge>.unmodifiable(_edges),
-      isClosed: close,
-    );
   }
 }
