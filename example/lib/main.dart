@@ -3,6 +3,8 @@ import 'package:collection/collection.dart';
 import 'package:example/polygon_stroke_regions_rounded.dart';
 import 'package:flutter/material.dart';
 
+import 'helpers/builders.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -13,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sparklines Example',
+      title: 'Any Border Examples',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),

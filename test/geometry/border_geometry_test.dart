@@ -52,6 +52,7 @@ void main() {
     expect(background.debugLabel, equals('background'));
     expect(background.path.getBounds(), equals(bounds));
 
+
     final backgroundMetrics = background.path.computeMetrics().toList();
     expect(backgroundMetrics.length, equals(1));
     expect(backgroundMetrics[0].length, equals(600));

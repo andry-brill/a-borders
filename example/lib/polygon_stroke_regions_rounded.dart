@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class IAnyFill {
   Color? get color;
@@ -44,8 +45,6 @@ extension _OffsetMath on Offset {
   Offset scaled(double value) => Offset(dx * value, dy * value);
 
   double cross(Offset other) => (dx * other.dy) - (dy * other.dx);
-
-  double dot(Offset other) => (dx * other.dx) + (dy * other.dy);
 
   Offset get normalized {
     final length = distance;
@@ -153,6 +152,7 @@ class Polygon {
   List<StrokeRegion> buildMergedStrokeRegions(
       PolygonSetup setup, {
         bool backgroundOnly = false,
+        bool backgroundMerge = true,
         AnyShapeBase? backgroundBase,
       }) {
     final geometry = _PolygonGeometry.fromCommands(commands);
@@ -160,6 +160,7 @@ class Polygon {
       geometry,
       setup,
       backgroundOnly: backgroundOnly,
+      backgroundMerge: backgroundMerge,
       backgroundBase: backgroundBase,
     ).build();
   }
@@ -182,9 +183,12 @@ class StrokeRegion {
   final IAnyFill fill;
   final Path path;
   const StrokeRegion(this.included, this.fill, this.path);
+
+  bool get hasFill => fill.hasFill;
 }
 
 class AnySide with MAnyFill {
+
   static const double alignInside = -1;
   static const double alignCenter = 0;
   static const double alignOutside = 1;
@@ -267,64 +271,68 @@ class AnyBackground extends AnySide {
     super.blendMode,
     this.shapeBase = AnyShapeBase.zeroBorder,
   }) : super(width: double.infinity, align: AnySide.alignCenter);
+
+  @override
+  bool operator ==(Object other) {
+    return super == other && (other is AnyBackground && shapeBase == other.shapeBase);
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, shapeBase);
+
 }
 
 /// Describes how this corner is rendered.
 ///
 /// `radius.x` and `radius.y` do not follow Flutter's built-in [Radius]
-/// semantics. Here they are geometric distances measured in the local corner
-/// coordinate system:
-/// - `radius.x` is the perpendicular distance to the side **before** the
-///   corner, measured along that side's inward normal.
-/// - `radius.y` is the perpendicular distance to the side **after** the
-///   corner, measured along that side's inward normal.
+/// semantics. Here they are geometric distances interpreted in the local
+/// corner coordinate system.
 ///
-/// The rounded corner is built in signed-distance coordinates to the two
-/// adjacent sides. From there it is mapped back to world coordinates.
+/// Base meanings:
+/// - `radius.x` is associated with the side **before** the corner.
+/// - `radius.y` is associated with the side **after** the corner.
 ///
 /// Rendering modes:
 /// - `radius == Radius.zero`: a sharp corner.
-/// - `radius.x > 0 && radius.y > 0`: build an ellipse that is tangent to both
-///   sides and use the **smaller** elliptic arc between the tangent points.
-///   This is the standard inset rounded corner.
+/// - `radius.x > 0 && radius.y > 0`: build an ellipse tangent to both sides
+///   and use the **smaller** arc between the tangent points. This is the
+///   standard rounded outer corner.
 /// - `radius.x < 0 && radius.y < 0`: build an ellipse whose center lies on the
-///   two side lines and use the **smaller** elliptic arc between the tangent
-///   points. This produces an inward notch, similar to a postmark cut.
-/// - `radius.x` and `radius.y` with different signs: build the same
-///   side-centered ellipse, but use the **larger** elliptic arc between the
-///   tangent points. This produces the outer arc variant.
-/// - If the adjacent sides are parallel, the corner falls back to a sharp
-///   connection for now.
+///   two side lines and use the **smaller** arc between the tangent points.
+///   This produces an inward notch, similar to a postmark cut.
+/// - `radius.x < 0 && radius.y > 0`: `|x|` is the circular radius for the
+///   **inner** contour, and `y` is the circular radius for the **outer**
+///   contour.
+/// - `radius.x > 0 && radius.y < 0`: `x` is the circular radius for the
+///   **outer** contour, and `|y|` is the circular radius for the **inner**
+///   contour.
+/// - `radius.x == 0 && radius.y > 0`, or `radius.y == 0 && radius.x > 0`:
+///   the non-zero value is the circular radius for the **outer** contour, and
+///   the inner contour stays sharp.
+/// - `radius.x == 0 && radius.y < 0`, or `radius.y == 0 && radius.x < 0`:
+///   the absolute non-zero value is the circular radius for the **inner**
+///   contour, and the outer contour stays sharp.
+///
+/// For all mixed-sign and single-non-zero cases, the corner is treated as a
+/// contour-driven circular corner:
+/// - the outer contour uses the configured outer circular radius,
+/// - the inner contour uses the configured inner circular radius,
+/// - intermediate contours interpolate between those two radii.
+///
+/// If the adjacent sides are parallel, the corner falls back to a sharp
+/// connection for now.
 ///
 /// Side constraint:
 /// For a side `S` between corners `L` and `R`, the two corner arcs must not
 /// overlap on that side.
 ///
-/// The consumed length on `S` is:
-/// - from `L`: `abs(L.radius.x) / sin(angleL)`
-/// - from `R`: `abs(R.radius.y) / sin(angleR)`
+/// The consumed length on `S` is computed from the radii that are active on
+/// that side. For same-sign corners this uses the side-associated component.
+/// For contour-driven circular corners it uses the larger of the outer/inner
+/// circular radii so every contour still fits.
 ///
-/// Therefore:
-/// `abs(L.radius.x) / sin(angleL) + abs(R.radius.y) / sin(angleR) <= length(S)`
-///
-/// Automatic normalization:
-/// If the consumed length is greater than `length(S)`, both values should be
-/// scaled proportionally so they exactly fit the side while preserving their
-/// relative weights.
-///
-/// Let:
-/// - `a = abs(L.radius.x) / sin(angleL)`
-/// - `b = abs(R.radius.y) / sin(angleR)`
-///
-/// If `a + b > length(S)`, compute:
-/// `k = length(S) / (a + b)`
-///
-/// Then apply:
-/// - `L.radius.x *= k`
-/// - `R.radius.y *= k`
-///
-/// This preserves the sign of each radius component and guarantees that the
-/// two corners exactly fit on the side without overlap.
+/// Automatic normalization scales the affected corner radii proportionally so
+/// the total side consumption does not exceed the side length.
 ///
 /// Join handling for adjacent sides with different widths or fills:
 /// - If the two adjacent sides share the same fill, they can be merged into a
@@ -332,8 +340,7 @@ class AnyBackground extends AnySide {
 ///   shape, and both the outer and inner corner boundaries are rounded by
 ///   their corresponding arcs.
 /// - If the two adjacent sides have different fills, they must remain separate.
-///   In this case, the corner transition cannot be rendered as a single merged
-///   shape. Instead, the corner arc must be split at the boundary between the
+///   In this case, the corner transition is split at the boundary between the
 ///   two side regions, producing two arc segments: one belonging to the
 ///   previous side and one belonging to the next side.
 ///
@@ -583,6 +590,65 @@ class _ResolvedCornerRadii {
     final normalizedBefore = <Enum, double>{...rawBefore};
     final normalizedAfter = <Enum, double>{...rawAfter};
 
+    bool isInset(Enum key) {
+      final before = normalizedBefore[key] ?? 0.0;
+      final after = normalizedAfter[key] ?? 0.0;
+      return before > _epsilon && after > _epsilon;
+    }
+
+    bool isNotch(Enum key) {
+      final before = normalizedBefore[key] ?? 0.0;
+      final after = normalizedAfter[key] ?? 0.0;
+      return before < -_epsilon && after < -_epsilon;
+    }
+
+    bool isContourDrivenCircular(Enum key) {
+      if (isInset(key) || isNotch(key)) {
+        return false;
+      }
+      final before = normalizedBefore[key] ?? 0.0;
+      final after = normalizedAfter[key] ?? 0.0;
+      return !_nearZero(before) || !_nearZero(after);
+    }
+
+    double circularConsumption(Enum key) {
+      final before = normalizedBefore[key] ?? 0.0;
+      final after = normalizedAfter[key] ?? 0.0;
+      final outer = max(0.0, max(before, after));
+      final inner = max(0.0, max(-before, -after));
+      return max(outer, inner);
+    }
+
+    double sideConsumptionFromStart(_CornerFrame cornerFrame, double sinTurn) {
+      final key = cornerFrame.key;
+      if (isContourDrivenCircular(key)) {
+        return circularConsumption(key) / sinTurn;
+      }
+      return (normalizedAfter[key] ?? 0.0).abs() / sinTurn;
+    }
+
+    double sideConsumptionFromEnd(_CornerFrame cornerFrame, double sinTurn) {
+      final key = cornerFrame.key;
+      if (isContourDrivenCircular(key)) {
+        return circularConsumption(key) / sinTurn;
+      }
+      return (normalizedBefore[key] ?? 0.0).abs() / sinTurn;
+    }
+
+    void scaleCorner(Enum key, double scale, {required bool affectsAfterSide}) {
+      if (isContourDrivenCircular(key)) {
+        normalizedBefore[key] = (normalizedBefore[key] ?? 0.0) * scale;
+        normalizedAfter[key] = (normalizedAfter[key] ?? 0.0) * scale;
+        return;
+      }
+
+      if (affectsAfterSide) {
+        normalizedAfter[key] = (normalizedAfter[key] ?? 0.0) * scale;
+      } else {
+        normalizedBefore[key] = (normalizedBefore[key] ?? 0.0) * scale;
+      }
+    }
+
     for (final side in geometry.sides) {
       final startCorner = geometry.cornerBeforeSide(side.index);
       final endCorner = geometry.cornerAfterSide(side.index);
@@ -596,15 +662,8 @@ class _ResolvedCornerRadii {
         continue;
       }
 
-      // The corner radius semantics are:
-      // - radius.x -> distance to the side before the corner.
-      // - radius.y -> distance to the side after the corner.
-      //
-      // So on a side segment S:
-      // - the corner before S consumes its `radius.y`,
-      // - the corner after S consumes its `radius.x`.
-      final startConsumption = normalizedAfter[startCorner.key]!.abs() / startSin;
-      final endConsumption = normalizedBefore[endCorner.key]!.abs() / endSin;
+      final startConsumption = sideConsumptionFromStart(startCorner, startSin);
+      final endConsumption = sideConsumptionFromEnd(endCorner, endSin);
       final totalConsumption = startConsumption + endConsumption;
 
       if (totalConsumption <= side.length + _epsilon ||
@@ -613,10 +672,8 @@ class _ResolvedCornerRadii {
       }
 
       final scale = side.length / totalConsumption;
-      normalizedAfter[startCorner.key] =
-          normalizedAfter[startCorner.key]! * scale;
-      normalizedBefore[endCorner.key] =
-          normalizedBefore[endCorner.key]! * scale;
+      scaleCorner(startCorner.key, scale, affectsAfterSide: true);
+      scaleCorner(endCorner.key, scale, affectsAfterSide: false);
     }
 
     return _ResolvedCornerRadii(
@@ -643,9 +700,6 @@ class _ConicArcSegment {
     required this.weight,
   });
 
-  void appendTo(Path path) {
-    path.conicTo(control.dx, control.dy, end.dx, end.dy, weight);
-  }
 }
 
 class _ResolvedCorner {
@@ -656,6 +710,10 @@ class _ResolvedCorner {
   final _SideFrame nextSide;
   final double beforeRadius;
   final double afterRadius;
+  final double previousStripCenterOffset;
+  final double nextStripCenterOffset;
+  final double previousHalfWidth;
+  final double nextHalfWidth;
 
   const _ResolvedCorner({
     required this.key,
@@ -665,25 +723,46 @@ class _ResolvedCorner {
     required this.nextSide,
     required this.beforeRadius,
     required this.afterRadius,
+    required this.previousStripCenterOffset,
+    required this.nextStripCenterOffset,
+    required this.previousHalfWidth,
+    required this.nextHalfWidth,
   });
-
-  bool get hasZeroRadiusComponent =>
-      _nearZero(beforeRadius) || _nearZero(afterRadius);
 
   bool get isInsetRounded => beforeRadius > _epsilon && afterRadius > _epsilon;
 
   bool get isNotchRounded => beforeRadius < -_epsilon && afterRadius < -_epsilon;
 
-  bool get isOuterArcRounded =>
-      !_nearZero(beforeRadius) &&
-          !_nearZero(afterRadius) &&
-          (beforeRadius.sign != afterRadius.sign);
-
-  bool get isSharp => hasZeroRadiusComponent;
-
   double get beforeAbs => beforeRadius.abs();
 
   double get afterAbs => afterRadius.abs();
+
+  double get outerContourRadius => max(0.0, max(beforeRadius, afterRadius));
+
+  double get innerContourRadius => max(0.0, max(-beforeRadius, -afterRadius));
+
+  bool get isContourDrivenCircular =>
+      !isInsetRounded &&
+          !isNotchRounded &&
+          (outerContourRadius > _epsilon || innerContourRadius > _epsilon);
+
+  bool get isDualContourRounded =>
+      isContourDrivenCircular &&
+          outerContourRadius > _epsilon &&
+          innerContourRadius > _epsilon;
+
+  bool get isOuterOnlyCircular =>
+      isContourDrivenCircular &&
+          outerContourRadius > _epsilon &&
+          innerContourRadius <= _epsilon;
+
+  bool get isInnerOnlyCircular =>
+      isContourDrivenCircular &&
+          innerContourRadius > _epsilon &&
+          outerContourRadius <= _epsilon;
+
+  bool get isSharp =>
+      !isInsetRounded && !isNotchRounded && !isContourDrivenCircular;
 
   double get turnAngle => frame.command.value.abs();
 
@@ -700,10 +779,14 @@ class _ResolvedCorner {
   Offset get nextNormal => nextSide.insideNormal;
 
   double get consumedOnPreviousSide =>
-      isParallel ? double.infinity : afterAbs / sinTurn;
+      isParallel
+          ? double.infinity
+          : (isContourDrivenCircular ? max(outerContourRadius, innerContourRadius) : afterAbs) / sinTurn;
 
   double get consumedOnNextSide =>
-      isParallel ? double.infinity : beforeAbs / sinTurn;
+      isParallel
+          ? double.infinity
+          : (isContourDrivenCircular ? max(outerContourRadius, innerContourRadius) : beforeAbs) / sinTurn;
 
   _CornerPrimitive primitive({
     required double previousOffset,
@@ -721,8 +804,9 @@ class _ResolvedCorner {
 /// adjacent side offsets.
 ///
 /// Local coordinates are signed perpendicular distances to the previous and
-/// next side. Depending on the radius signs, the primitive uses either the
-/// small tangent-to-tangent arc or the large one.
+/// next side. Depending on the radius semantics, the primitive uses either
+/// the tangent ellipse/notch geometry or the contour-driven circular radius
+/// for the currently traced contour.
 class _CornerPrimitive {
   final _ResolvedCorner corner;
   final double previousOffset;
@@ -742,11 +826,64 @@ class _CornerPrimitive {
 
   bool get isNotchRounded => corner.isNotchRounded;
 
-  bool get isOuterArcRounded => corner.isOuterArcRounded;
+  bool get isContourDrivenCircular => corner.isContourDrivenCircular;
 
-  double get beforeRadius => corner.beforeAbs;
+  bool get isDualContourRounded => corner.isDualContourRounded;
 
-  double get afterRadius => corner.afterAbs;
+  bool get isOuterOnlyCircular => corner.isOuterOnlyCircular;
+
+  bool get isInnerOnlyCircular => corner.isInnerOnlyCircular;
+
+  double _blendForSide(double actualOffset, double centerOffset, double halfWidth) {
+    if (halfWidth <= _epsilon) {
+      return double.nan;
+    }
+
+    final centered = actualOffset - centerOffset;
+    final blend = (centered / halfWidth + 1.0) / 2.0;
+    return max(0.0, min(1.0, blend));
+  }
+
+  double get contourBlend {
+    final blends = <double>[];
+
+    final previousBlend = _blendForSide(
+      previousOffset,
+      corner.previousStripCenterOffset,
+      corner.previousHalfWidth,
+    );
+    if (!previousBlend.isNaN) {
+      blends.add(previousBlend);
+    }
+
+    final nextBlend = _blendForSide(
+      nextOffset,
+      corner.nextStripCenterOffset,
+      corner.nextHalfWidth,
+    );
+    if (!nextBlend.isNaN) {
+      blends.add(nextBlend);
+    }
+
+    if (blends.isEmpty) {
+      final averageOffset = (previousOffset + nextOffset) / 2.0;
+      return averageOffset > _epsilon ? 1.0 : 0.0;
+    }
+
+    return blends.reduce((a, b) => a + b) / blends.length;
+  }
+
+  double get circularRadiusForContour => _lerpDouble(
+    corner.outerContourRadius,
+    corner.innerContourRadius,
+    contourBlend,
+  );
+
+  double get beforeRadius =>
+      isContourDrivenCircular ? circularRadiusForContour : corner.beforeAbs;
+
+  double get afterRadius =>
+      isContourDrivenCircular ? circularRadiusForContour : corner.afterAbs;
 
   bool get canBuildExactConic =>
       corner.hasExactConic &&
@@ -754,7 +891,7 @@ class _CornerPrimitive {
           afterRadius > _epsilon;
 
   Offset get localCenter {
-    if (isInsetRounded) {
+    if (isInsetRounded || isContourDrivenCircular) {
       return Offset(
         previousOffset + beforeRadius,
         nextOffset + afterRadius,
@@ -765,23 +902,18 @@ class _CornerPrimitive {
   }
 
   double get startAngle {
-    if (isInsetRounded) {
+    if (isInsetRounded || isContourDrivenCircular) {
       return pi;
     }
     return pi / 2.0;
   }
 
   double get endAngle {
-    if (isInsetRounded) {
+    if (isInsetRounded || isContourDrivenCircular) {
       return 1.5 * pi;
     }
-    if (isNotchRounded) {
-      return 0.0;
-    }
-    return 2.0 * pi;
+    return 0.0;
   }
-
-  double angleAt(double t) => _lerpDouble(startAngle, endAngle, t);
 
   Offset localPointAtAngle(double angle) {
     if (!canBuildExactConic) {
@@ -846,10 +978,6 @@ class _CornerPrimitive {
     final local = localPointAtAngle(angle);
     return mapDistancesToWorld(local.dx, local.dy);
   }
-
-  Offset tangentOnPreviousSide() => worldPointAtAngle(startAngle);
-
-  Offset tangentOnNextSide() => worldPointAtAngle(endAngle);
 
   Offset mapDistancesToWorld(double previousDistance, double nextDistance) {
     final a = corner.previousNormal.dx;
@@ -956,18 +1084,6 @@ class _CornerPrimitive {
     );
   }
 
-  void appendConic(
-      Path path, {
-        required double fromAngle,
-        required double toAngle,
-      }) {
-    for (final segment in conicSegments(
-      fromAngle: fromAngle,
-      toAngle: toAngle,
-    )) {
-      segment.appendTo(path);
-    }
-  }
 }
 
 class _BackgroundEntry {
@@ -1304,6 +1420,7 @@ class _StrokeRegionBuilder {
   final _PolygonGeometry geometry;
   final PolygonSetup setup;
   final bool backgroundOnly;
+  final bool backgroundMerge;
   final AnyShapeBase? backgroundBase;
 
   late final Map<Enum, _ResolvedSide> _resolvedSides = _resolveSides();
@@ -1315,6 +1432,7 @@ class _StrokeRegionBuilder {
       this.geometry,
       this.setup, {
         this.backgroundOnly = false,
+        this.backgroundMerge = true,
         this.backgroundBase,
       }) {
     _validateSetup();
@@ -1358,14 +1476,8 @@ class _StrokeRegionBuilder {
 
       final rx = resolved.radius.x;
       final ry = resolved.radius.y;
-      final validShape =
-          (_nearZero(rx) && _nearZero(ry)) ||
-              (!_nearZero(rx) && !_nearZero(ry));
-
-      if (!validShape) {
-        throw ArgumentError(
-          'Corner ${corner.key} must use Radius.zero or two non-zero radius components.',
-        );
+      if (rx.isNaN || ry.isNaN) {
+        throw ArgumentError('Corner ${corner.key} contains NaN radius values.');
       }
     }
   }
@@ -1397,17 +1509,23 @@ class _StrokeRegionBuilder {
     final result = <Enum, _ResolvedCorner>{};
 
     for (final cornerFrame in geometry.corners) {
-      final previousSide = geometry.sideAt(cornerFrame.index);
-      final nextSide = geometry.sideAt(cornerFrame.index + 1);
+      final previousSideFrame = geometry.sideAt(cornerFrame.index);
+      final nextSideFrame = geometry.sideAt(cornerFrame.index + 1);
+      final previousResolvedSide = _resolvedSides[previousSideFrame.key]!;
+      final nextResolvedSide = _resolvedSides[nextSideFrame.key]!;
 
       result[cornerFrame.key] = _ResolvedCorner(
         key: cornerFrame.key,
         corner: setup.corners[cornerFrame.key]!,
         frame: cornerFrame,
-        previousSide: previousSide,
-        nextSide: nextSide,
+        previousSide: previousSideFrame,
+        nextSide: nextSideFrame,
         beforeRadius: normalizedRadii.beforeOf(cornerFrame.key),
         afterRadius: normalizedRadii.afterOf(cornerFrame.key),
+        previousStripCenterOffset: previousResolvedSide.stripCenterOffset,
+        nextStripCenterOffset: nextResolvedSide.stripCenterOffset,
+        previousHalfWidth: previousResolvedSide.halfWidth,
+        nextHalfWidth: nextResolvedSide.halfWidth,
       );
     }
 
@@ -1444,8 +1562,6 @@ class _StrokeRegionBuilder {
         required double oNext,
       }) {
     final corner = _cornerAfter(previousSideIndex);
-    final previousSide = _sideAt(previousSideIndex);
-    final nextSide = _sideAt(previousSideIndex + 1);
     return corner.primitive(
       previousOffset: oPrev,
       nextOffset: oNext,
@@ -1482,7 +1598,7 @@ class _StrokeRegionBuilder {
       }
     }
 
-    if (_background != null) {
+    if (_background != null && backgroundMerge) {
       for (final side in _activeSides.values) {
         if (side.fill.isSameAs(_background!.fill)) {
           adjacency[side.key]!.add(_background!.key);
@@ -1518,8 +1634,7 @@ class _StrokeRegionBuilder {
       }
 
       final sideKeys = component.where(_activeSides.containsKey).toSet();
-      final backgroundKey =
-      component.contains(_background?.key) ? _background!.key : null;
+      final backgroundKey = component.contains(_background?.key) ? _background!.key : null;
 
       final orderedMembers = <Enum>[
         ...geometry.sideKeys.where(component.contains),
@@ -1680,17 +1795,6 @@ class _StrokeRegionBuilder {
       fragments.add(_buildBackgroundCornerFragmentPlan(i, group.sideKeys));
     }
     return _buildClosedContourPlanFromFragments(fragments);
-  }
-
-  ContourPathPlan _buildSideOnlyPlan(Set<Enum> sideKeys) {
-    final runs = _collectSideRuns(sideKeys);
-    if (runs.isEmpty) {
-      return ContourPathPlan(nodes: const <ContourNode>[], edges: const <ContourEdge>[], isClosed: false);
-    }
-    if (runs.length > 1) {
-      throw StateError('Side-only plan is only defined for a single contiguous run.');
-    }
-    return _buildSideRunPlan(runs.single);
   }
 
   ContourPathPlan _buildSideRunPlan(_SideRun run) {
@@ -2012,6 +2116,7 @@ class _StrokeRegionBuilder {
       oPrev: oPrev,
       oNext: oNext,
     );
+
     final splitAngle = switch (slice) {
       _CornerSlice.full => null,
       _CornerSlice.prevToSplit || _CornerSlice.splitToNext =>
@@ -2020,22 +2125,22 @@ class _StrokeRegionBuilder {
 
     final (startAngle, endAngle, startKind, endKind) = switch (slice) {
       _CornerSlice.full => (
-      primitive.startAngle,
-      primitive.endAngle,
-      ContourNodeKind.cornerTangent,
-      ContourNodeKind.cornerTangent,
+        primitive.startAngle,
+        primitive.endAngle,
+        ContourNodeKind.cornerTangent,
+        ContourNodeKind.cornerTangent,
       ),
       _CornerSlice.prevToSplit => (
-      primitive.startAngle,
-      splitAngle!,
-      ContourNodeKind.cornerTangent,
-      ContourNodeKind.cornerSplit,
+        primitive.startAngle,
+        splitAngle!,
+        ContourNodeKind.cornerTangent,
+        ContourNodeKind.cornerSplit,
       ),
       _CornerSlice.splitToNext => (
-      splitAngle!,
-      primitive.endAngle,
-      ContourNodeKind.cornerSplit,
-      ContourNodeKind.cornerTangent,
+        splitAngle!,
+        primitive.endAngle,
+        ContourNodeKind.cornerSplit,
+        ContourNodeKind.cornerTangent,
       ),
     };
 
@@ -2563,12 +2668,8 @@ class _StrokeRegionBuilder {
 }
 
 
-enum ShadowAlign {
-  inside,
-  outside
-}
-
 class AnyShadow with MAnyFill {
+
   @override
   final Color? color;
   @override
@@ -2578,6 +2679,11 @@ class AnyShadow with MAnyFill {
   @override
   final BlendMode? blendMode;
 
+  final double blurRadius;
+  final double spreadRadius;
+  final Offset offset;
+  final BlurStyle style;
+
   const AnyShadow({
     this.color,
     this.gradient,
@@ -2586,16 +2692,17 @@ class AnyShadow with MAnyFill {
     this.blurRadius = 0.0,
     this.offset = Offset.zero,
     this.spreadRadius = 0.0,
-    this.align = ShadowAlign.outside,
+    this.style = BlurStyle.normal,
   });
 
-  final double blurRadius;
-  final double spreadRadius;
-  final Offset offset;
-  final ShadowAlign align;
 
   @override
   bool operator ==(Object other) {
+
+    if (identical(this, other)) {
+      return true;
+    }
+
     return other is AnyShadow &&
         other.color == color &&
         other.gradient == gradient &&
@@ -2604,7 +2711,7 @@ class AnyShadow with MAnyFill {
         other.blurRadius == blurRadius &&
         other.offset == offset &&
         other.spreadRadius == spreadRadius &&
-        other.align == align;
+        other.style == style;
   }
 
   @override
@@ -2616,7 +2723,7 @@ class AnyShadow with MAnyFill {
     blurRadius,
     offset,
     spreadRadius,
-    align,
+    style,
   );
 }
 
@@ -2638,6 +2745,8 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
   final AnyShapeBase clip;
   final AnyShapeBase background;
 
+  final bool isAntiAlias;
+
   const AnyDecoration({
     this.shadows = const [],
     this.color,
@@ -2646,6 +2755,7 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
     this.blendMode,
     this.clip = AnyShapeBase.zeroBorder,
     this.background = AnyShapeBase.zeroBorder,
+    this.isAntiAlias = true,
   });
 
   @override
@@ -2663,74 +2773,142 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
     );
     return background.first.path.shift(rect.topLeft);
   }
+
+
+  @override
+  bool operator ==(Object other) {
+    return other is AnyDecoration &&
+        other.color == color &&
+        other.gradient == gradient &&
+        other.image == image &&
+        other.blendMode == blendMode &&
+        other.clip == clip &&
+        other.background == background &&
+        listEquals(other.shadows, shadows)
+    ;
+  }
+
+  @override
+  int get hashCode => Object.hash(color, gradient, image, blendMode, clip, background, Object.hashAll(shadows));
+
 }
 
 class _AnyDecorationPainter extends BoxPainter {
+
   _AnyDecorationPainter(this.decoration, super.onChanged);
 
   final AnyDecoration decoration;
-  final Map<DecorationImage, DecorationImagePainter> _imagePainters =
-  <DecorationImage, DecorationImagePainter>{};
+  final Map<DecorationImage, DecorationImagePainter> _imagePainters = <DecorationImage, DecorationImagePainter>{};
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     final size = configuration.size;
     if (size == null || size.isEmpty) return;
 
+    final List<AnyShadow> innerShadows = [];
+    final List<AnyShadow> otherShadows = [];
+    for (var shadow in decoration.shadows) {
+      ( shadow.style == BlurStyle.inner ? innerShadows : otherShadows ).add(shadow);
+    }
+
     final rect = offset & size;
     final (shape, setup) = decoration.polygon(rect, configuration.textDirection);
+    final regions = shape.buildMergedStrokeRegions(
+      setup,
+      backgroundMerge: innerShadows.isEmpty
+    );
 
-    final regions = shape.buildMergedStrokeRegions(setup);
     final backgroundKey = setup.background.keys.firstOrNull;
-
     StrokeRegion? backgroundRegion;
+    Path? shadowPath;
+
     if (backgroundKey != null) {
-      backgroundRegion =
-          regions.firstWhereOrNull((r) => r.included.contains(backgroundKey));
-      if (backgroundRegion != null) {
-        _paintRegion(canvas, backgroundRegion, rect, configuration);
+
+      backgroundRegion = regions.firstWhereOrNull((r) => r.included.contains(backgroundKey));
+
+      if (backgroundRegion?.included.length == 1) {
+        shadowPath = backgroundRegion!.path;
       }
     }
 
+    if (decoration.shadows.isNotEmpty) {
+
+      if (shadowPath == null) {
+        shadowPath = shape.buildMergedStrokeRegions(
+            setup,
+            backgroundOnly: true,
+            backgroundBase: decoration.background
+        ).first.path;
+      }
+
+      shadowPath = shadowPath.shift(offset);
+    }
+
+    for (var shadow in otherShadows) {
+      _paintShadow(canvas, shadow, shadowPath!, configuration);
+    }
+
+    if (backgroundRegion != null && backgroundRegion.hasFill) {
+      final path = backgroundRegion.path.shift(offset);
+      _paintRegion(canvas, backgroundRegion.fill, path, configuration);
+    }
+
+    for (var shadow in innerShadows) {
+      _paintShadow(canvas, shadow, shadowPath!, configuration);
+    }
+
     for (final region in regions) {
-      if (backgroundRegion == region) continue;
-      _paintRegion(canvas, region, rect, configuration);
+      if (backgroundRegion == region || !region.hasFill) continue;
+      final path = region.path.shift(offset);
+      _paintRegion(canvas, region.fill, path, configuration);
     }
   }
 
   void _paintRegion(
       Canvas canvas,
-      StrokeRegion region,
-      Rect rect,
+      IAnyFill fill,
+      Path path,
       ImageConfiguration configuration,
       ) {
-    final fill = region.fill;
+
+    final bounds = path.getBounds();
+
     if (fill.color != null || fill.gradient != null) {
-      final paint = Paint()..isAntiAlias = true;
+
+      final paint = Paint()
+        ..isAntiAlias = decoration.isAntiAlias;
+
       if (fill.blendMode != null) {
         paint.blendMode = fill.blendMode!;
       }
+
       if (fill.gradient != null) {
-        paint.shader = fill.gradient!
-            .createShader(rect, textDirection: configuration.textDirection);
+        paint.shader = fill.gradient!.createShader(bounds, textDirection: configuration.textDirection);
       } else if (fill.color != null) {
         paint.color = fill.color!;
       }
-      canvas.drawPath(region.path.shift(rect.topLeft), paint);
+
+      canvas.drawPath(path, paint);
     }
 
     if (fill.image != null) {
-      canvas.save();
-      canvas.clipPath(region.path.shift(rect.topLeft));
       final painterCallback = onChanged;
       final imagePainter = _imagePainters.putIfAbsent(
         fill.image!,
             () => fill.image!.createPainter(painterCallback!),
       );
-      imagePainter.paint(canvas, rect, Path()..addRect(rect), configuration);
-      canvas.restore();
+      imagePainter.paint(canvas, bounds, path, configuration);
     }
   }
+
+  void _paintShadow(Canvas canvas,
+      AnyShadow shadow,
+      Path path,
+      ImageConfiguration configuration,
+      ) {
+
+  }
+
 }
 
 enum BoxSide {
@@ -2851,197 +3029,5 @@ class AnyBoxDecoration extends AnyDecoration {
       },
     )
     );
-  }
-}
-
-class AnySideBuilder {
-  double width = 0.0;
-  double align = AnySide.alignCenter;
-
-  Color? color;
-  Gradient? gradient;
-  DecorationImage? image;
-  BlendMode? blendMode;
-
-  AnySideBuilder();
-
-  bool get isEmpty =>
-      width.abs() <= 0.00001 &&
-          color == null &&
-          gradient == null &&
-          image == null;
-
-  AnySide? buildOrNull() {
-    if (isEmpty) return null;
-
-    return AnySide(
-      width: width,
-      align: align,
-      color: color,
-      gradient: gradient,
-      image: image,
-      blendMode: blendMode,
-    );
-  }
-}
-
-class AnyDecorationBuilder {
-  final AnySideBuilder left = AnySideBuilder();
-  final AnySideBuilder top = AnySideBuilder();
-  final AnySideBuilder right = AnySideBuilder();
-  final AnySideBuilder bottom = AnySideBuilder();
-  final AnySideBuilder sides = AnySideBuilder();
-
-  List<AnyShadow> shadows = [];
-
-  Color? color;
-  Gradient? gradient;
-  DecorationImage? image;
-  BlendMode? blendMode;
-
-  AnyShapeBase? clip;
-  AnyShapeBase? background;
-
-  AnyDecorationBuilder();
-
-  AnyDecoration build() {
-    return AnyBoxDecoration(
-      left: left.buildOrNull(),
-      top: top.buildOrNull(),
-      right: right.buildOrNull(),
-      bottom: bottom.buildOrNull(),
-      sides: sides.buildOrNull(),
-      topRight: AnyCorner(Radius.elliptical(-4, 4)),
-      shadows: shadows,
-      color: color,
-      gradient: gradient,
-      image: image,
-      blendMode: blendMode,
-      clip: clip ?? AnyShapeBase.zeroBorder,
-      background: background ?? AnyShapeBase.zeroBorder,
-    );
-  }
-}
-
-class Change {
-  final String name;
-  final void Function(AnyDecorationBuilder) change;
-  const Change(this.name, this.change);
-}
-
-class ChangeGroup {
-  final String name;
-  final List<Change> changes;
-  const ChangeGroup(this.name, this.changes);
-}
-
-class ExampleGenerator {
-  static const groupSeparator = ' ';
-  static const changeSeparator = '-';
-
-  final List<ChangeGroup> groups;
-  const ExampleGenerator(this.groups);
-
-  Iterable<(String, List<Change>)> changes() sync* {
-    if (groups.isEmpty) return;
-
-    final orderedNames = <String>[];
-    final grouped = <String, List<ChangeGroup>>{};
-
-    for (final group in groups) {
-      final bucket = grouped[group.name];
-      if (bucket == null) {
-        orderedNames.add(group.name);
-        grouped[group.name] = [group];
-      } else {
-        bucket.add(group);
-      }
-    }
-
-    final perNamedGroup = <List<(String, List<Change>)>>[];
-
-    for (final groupName in orderedNames) {
-      final sameNameGroups = grouped[groupName]!;
-
-      List<(String, List<Change>)> combinations = [('', <Change>[])];
-
-      for (final group in sameNameGroups) {
-        final next = <(String, List<Change>)>[];
-
-        for (final current in combinations) {
-          for (final change in group.changes) {
-            final currentName = current.$1;
-            final nextName = currentName.isEmpty
-                ? change.name
-                : '$currentName$changeSeparator${change.name}';
-
-            next.add((
-            nextName,
-            [...current.$2, change],
-            ));
-          }
-        }
-
-        combinations = next;
-      }
-
-      perNamedGroup.add([
-        for (final combo in combinations)
-          (
-          combo.$1.isEmpty
-              ? groupName
-              : groupName.isEmpty
-              ? combo.$1
-              : '$groupName$changeSeparator${combo.$1}',
-          combo.$2,
-          ),
-      ]);
-    }
-
-    List<(String, List<Change>)> result = [('', <Change>[])];
-
-    for (final namedGroupVariants in perNamedGroup) {
-      final next = <(String, List<Change>)>[];
-
-      for (final current in result) {
-        for (final variant in namedGroupVariants) {
-          final currentName = current.$1;
-          final variantName = variant.$1;
-
-          final nextName = currentName.isEmpty
-              ? variantName
-              : variantName.isEmpty
-              ? currentName
-              : '$currentName$groupSeparator$variantName';
-
-          next.add((
-          nextName,
-          [...current.$2, ...variant.$2],
-          ));
-        }
-      }
-
-      result = next;
-    }
-
-    yield* result;
-  }
-
-  List<(String, AnyDecoration)> build() {
-    final result = <(String, AnyDecoration)>[];
-
-    for (final (name, changes) in changes()) {
-      final builder = AnyDecorationBuilder();
-      for (final change in changes) {
-        change.change(builder);
-      }
-
-      final decoration = builder.build();
-      result.add((name, decoration));
-    }
-
-    debugPrint('Built ${result.length} examples');
-
-    return result;
   }
 }

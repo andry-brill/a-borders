@@ -1,10 +1,11 @@
-import 'package:any_borders/any_borders.dart';
+
 import 'package:flutter/material.dart';
 
-class AnySideBuilder {
+import '../polygon_stroke_regions_rounded.dart';
 
+class AnySideBuilder {
   double width = 0.0;
-  AnyAlign? align;
+  double align = AnySide.alignCenter;
 
   Color? color;
   Gradient? gradient;
@@ -33,43 +34,14 @@ class AnySideBuilder {
   }
 }
 
-class AnyBorderBuilder {
-
+class AnyDecorationBuilder {
   final AnySideBuilder left = AnySideBuilder();
   final AnySideBuilder top = AnySideBuilder();
   final AnySideBuilder right = AnySideBuilder();
   final AnySideBuilder bottom = AnySideBuilder();
   final AnySideBuilder sides = AnySideBuilder();
 
-  IAnyCorner? topLeft;
-  IAnyCorner? topRight;
-  IAnyCorner? bottomRight;
-  IAnyCorner? bottomLeft;
-  IAnyCorner? corners;
-
-  AnyBorderBuilder();
-
-  AnyBorder build() {
-    return AnyBorder(
-      left: left.buildOrNull(),
-      top: top.buildOrNull(),
-      right: right.buildOrNull(),
-      bottom: bottom.buildOrNull(),
-      sides: sides.buildOrNull(),
-      topLeft: topLeft,
-      topRight: topRight,
-      bottomRight: bottomRight,
-      bottomLeft: bottomLeft,
-      corners: corners,
-    );
-  }
-}
-
-class AnyDecorationBuilder {
-
-  final AnyBorderBuilder border = AnyBorderBuilder();
-
-  List<IAnyShadow>? shadows;
+  List<AnyShadow> shadows = [];
 
   Color? color;
   Gradient? gradient;
@@ -82,19 +54,23 @@ class AnyDecorationBuilder {
   AnyDecorationBuilder();
 
   AnyDecoration build() {
-    return AnyDecoration(
-      border: border.build(),
-      shadows: (shadows == null || shadows!.isEmpty) ? null : shadows,
+    return AnyBoxDecoration(
+      left: left.buildOrNull(),
+      top: top.buildOrNull(),
+      right: right.buildOrNull(),
+      bottom: bottom.buildOrNull(),
+      sides: sides.buildOrNull(),
+      topRight: AnyCorner(Radius.elliptical(10, 0)),
+      shadows: shadows,
       color: color,
       gradient: gradient,
       image: image,
       blendMode: blendMode,
-      clip: clip,
-      background: background,
+      clip: clip ?? AnyShapeBase.zeroBorder,
+      background: background ?? AnyShapeBase.zeroBorder,
     );
   }
 }
-
 
 class Change {
   final String name;
@@ -108,25 +84,16 @@ class ChangeGroup {
   const ChangeGroup(this.name, this.changes);
 }
 
-class ExampleGenerator  {
-
+class ExampleGenerator {
   static const groupSeparator = ' ';
   static const changeSeparator = '-';
 
   final List<ChangeGroup> groups;
   const ExampleGenerator(this.groups);
 
-  // Iterable<(String,List<Change>)> changes() sync* {
-  //   // TODO implement grouping groups name
-  //   //  TODO like if we have [ChangeGroup('TopBorder', [Change('Width0', ..), Change('Width10', ..)], ChangeGroup('TopBorder', [Change('AlignInner', ..), Change('AlignOuter', ..)]), ...]
-  //   //  TODO we will get TopBorder-Width0-AlignInner (no duplication)
-  //   // TODO implement cross join for each group changes and yield to iterate over
-  // }
-
   Iterable<(String, List<Change>)> changes() sync* {
     if (groups.isEmpty) return;
 
-    // Group ChangeGroups by their name, preserving first appearance order.
     final orderedNames = <String>[];
     final grouped = <String, List<ChangeGroup>>{};
 
@@ -140,8 +107,6 @@ class ExampleGenerator  {
       }
     }
 
-    // For each unique group name, build all combinations across all groups
-    // sharing that name.
     final perNamedGroup = <List<(String, List<Change>)>>[];
 
     for (final groupName in orderedNames) {
@@ -182,7 +147,6 @@ class ExampleGenerator  {
       ]);
     }
 
-    // Cross join across unique named groups.
     List<(String, List<Change>)> result = [('', <Change>[])];
 
     for (final namedGroupVariants in perNamedGroup) {
@@ -212,28 +176,20 @@ class ExampleGenerator  {
     yield* result;
   }
 
-  List<(String,AnyDecoration)> build() {
+  List<(String, AnyDecoration)> build() {
+    final result = <(String, AnyDecoration)>[];
 
-    int total = 0;
-    Set<AnyDecoration> unique = {};
-    List<(String,AnyDecoration)> result = [];
-
-    for (var (name, changes) in changes()) {
-      AnyDecorationBuilder builder = AnyDecorationBuilder();
-      for (var change in changes) {
+    for (final (name, changes) in changes()) {
+      final builder = AnyDecorationBuilder();
+      for (final change in changes) {
         change.change(builder);
       }
 
       final decoration = builder.build();
-      total++;
-
-      if (!unique.contains(decoration)) {
-        result.add((name, decoration));
-        unique.add(decoration);
-      }
+      result.add((name, decoration));
     }
 
-    debugPrint('Built ${result.length} examples from $total total builds');
+    debugPrint('Built ${result.length} examples');
 
     return result;
   }

@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import '../example/lib/polygon_stroke_regions.dart';
+import '../example/lib/polygon_stroke_regions_rounded.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 enum RectSide {
