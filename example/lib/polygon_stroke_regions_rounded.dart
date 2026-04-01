@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
@@ -9,6 +10,7 @@ abstract class IAnyFill {
   Gradient? get gradient;
   DecorationImage? get image;
   BlendMode? get blendMode;
+  bool get isAntiAlias;
   bool isSameAs(IAnyFill other);
 }
 
@@ -19,7 +21,8 @@ mixin MAnyFill implements IAnyFill {
     return color == other.color &&
         gradient == other.gradient &&
         image == other.image &&
-        blendMode == other.blendMode;
+        blendMode == other.blendMode &&
+        isAntiAlias == other.isAntiAlias;
   }
 }
 
@@ -209,6 +212,8 @@ class AnySide with MAnyFill {
   final DecorationImage? image;
   @override
   final BlendMode? blendMode;
+  @override
+  final bool isAntiAlias;
 
   const AnySide({
     this.width = 0.0,
@@ -217,6 +222,7 @@ class AnySide with MAnyFill {
     this.gradient,
     this.image,
     this.blendMode,
+    this.isAntiAlias = true
   })  : _align = align,
         assert(width >= 0.0),
         assert(align == null || (align >= -1.0 && align <= 1.0));
@@ -269,6 +275,7 @@ class AnyBackground extends AnySide {
     super.gradient,
     super.image,
     super.blendMode,
+    super.isAntiAlias,
     this.shapeBase = AnyShapeBase.zeroBorder,
   }) : super(width: double.infinity, align: AnySide.alignCenter);
 
@@ -2678,9 +2685,11 @@ class AnyShadow with MAnyFill {
   final DecorationImage? image;
   @override
   final BlendMode? blendMode;
+  @override
+  final bool isAntiAlias;
 
   final double blurRadius;
-  final double spreadRadius;
+  final Offset spreadRadius;
   final Offset offset;
   final BlurStyle style;
 
@@ -2691,10 +2700,12 @@ class AnyShadow with MAnyFill {
     this.blendMode,
     this.blurRadius = 0.0,
     this.offset = Offset.zero,
-    this.spreadRadius = 0.0,
+    this.spreadRadius = Offset.zero,
     this.style = BlurStyle.normal,
+    this.isAntiAlias = true
   });
 
+  double get blurSigma => Shadow.convertRadiusToSigma(blurRadius);
 
   @override
   bool operator ==(Object other) {
@@ -2727,36 +2738,25 @@ class AnyShadow with MAnyFill {
   );
 }
 
-abstract class AnyDecoration extends Decoration with MAnyFill {
+abstract class AnyDecoration extends Decoration {
   /// Polygon defines shape
   (Polygon, PolygonSetup) polygon(Rect rect, TextDirection? textDirection);
 
+  final AnyBackground? background;
   final List<AnyShadow> shadows;
 
-  @override
-  final Color? color;
-  @override
-  final Gradient? gradient;
-  @override
-  final DecorationImage? image;
-  @override
-  final BlendMode? blendMode;
+  final AnyShapeBase clipBase;
 
-  final AnyShapeBase clip;
-  final AnyShapeBase background;
+  final AnyShapeBase? _shadowBase;
+  AnyShapeBase get shadowBase => _shadowBase ?? background?.shapeBase ?? clipBase;
 
-  final bool isAntiAlias;
 
   const AnyDecoration({
     this.shadows = const [],
-    this.color,
-    this.gradient,
-    this.image,
-    this.blendMode,
-    this.clip = AnyShapeBase.zeroBorder,
-    this.background = AnyShapeBase.zeroBorder,
-    this.isAntiAlias = true,
-  });
+    this.background,
+    this.clipBase = AnyShapeBase.zeroBorder,
+    AnyShapeBase? shadowBase
+  }) : _shadowBase = shadowBase;
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
@@ -2769,7 +2769,7 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
     final background = shape.buildMergedStrokeRegions(
       setup,
       backgroundOnly: true,
-      backgroundBase: clip,
+      backgroundBase: clipBase,
     );
     return background.first.path.shift(rect.topLeft);
   }
@@ -2777,19 +2777,21 @@ abstract class AnyDecoration extends Decoration with MAnyFill {
 
   @override
   bool operator ==(Object other) {
+
+    if (identical(this, other)) {
+      return true;
+    }
+
     return other is AnyDecoration &&
-        other.color == color &&
-        other.gradient == gradient &&
-        other.image == image &&
-        other.blendMode == blendMode &&
-        other.clip == clip &&
+        other.shadowBase == shadowBase &&
+        other.clipBase == clipBase &&
         other.background == background &&
         listEquals(other.shadows, shadows)
     ;
   }
 
   @override
-  int get hashCode => Object.hash(color, gradient, image, blendMode, clip, background, Object.hashAll(shadows));
+  int get hashCode => Object.hash(clipBase, shadowBase, background, Object.hashAll(shadows));
 
 }
 
@@ -2808,7 +2810,9 @@ class _AnyDecorationPainter extends BoxPainter {
     final List<AnyShadow> innerShadows = [];
     final List<AnyShadow> otherShadows = [];
     for (var shadow in decoration.shadows) {
-      ( shadow.style == BlurStyle.inner ? innerShadows : otherShadows ).add(shadow);
+      if (shadow.hasFill) {
+        ( shadow.style == BlurStyle.inner ? innerShadows : otherShadows ).add(shadow);
+      }
     }
 
     final rect = offset & size;
@@ -2826,18 +2830,18 @@ class _AnyDecorationPainter extends BoxPainter {
 
       backgroundRegion = regions.firstWhereOrNull((r) => r.included.contains(backgroundKey));
 
-      if (backgroundRegion?.included.length == 1) {
+      if (backgroundRegion?.included.length == 1 && decoration.background?.shapeBase == decoration.shadowBase) {
         shadowPath = backgroundRegion!.path;
       }
     }
 
-    if (decoration.shadows.isNotEmpty) {
+    if (innerShadows.isNotEmpty || otherShadows.isNotEmpty) {
 
       if (shadowPath == null) {
         shadowPath = shape.buildMergedStrokeRegions(
             setup,
             backgroundOnly: true,
-            backgroundBase: decoration.background
+            backgroundBase: decoration.shadowBase
         ).first.path;
       }
 
@@ -2871,34 +2875,54 @@ class _AnyDecorationPainter extends BoxPainter {
       ImageConfiguration configuration,
       ) {
 
-    final bounds = path.getBounds();
-
-    if (fill.color != null || fill.gradient != null) {
-
-      final paint = Paint()
-        ..isAntiAlias = decoration.isAntiAlias;
-
-      if (fill.blendMode != null) {
-        paint.blendMode = fill.blendMode!;
-      }
-
-      if (fill.gradient != null) {
-        paint.shader = fill.gradient!.createShader(bounds, textDirection: configuration.textDirection);
-      } else if (fill.color != null) {
-        paint.color = fill.color!;
-      }
-
-      canvas.drawPath(path, paint);
-    }
 
     if (fill.image != null) {
+
       final painterCallback = onChanged;
       final imagePainter = _imagePainters.putIfAbsent(
         fill.image!,
             () => fill.image!.createPainter(painterCallback!),
       );
-      imagePainter.paint(canvas, bounds, path, configuration);
+
+      imagePainter.paint(canvas, path.getBounds(), path, configuration);
     }
+
+    if (fill.hasBaseFill) {
+      final paint = createBasePaint(fill, path, configuration);
+      canvas.drawPath(path, paint);
+    }
+
+  }
+
+  Paint createBasePaint(IAnyFill fill, Path path, ImageConfiguration configuration) {
+
+    final paint = Paint()
+      ..isAntiAlias = fill.isAntiAlias;
+
+    if (fill.blendMode != null) {
+      paint.blendMode = fill.blendMode!;
+    }
+
+    if (fill.gradient != null) {
+      paint.shader = fill.gradient!.createShader(path.getBounds(), textDirection: configuration.textDirection);
+    } else if (fill.color != null) {
+      paint.color = fill.color!;
+    }
+
+    return paint;
+  }
+
+  Path scalePathAroundCenter(Path path, double scale) {
+    final bounds = path.getBounds();
+    final cx = bounds.center.dx;
+    final cy = bounds.center.dy;
+
+    final matrix = Matrix4.identity()
+      ..translateByDouble(cx, cy, 0, 1.0)
+      ..scaleByDouble(scale, scale, 1.0, 1.0)
+      ..translateByDouble(-cx, -cy, 0, 1.0);
+
+    return path.transform(matrix.storage);
   }
 
   void _paintShadow(Canvas canvas,
@@ -2906,6 +2930,128 @@ class _AnyDecorationPainter extends BoxPainter {
       Path path,
       ImageConfiguration configuration,
       ) {
+
+    if (shadow.spreadRadius != Offset.zero) {
+
+      final bounds = path.getBounds();
+      final scaleX =  (bounds.width + shadow.spreadRadius.dx) / bounds.width;
+      final scaleY =  (bounds.height + shadow.spreadRadius.dy) / bounds.height;
+
+      final cx = bounds.center.dx;
+      final cy = bounds.center.dy;
+
+
+      final matrix = Matrix4.identity()
+        ..translateByDouble(cx, cy, 0, 1.0)
+        ..scaleByDouble(scaleX, scaleY, 1.0, 1.0)
+        ..translateByDouble(-cx, -cy, 0, 1.0);
+
+      path = path.transform(matrix.storage);
+    }
+
+    if (shadow.offset != Offset.zero) {
+      path = path.shift(shadow.offset);
+    }
+
+    if (shadow.image != null) {
+
+      final painterCallback = onChanged;
+      final imagePainter = _imagePainters.putIfAbsent(
+        shadow.image!,
+            () => shadow.image!.createPainter(painterCallback!),
+      );
+
+      void paintImageSource() {
+        imagePainter.paint(
+          canvas,
+          path.getBounds(),
+          path,
+          configuration,
+        );
+      }
+
+      // Extra space so the blurred pixels are not clipped.
+      final layerBounds = path.getBounds().inflate(
+        shadow.blurRadius > 0 ? shadow.blurRadius * 2.0 + 1.0 : 1.0,
+      );
+
+      final compositePaint = Paint()
+        ..isAntiAlias = shadow.isAntiAlias;
+
+      if (shadow.blendMode != null) {
+        compositePaint.blendMode = shadow.blendMode!;
+      }
+
+      final blurPaint = Paint();
+      if (shadow.blurSigma > 0.0) {
+        blurPaint.imageFilter = ImageFilter.blur(
+          sigmaX: shadow.blurSigma,
+          sigmaY: shadow.blurSigma,
+          tileMode: TileMode.decal,
+        );
+      }
+
+      canvas.saveLayer(layerBounds, compositePaint);
+
+      switch (shadow.style) {
+        case BlurStyle.normal:
+          canvas.saveLayer(layerBounds, blurPaint);
+          paintImageSource();
+          canvas.restore();
+          break;
+
+        case BlurStyle.inner:
+          canvas.saveLayer(layerBounds, blurPaint);
+          paintImageSource();
+          canvas.restore();
+
+          canvas.saveLayer(
+            layerBounds,
+            Paint()..blendMode = BlendMode.dstIn,
+          );
+          paintImageSource();
+          canvas.restore();
+          break;
+
+        case BlurStyle.outer:
+          canvas.saveLayer(layerBounds, blurPaint);
+          paintImageSource();
+          canvas.restore();
+
+          canvas.saveLayer(
+            layerBounds,
+            Paint()..blendMode = BlendMode.dstOut,
+          );
+          paintImageSource();
+          canvas.restore();
+          break;
+
+        case BlurStyle.solid:
+          canvas.saveLayer(layerBounds, blurPaint);
+          paintImageSource();
+          canvas.restore();
+
+          canvas.saveLayer(
+            layerBounds,
+            Paint()..blendMode = BlendMode.dstOut,
+          );
+          paintImageSource();
+          canvas.restore();
+
+          paintImageSource();
+          break;
+      }
+
+      canvas.restore();
+    }
+
+    if (shadow.hasBaseFill) {
+
+      final paint = createBasePaint(shadow, path, configuration)
+        ..maskFilter = MaskFilter.blur(shadow.style, shadow.blurSigma);
+
+      canvas.drawPath(path, paint);
+    }
 
   }
 
@@ -2927,7 +3073,8 @@ enum BoxCorner {
 }
 
 class AnyBoxDecoration extends AnyDecoration {
-  static AnySide zeroSide = const AnySide(width: 0);
+
+  static AnySide zeroSide = const AnySide();
   static AnyCorner cornersBase = const AnyCorner();
 
   final AnySide? _left;
@@ -2962,11 +3109,8 @@ class AnyBoxDecoration extends AnyDecoration {
 
   const AnyBoxDecoration({
     super.shadows,
-    super.color,
-    super.gradient,
-    super.image,
-    super.blendMode,
-    super.clip,
+    super.clipBase,
+    super.shadowBase,
     super.background,
     AnySide? left,
     AnySide? top,
@@ -3019,13 +3163,7 @@ class AnyBoxDecoration extends AnyDecoration {
         BoxSide.bottom: bottom,
       },
       background: {
-        BoxSide.background: AnyBackground(
-          color: color,
-          gradient: gradient,
-          image: image,
-          blendMode: blendMode,
-          shapeBase: background,
-        )
+        if (background != null ) BoxSide.background: background!
       },
     )
     );

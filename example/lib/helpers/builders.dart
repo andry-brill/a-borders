@@ -62,12 +62,14 @@ class AnyDecorationBuilder {
       sides: sides.buildOrNull(),
       topRight: AnyCorner(Radius.elliptical(10, 0)),
       shadows: shadows,
-      color: color,
-      gradient: gradient,
-      image: image,
-      blendMode: blendMode,
-      clip: clip ?? AnyShapeBase.zeroBorder,
-      background: background ?? AnyShapeBase.zeroBorder,
+      clipBase: clip ?? AnyShapeBase.zeroBorder,
+      background: AnyBackground(
+        color: color,
+        gradient: gradient,
+        image: image,
+        blendMode: blendMode,
+        shapeBase: background ?? AnyShapeBase.zeroBorder,
+      ),
     );
   }
 }
