@@ -170,6 +170,7 @@ class Polygon {
 }
 
 class PolygonSetup {
+
   final Map<Enum, AnySide> sides;
   final Map<Enum, AnyCorner> corners;
   final Map<Enum, AnyBackground> background;
@@ -357,6 +358,7 @@ class AnyBackground extends AnySide {
 /// must be chosen consistently to keep both side regions continuous and
 /// visually aligned through the corner.
 class AnyCorner {
+
   final Radius radius;
   const AnyCorner([this.radius = Radius.zero]);
 
@@ -2739,8 +2741,9 @@ class AnyShadow with MAnyFill {
 }
 
 abstract class AnyDecoration extends Decoration {
+
   /// Polygon defines shape
-  (Polygon, PolygonSetup) polygon(Rect rect, TextDirection? textDirection);
+  (Polygon, PolygonSetup, Offset) polygon(Rect rect, TextDirection? textDirection);
 
   final AnyBackground? background;
   final List<AnyShadow> shadows;
@@ -2765,13 +2768,13 @@ abstract class AnyDecoration extends Decoration {
 
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {
-    final (shape, setup) = polygon(rect, textDirection);
+    final (shape, setup, offset) = polygon(rect, textDirection);
     final background = shape.buildMergedStrokeRegions(
       setup,
       backgroundOnly: true,
       backgroundBase: clipBase,
     );
-    return background.first.path.shift(rect.topLeft);
+    return background.first.path.shift(offset);
   }
 
 
@@ -2803,7 +2806,8 @@ class _AnyDecorationPainter extends BoxPainter {
   final Map<DecorationImage, DecorationImagePainter> _imagePainters = <DecorationImage, DecorationImagePainter>{};
 
   @override
-  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+  void paint(Canvas canvas, Offset topLeft, ImageConfiguration configuration) {
+
     final size = configuration.size;
     if (size == null || size.isEmpty) return;
 
@@ -2815,8 +2819,8 @@ class _AnyDecorationPainter extends BoxPainter {
       }
     }
 
-    final rect = offset & size;
-    final (shape, setup) = decoration.polygon(rect, configuration.textDirection);
+    final rect = topLeft & size;
+    final (shape, setup, offset) = decoration.polygon(rect, configuration.textDirection);
     final regions = shape.buildMergedStrokeRegions(
       setup,
       backgroundMerge: innerShadows.isEmpty
@@ -3107,7 +3111,12 @@ class AnyBoxDecoration extends AnyDecoration {
   final AnyCorner? _corners;
   AnyCorner get corners => _corners ?? cornersBase;
 
+  /// Width / Height
+  final double? ratio;
+
   const AnyBoxDecoration({
+    double? ratio,
+    bool circle = false,
     super.shadows,
     super.clipBase,
     super.shadowBase,
@@ -3122,7 +3131,9 @@ class AnyBoxDecoration extends AnyDecoration {
     AnyCorner? bottomRight,
     AnyCorner? bottomLeft,
     AnyCorner? corners,
-  })  : _corners = corners,
+  })  :
+        ratio =  circle ? 1.0 : ratio,
+        _corners = circle ? const AnyCorner(Radius.circular(double.infinity)) : corners,
         _sides = sides,
         _left = left,
         _top = top,
@@ -3131,25 +3142,45 @@ class AnyBoxDecoration extends AnyDecoration {
         _topLeft = topLeft,
         _topRight = topRight,
         _bottomRight = bottomRight,
-        _bottomLeft = bottomLeft;
+        _bottomLeft = bottomLeft
+      ;
 
   @override
-  (Polygon, PolygonSetup) polygon(Rect rect, TextDirection? textDirection) {
+  (Polygon, PolygonSetup, Offset) polygon(Rect rect, TextDirection? textDirection) {
+
+    Offset offset = rect.topLeft;
+    final width = rect.width;
+    final height = rect.height;
+
+    // ratio is width / height
+    if (ratio != null) {
+      double nextWidth = width;
+      double nextHeight = width / ratio!;
+
+      if (nextHeight > height) {
+        nextHeight = height;
+        nextWidth = height * ratio!;
+      }
+
+      offset += Offset(
+        (width - nextWidth) / 2,
+        (height - nextHeight) / 2,
+      ); // align in center
+    }
+
     const d90 = pi / 2.0;
     final polygon = Polygon({
-      BoxSide.top: Command(CommandType.line, rect.width),
+      BoxSide.top: Command(CommandType.line, width),
       BoxCorner.topRight: const Command(CommandType.rotateRight, d90),
-      BoxSide.right: Command(CommandType.line, rect.height),
+      BoxSide.right: Command(CommandType.line, height),
       BoxCorner.bottomRight: const Command(CommandType.rotateRight, d90),
-      BoxSide.bottom: Command(CommandType.line, rect.width),
+      BoxSide.bottom: Command(CommandType.line, width),
       BoxCorner.bottomLeft: const Command(CommandType.rotateRight, d90),
-      BoxSide.left: Command(CommandType.line, rect.height),
+      BoxSide.left: Command(CommandType.line, height),
       BoxCorner.topLeft: const Command(CommandType.rotateRight, d90),
     });
 
-    return (
-    polygon,
-    PolygonSetup(
+    final setup = PolygonSetup(
       corners: {
         BoxCorner.topLeft: topLeft,
         BoxCorner.topRight: topRight,
@@ -3165,7 +3196,237 @@ class AnyBoxDecoration extends AnyDecoration {
       background: {
         if (background != null ) BoxSide.background: background!
       },
-    )
     );
+
+    return (polygon, setup, offset);
+  }
+}
+
+
+
+enum TriSide {
+  // side that is perpendicular to center of the rect
+  base,
+  left,
+  right,
+  background,
+}
+
+
+enum TriCorner {
+  /// From left of the base
+  l,
+  /// From right of the base
+  r,
+  /// In front of the base
+  f,
+}
+
+/// Triangle will be inscribed into
+///   rect with point TL TR BL BR (LT - left top, RB - right bottom, C(T/B/L/R) - center of top/bottom/left/right)
+enum TriType {
+  // Triangle between TL & TR & BL
+  topLeft,
+  // Triangle between CB & TL & TR
+  topCenter,
+  // Triangle between TR & BR & TL
+  topRight,
+  // Triangle between CL & TR & BR
+  centerRight,
+  // Triangle between BR & BL & TR
+  bottomRight,
+  // Triangle between CT & BR & BL
+  bottomCenter,
+  // Triangle between BL & TL & TR
+  bottomLeft,
+  // Triangle between CR & BL & TL
+  centerLeft,
+}
+
+
+class AnyTriDecoration extends AnyDecoration {
+  static AnySide zeroSide = const AnySide();
+  static AnyCorner cornersBase = const AnyCorner();
+
+  final AnySide? _left;
+  AnySide get left => _left ?? sides;
+
+  final AnySide? _base;
+  AnySide get base => _base ?? sides;
+
+  final AnySide? _right;
+  AnySide get right => _right ?? sides;
+
+  final AnySide? _sides;
+  AnySide get sides => _sides ?? zeroSide;
+
+  final AnyCorner? _l;
+  AnyCorner get l => _l ?? corners;
+
+  final AnyCorner? _r;
+  AnyCorner get r => _r ?? corners;
+
+  final AnyCorner? _f;
+  AnyCorner get f => _f ?? corners;
+
+  final AnyCorner? _corners;
+  AnyCorner get corners => _corners ?? cornersBase;
+
+  /// Width / Height
+  final double? ratio;
+
+  final TriType type;
+
+  const AnyTriDecoration({
+    required this.type,
+    double? ratio,
+    bool circle = false,
+    super.shadows,
+    super.clipBase,
+    super.shadowBase,
+    super.background,
+    AnySide? left,
+    AnySide? base,
+    AnySide? right,
+    AnySide? sides,
+    AnyCorner? l,
+    AnyCorner? r,
+    AnyCorner? f,
+    AnyCorner? bottomLeft,
+    AnyCorner? corners,
+  })  : ratio = circle ? 1.0 : ratio,
+        _corners = circle ? const AnyCorner(Radius.circular(double.infinity)) : corners,
+        _sides = sides,
+        _left = left,
+        _base = base,
+        _right = right,
+        _l = l,
+        _r = r,
+        _f = f;
+
+  double _turnRightAngle(Offset from, Offset to) {
+    final a1 = atan2(from.dy, from.dx);
+    final a2 = atan2(to.dy, to.dx);
+
+    double delta = a2 - a1;
+    while (delta <= 0) {
+      delta += pi * 2.0;
+    }
+    while (delta > pi * 2.0) {
+      delta -= pi * 2.0;
+    }
+    return delta;
+  }
+
+  ({Offset l, Offset r, Offset f}) _pointsForType(double width, double height) {
+    final tl = Offset.zero;
+    final tr = Offset(width, 0);
+    final br = Offset(width, height);
+    final bl = Offset(0, height);
+    final ct = Offset(width / 2.0, 0);
+    final cb = Offset(width / 2.0, height);
+    final cl = Offset(0, height / 2.0);
+    final cr = Offset(width, height / 2.0);
+
+    return switch (type) {
+    // Triangle: TL, TR, BL
+    // front = TL, base = TR -> BL
+      TriType.topLeft => (l: tr, r: bl, f: tl),
+
+    // Triangle: CB, TL, TR
+    // front = CB, base = TL -> TR
+      TriType.topCenter => (l: tl, r: tr, f: cb),
+
+    // Triangle: TR, BR, TL
+    // front = TR, base = BR -> TL
+      TriType.topRight => (l: br, r: tl, f: tr),
+
+    // Triangle: CL, TR, BR
+    // front = CL, base = TR -> BR
+      TriType.centerRight => (l: tr, r: br, f: cl),
+
+    // Triangle: BR, BL, TR
+    // front = BR, base = BL -> TR
+      TriType.bottomRight => (l: bl, r: tr, f: br),
+
+    // Triangle: CT, BR, BL
+    // front = CT, base = BR -> BL
+      TriType.bottomCenter => (l: br, r: bl, f: ct),
+
+    // Triangle: BL, TL, BR
+    // front = BL, base = TL -> BR
+      TriType.bottomLeft => (l: tl, r: br, f: bl),
+
+    // Triangle: CR, BL, TL
+    // front = CR, base = BL -> TL
+      TriType.centerLeft => (l: bl, r: tl, f: cr),
+    };
+  }
+
+  @override
+  (Polygon, PolygonSetup, Offset) polygon(Rect rect, TextDirection? textDirection) {
+
+    Offset offset = rect.topLeft;
+
+    double width = rect.width;
+    double height = rect.height;
+
+    // ratio is width / height
+    if (ratio != null) {
+      double nextWidth = width;
+      double nextHeight = width / ratio!;
+
+      if (nextHeight > height) {
+        nextHeight = height;
+        nextWidth = height * ratio!;
+      }
+
+      offset += Offset(
+        (width - nextWidth) / 2.0,
+        (height - nextHeight) / 2.0,
+      );
+
+      width = nextWidth;
+      height = nextHeight;
+    }
+
+    final points = _pointsForType(width, height);
+    print('p $points');
+
+    final baseVec = points.r - points.l;
+    final rightVec = points.f - points.r;
+    final leftVec = points.l - points.f;
+
+    print('b $baseVec r $rightVec l $leftVec');
+
+    print('>>>> ${atan2(200, 100)}');
+
+    final polygon = Polygon({
+      TriSide.left: Command(CommandType.line, 200),
+      TriCorner.r: Command(CommandType.rotateRight, pi / 2 + atan2(200, 100)),
+      TriSide.base: Command(CommandType.line, sqrt(200 * 200 + 100 * 100)),
+      TriCorner.l: Command(CommandType.rotateRight, pi / 2 + atan2(100, 200)),
+      TriSide.right: Command(CommandType.line, 100),
+      TriCorner.f: Command(CommandType.rotateRight, pi / 2),
+
+    });
+
+    final setup = PolygonSetup(
+      corners: {
+        TriCorner.l: l,
+        TriCorner.r: r,
+        TriCorner.f: f,
+      },
+      sides: {
+        TriSide.left: left,
+        TriSide.base: base,
+        TriSide.right: right,
+      },
+      background: {
+        if (background != null) TriSide.background: background!,
+      },
+    );
+
+    return (polygon, setup, offset);
   }
 }

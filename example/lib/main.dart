@@ -321,7 +321,7 @@ class _ExamplePageState extends State<_ExamplePage> {
     if (filterTo.isNotEmpty) {
       ex = filterTo.map((i) => examples[i]).toList();
     }
-
+    // ex.slices(4).map(row).toList();
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(padding: EdgeInsetsGeometry.all(100),
@@ -329,7 +329,18 @@ class _ExamplePageState extends State<_ExamplePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: w4,
-              children: ex.slices(4).map(row).toList(),
+              children: [
+                Center(child: Container(
+                  constraints: BoxConstraints.tightFor(width: 200, height:  100),
+                  decoration: AnyTriDecoration(
+                    base: AnySide(width: 10, color: Colors.orange),
+                    f: AnyCorner(Radius.circular(20)),
+                    r: AnyCorner(Radius.circular(30)),
+                    background: AnyBackground(color: Colors.blue),
+                    type: TriType.topLeft
+                  ),
+                  child: Center(child: Text("Triangle")),
+              ))],
         ))
       ),
     );
