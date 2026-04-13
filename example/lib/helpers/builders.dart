@@ -1,7 +1,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../polygon_stroke_regions_rounded.dart';
+// import '../polygon_stroke_regions_rounded.dart';
+import '../next.dart';
 
 class AnySideBuilder {
   double width = 0.0;
@@ -60,7 +61,7 @@ class AnyDecorationBuilder {
       right: right.buildOrNull(),
       bottom: bottom.buildOrNull(),
       sides: sides.buildOrNull(),
-      topRight: AnyCorner(Radius.elliptical(10, 0)),
+      topRight: AnyCorner(Radius.circular(10)),
       shadows: shadows,
       clipBase: clip ?? AnyShapeBase.zeroBorder,
       background: AnyBackground(

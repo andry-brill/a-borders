@@ -1,6 +1,6 @@
 
 import 'package:collection/collection.dart';
-import 'package:example/polygon_stroke_regions_rounded.dart';
+import 'package:example/next.dart';
 import 'package:flutter/material.dart';
 
 import 'helpers/builders.dart';
@@ -321,7 +321,7 @@ class _ExamplePageState extends State<_ExamplePage> {
     if (filterTo.isNotEmpty) {
       ex = filterTo.map((i) => examples[i]).toList();
     }
-    // ex.slices(4).map(row).toList();
+    final children = ex.slices(4).map(row).toList();
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(padding: EdgeInsetsGeometry.all(100),
@@ -329,7 +329,16 @@ class _ExamplePageState extends State<_ExamplePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: w4,
-              children: [
+              children: children,
+        ))
+      ),
+    );
+  }
+}
+
+/*
+
+[
                 Center(child: Container(
                   constraints: BoxConstraints.tightFor(width: 200, height:  100),
                   decoration: AnyTriDecoration(
@@ -340,9 +349,6 @@ class _ExamplePageState extends State<_ExamplePage> {
                     type: TriType.topLeft
                   ),
                   child: Center(child: Text("Triangle")),
-              ))],
-        ))
-      ),
-    );
-  }
-}
+              ))]
+
+*/
