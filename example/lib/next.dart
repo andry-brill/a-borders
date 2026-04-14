@@ -58,16 +58,6 @@ bool _pickLerpBool(bool a, bool b, double t) {
   return t < 0.5 ? a : b;
 }
 
-AnyCorner _resolveFiniteCorner(AnyCorner corner, double maxRx, double maxRy) {
-  final rawX = corner.radius.x;
-  final rawY = corner.radius.y;
-
-  final rx = rawX.isFinite ? math.max(0.0, rawX) : math.max(0.0, maxRx);
-  final ry = rawY.isFinite ? math.max(0.0, rawY) : math.max(0.0, maxRy);
-
-  return AnyCorner(Radius.elliptical(rx, ry));
-}
-
 Rect _fitRectToRatio(Rect rect, double? ratio) {
   if (ratio == null || ratio <= 0.0) {
     return rect;
@@ -89,23 +79,214 @@ Rect _fitRectToRatio(Rect rect, double? ratio) {
   );
 }
 
-/// NB! No negative values support.
+/// Contract for a corner strategy.
 ///
-/// For rounded corners the implementation uses cubic Bézier segments.
-/// If the geometric corner angle is greater than 90°, the rounded corner is
-/// split into several Bézier segments.
-class AnyCorner {
+/// The contour owns shared geometric caches such as side directions, normals,
+/// offset-line transforms and side widths. A corner object owns the actual
+/// corner semantics: how it resolves itself for finite bounds, how much side
+/// length it consumes, how it scales during normalization, and how it emits
+/// the corresponding geometry into a [Path].
+abstract class AnyCorner {
+  const AnyCorner();
+
+  /// Resolve infinities / other size-dependent values using the local side
+  /// extents around this corner.
+  ///
+  /// `maxPreviousExtent` corresponds to the side before the corner, and
+  /// `maxNextExtent` corresponds to the side after the corner.
+  AnyCorner resolveFinite(double maxPreviousExtent, double maxNextExtent);
+
+  /// Returns the consumption on the previous side of this corner.
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex);
+
+  /// Returns the consumption on the next side of this corner.
+  double consumptionForNextSide(AnyContour contour, int cornerIndex);
+
+  /// Scales only the part of this corner that affects the previous side.
+  AnyCorner scaleForPreviousSide(double factor);
+
+  /// Scales only the part of this corner that affects the next side.
+  AnyCorner scaleForNextSide(double factor);
+
+  /// Returns the world-space point for the requested local corner parameter.
+  (double, double) pointAt(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      );
+
+  /// Emits the requested corner segment directly into [path].
+  void appendArc(
+      Path path,
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double fromAngle,
+      double toAngle,
+      );
+
+  /// Interpolates to another corner of the same type when possible.
+  AnyCorner lerpTo(AnyCorner other, double t);
+}
+
+/// Current rounded-corner implementation.
+///
+/// Negative values are ignored. Infinity is resolved against the adjacent side
+/// lengths during contour preparation.
+class RoundedCorner extends AnyCorner {
   final Radius radius;
 
-  const AnyCorner([this.radius = Radius.zero]);
+  const RoundedCorner([this.radius = Radius.zero]);
+
+  bool _canBuild(AnyContour contour, int cornerIndex) {
+    return !contour.isCornerParallel(cornerIndex) &&
+        radius.x > _epsilon &&
+        radius.y > _epsilon &&
+        contour.cornerSin[cornerIndex] > _epsilon;
+  }
+
+  @override
+  RoundedCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
+    final rawX = radius.x;
+    final rawY = radius.y;
+
+    final rx = rawX.isFinite ? math.max(0.0, rawX) : math.max(0.0, maxPreviousExtent);
+    final ry = rawY.isFinite ? math.max(0.0, rawY) : math.max(0.0, maxNextExtent);
+
+    return RoundedCorner(Radius.elliptical(rx, ry));
+  }
+
+  @override
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _epsilon) return 0.0;
+    return math.max(0.0, radius.x) / sinTurn;
+  }
+
+  @override
+  double consumptionForNextSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _epsilon) return 0.0;
+    return math.max(0.0, radius.y) / sinTurn;
+  }
+
+  @override
+  RoundedCorner scaleForPreviousSide(double factor) {
+    return RoundedCorner(
+      Radius.elliptical(radius.x * factor, radius.y),
+    );
+  }
+
+  @override
+  RoundedCorner scaleForNextSide(double factor) {
+    return RoundedCorner(
+      Radius.elliptical(radius.x, radius.y * factor),
+    );
+  }
+
+  @override
+  (double, double) pointAt(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) {
+    if (!_canBuild(contour, cornerIndex)) {
+      return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+    }
+
+    final localX = dPrev + radius.x + radius.x * math.cos(angle);
+    final localY = dNext + radius.y + radius.y * math.sin(angle);
+    return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
+  }
+
+  @override
+  void appendArc(
+      Path path,
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double fromAngle,
+      double toAngle,
+      ) {
+    final delta = toAngle - fromAngle;
+    if (_nearZero(delta)) return;
+
+    if (!_canBuild(contour, cornerIndex)) {
+      final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+      path.lineTo(x, y);
+      return;
+    }
+
+    final fraction = delta.abs() / _quarterSweep;
+    final baseSegments = contour.cornerSegments[cornerIndex];
+    final segmentCount = math.max(1, (baseSegments * fraction).ceil());
+
+    final centerX = dPrev + radius.x;
+    final centerY = dNext + radius.y;
+
+    for (var i = 0; i < segmentCount; i++) {
+      final t0 = i / segmentCount;
+      final t1 = (i + 1) / segmentCount;
+      final a0 = fromAngle + delta * t0;
+      final a1 = fromAngle + delta * t1;
+      final da = a1 - a0;
+      final alpha = (4.0 / 3.0) * math.tan(da / 4.0);
+
+      final cos0 = math.cos(a0);
+      final sin0 = math.sin(a0);
+      final cos1 = math.cos(a1);
+      final sin1 = math.sin(a1);
+
+      final p1x = centerX + radius.x * cos0 - alpha * radius.x * sin0;
+      final p1y = centerY + radius.y * sin0 + alpha * radius.y * cos0;
+      final p2x = centerX + radius.x * cos1 + alpha * radius.x * sin1;
+      final p2y = centerY + radius.y * sin1 - alpha * radius.y * cos1;
+      final p3x = centerX + radius.x * cos1;
+      final p3y = centerY + radius.y * sin1;
+
+      final (c1x, c1y) = contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
+      final (c2x, c2y) = contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
+      final (ex, ey) = contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
+
+      path.cubicTo(c1x, c1y, c2x, c2y, ex, ey);
+    }
+  }
+
+  @override
+  RoundedCorner lerpTo(AnyCorner other, double t) {
+    if (other is! RoundedCorner) {
+      return t < 0.5 ? this : const RoundedCorner();
+    }
+
+    return RoundedCorner(
+      Radius.elliptical(
+        _lerpDouble(radius.x, other.radius.x, t),
+        _lerpDouble(radius.y, other.radius.y, t),
+      ),
+    );
+  }
 
   @override
   bool operator ==(Object other) {
-    return other is AnyCorner && other.radius == radius;
+    return other is RoundedCorner && other.radius == radius;
   }
 
   @override
   int get hashCode => radius.hashCode;
+}
+
+AnyCorner _lerpCorner(AnyCorner a, AnyCorner b, double t) {
+  if (identical(a, b) || a == b) return a;
+  if (a.runtimeType != b.runtimeType) {
+    return t < 0.5 ? a : b;
+  }
+  return a.lerpTo(b, t);
 }
 
 class AnySide with MAnyFill {
@@ -239,18 +420,8 @@ class AnyPoint {
           _lerpDouble(pa.point.dx, pb.point.dx, t),
           _lerpDouble(pa.point.dy, pb.point.dy, t),
         ),
-        outer: AnyCorner(
-          Radius.elliptical(
-            _lerpDouble(pa.outer.radius.x, pb.outer.radius.x, t),
-            _lerpDouble(pa.outer.radius.y, pb.outer.radius.y, t),
-          ),
-        ),
-        inner: AnyCorner(
-          Radius.elliptical(
-            _lerpDouble(pa.inner.radius.x, pb.inner.radius.x, t),
-            _lerpDouble(pa.inner.radius.y, pb.inner.radius.y, t),
-          ),
-        ),
+        outer: _lerpCorner(pa.outer, pb.outer, t),
+        inner: _lerpCorner(pa.inner, pb.inner, t),
         side: AnySide(
           width: _lerpDouble(pa.side.width, pb.side.width, t),
           align: _lerpDouble(pa.side.align, pb.side.align, t),
@@ -292,10 +463,10 @@ class AnyRegions {
 /// Keyed by decoration instance. The cached contour is reusable only if its
 /// local size and text direction still match.
 class IDecorationCache {
-
   static int limit = 1000;
 
-  static final LinkedHashMap<AnyDecoration, AnyContour> _contours = LinkedHashMap<AnyDecoration, AnyContour>();
+  static final LinkedHashMap<AnyDecoration, AnyContour> _contours =
+  LinkedHashMap<AnyDecoration, AnyContour>();
 
   static AnyContour? get(
       AnyDecoration decoration,
@@ -306,7 +477,6 @@ class IDecorationCache {
     if (contour == null) return null;
     if (!contour.canReuseFor(size, textDirection)) return null;
 
-    // This decoration becomes the most recently used one (so will not be removed in case of limit)
     _contours.remove(decoration);
     _contours[decoration] = contour;
     return contour;
@@ -325,7 +495,6 @@ class IDecorationCache {
     _contours.clear();
   }
 }
-
 
 class AnyContour {
   final Size size;
@@ -354,91 +523,89 @@ class AnyContour {
     return size == otherSize && textDirection == otherTextDirection;
   }
 
-  int _count = 0;
+  int count = 0;
 
-  Float64List _px = Float64List(0);
-  Float64List _py = Float64List(0);
+  late final Float64List pointX;
+  late final Float64List pointY;
 
-  Float64List _sdx = Float64List(0);
-  Float64List _sdy = Float64List(0);
-  Float64List _slen = Float64List(0);
+  late final Float64List sideDirectionX;
+  late final Float64List sideDirectionY;
+  late final Float64List sideLength;
 
-  Float64List _inx = Float64List(0);
-  Float64List _iny = Float64List(0);
+  late final Float64List sideInsideNormalX;
+  late final Float64List sideInsideNormalY;
 
-  Float64List _inside = Float64List(0);
-  Float64List _outside = Float64List(0);
+  late final Float64List sideInsideOffset;
+  late final Float64List sideOutsideOffset;
 
-  Float64List _outerRx = Float64List(0);
-  Float64List _outerRy = Float64List(0);
-  Float64List _innerRx = Float64List(0);
-  Float64List _innerRy = Float64List(0);
+  late final Float64List cornerMatrix00;
+  late final Float64List cornerMatrix01;
+  late final Float64List cornerMatrix10;
+  late final Float64List cornerMatrix11;
 
-  Float64List _m00 = Float64List(0);
-  Float64List _m01 = Float64List(0);
-  Float64List _m10 = Float64List(0);
-  Float64List _m11 = Float64List(0);
+  late final Float64List cornerSin;
+  late final Int32List cornerSegments;
+  late final Uint8List cornerParallel;
+  late final Uint8List sideHasWidth;
+  late final Uint8List sidePainted;
 
-  Float64List _cornerSin = Float64List(0);
-  Int32List _cornerSegments = Int32List(0);
-  Uint8List _cornerParallel = Uint8List(0);
-  Uint8List _sideHasWidth = Uint8List(0);
-  Uint8List _sidePainted = Uint8List(0);
-
-  List<AnySide> _sides = List<AnySide>.empty(growable: false);
+  late final List<AnySide> sides;
+  late List<AnyCorner> outerCorners;
+  late List<AnyCorner> innerCorners;
 
   void _prepare(List<AnyPoint> points) {
-    _count = points.length;
+    count = points.length;
 
-    _px = Float64List(_count);
-    _py = Float64List(_count);
-    _sdx = Float64List(_count);
-    _sdy = Float64List(_count);
-    _slen = Float64List(_count);
-    _inx = Float64List(_count);
-    _iny = Float64List(_count);
-    _inside = Float64List(_count);
-    _outside = Float64List(_count);
-    _outerRx = Float64List(_count);
-    _outerRy = Float64List(_count);
-    _innerRx = Float64List(_count);
-    _innerRy = Float64List(_count);
-    _m00 = Float64List(_count);
-    _m01 = Float64List(_count);
-    _m10 = Float64List(_count);
-    _m11 = Float64List(_count);
-    _cornerSin = Float64List(_count);
-    _cornerSegments = Int32List(_count);
-    _cornerParallel = Uint8List(_count);
-    _sideHasWidth = Uint8List(_count);
-    _sidePainted = Uint8List(_count);
-    _sides = List<AnySide>.generate(
-      _count,
+    pointX = Float64List(count);
+    pointY = Float64List(count);
+    sideDirectionX = Float64List(count);
+    sideDirectionY = Float64List(count);
+    sideLength = Float64List(count);
+    sideInsideNormalX = Float64List(count);
+    sideInsideNormalY = Float64List(count);
+    sideInsideOffset = Float64List(count);
+    sideOutsideOffset = Float64List(count);
+    cornerMatrix00 = Float64List(count);
+    cornerMatrix01 = Float64List(count);
+    cornerMatrix10 = Float64List(count);
+    cornerMatrix11 = Float64List(count);
+    cornerSin = Float64List(count);
+    cornerSegments = Int32List(count);
+    cornerParallel = Uint8List(count);
+    sideHasWidth = Uint8List(count);
+    sidePainted = Uint8List(count);
+    sides = List<AnySide>.generate(
+      count,
           (index) => points[index].side,
+      growable: false,
+    );
+    outerCorners = List<AnyCorner>.generate(
+      count,
+          (index) => points[index].outer,
+      growable: false,
+    );
+    innerCorners = List<AnyCorner>.generate(
+      count,
+          (index) => points[index].inner,
       growable: false,
     );
 
     var signedAreaTwice = 0.0;
 
-    for (var i = 0; i < _count; i++) {
+    for (var i = 0; i < count; i++) {
       final point = points[i];
-      final next = points[(i + 1) % _count];
+      final next = points[(i + 1) % count];
       final side = point.side;
 
-      _px[i] = point.point.dx;
-      _py[i] = point.point.dy;
-
-      _outerRx[i] = math.max(0.0, point.outer.radius.x);
-      _outerRy[i] = math.max(0.0, point.outer.radius.y);
-      _innerRx[i] = math.max(0.0, point.inner.radius.x);
-      _innerRy[i] = math.max(0.0, point.inner.radius.y);
+      pointX[i] = point.point.dx;
+      pointY[i] = point.point.dy;
 
       final inside = side.width * (1.0 - side.align) / 2.0;
       final outside = side.width * (1.0 + side.align) / 2.0;
-      _inside[i] = inside;
-      _outside[i] = outside;
-      _sideHasWidth[i] = side.width > _epsilon ? 1 : 0;
-      _sidePainted[i] = side.width > _epsilon && side.hasFill ? 1 : 0;
+      sideInsideOffset[i] = inside;
+      sideOutsideOffset[i] = outside;
+      sideHasWidth[i] = side.width > _epsilon ? 1 : 0;
+      sidePainted[i] = side.width > _epsilon && side.hasFill ? 1 : 0;
 
       signedAreaTwice +=
           (point.point.dx * next.point.dy) - (point.point.dy * next.point.dx);
@@ -446,10 +613,10 @@ class AnyContour {
 
     final isClockwise = signedAreaTwice > 0.0;
 
-    for (var i = 0; i < _count; i++) {
-      final next = (i + 1) % _count;
-      final dx = _px[next] - _px[i];
-      final dy = _py[next] - _py[i];
+    for (var i = 0; i < count; i++) {
+      final next = (i + 1) % count;
+      final dx = pointX[next] - pointX[i];
+      final dy = pointY[next] - pointY[i];
       final length = math.sqrt(dx * dx + dy * dy);
       if (length <= _epsilon) {
         throw ArgumentError('Side $i has zero length.');
@@ -457,58 +624,67 @@ class AnyContour {
 
       final ux = dx / length;
       final uy = dy / length;
-      _sdx[i] = ux;
-      _sdy[i] = uy;
-      _slen[i] = length;
+      sideDirectionX[i] = ux;
+      sideDirectionY[i] = uy;
+      sideLength[i] = length;
 
       if (isClockwise) {
-        _inx[i] = -uy;
-        _iny[i] = ux;
+        sideInsideNormalX[i] = -uy;
+        sideInsideNormalY[i] = ux;
       } else {
-        _inx[i] = uy;
-        _iny[i] = -ux;
+        sideInsideNormalX[i] = uy;
+        sideInsideNormalY[i] = -ux;
       }
     }
 
-    for (var corner = 0; corner < _count; corner++) {
-      final prev = _wrap(corner - 1);
+    for (var corner = 0; corner < count; corner++) {
+      final prev = wrap(corner - 1);
 
-      final npx = _inx[prev];
-      final npy = _iny[prev];
-      final nnx = _inx[corner];
-      final nny = _iny[corner];
+      final npx = sideInsideNormalX[prev];
+      final npy = sideInsideNormalY[prev];
+      final nnx = sideInsideNormalX[corner];
+      final nny = sideInsideNormalY[corner];
 
       final det = (npx * nny) - (npy * nnx);
       if (_nearZero(det)) {
-        _cornerParallel[corner] = 1;
-        _m00[corner] = 0.0;
-        _m01[corner] = 0.0;
-        _m10[corner] = 0.0;
-        _m11[corner] = 0.0;
+        cornerParallel[corner] = 1;
+        cornerMatrix00[corner] = 0.0;
+        cornerMatrix01[corner] = 0.0;
+        cornerMatrix10[corner] = 0.0;
+        cornerMatrix11[corner] = 0.0;
       } else {
-        _cornerParallel[corner] = 0;
-        _m00[corner] = nny / det;
-        _m01[corner] = -npy / det;
-        _m10[corner] = -nnx / det;
-        _m11[corner] = npx / det;
+        cornerParallel[corner] = 0;
+        cornerMatrix00[corner] = nny / det;
+        cornerMatrix01[corner] = -npy / det;
+        cornerMatrix10[corner] = -nnx / det;
+        cornerMatrix11[corner] = npx / det;
       }
 
-      final cross = (_sdx[prev] * _sdy[corner]) - (_sdy[prev] * _sdx[corner]);
+      final cross =
+          (sideDirectionX[prev] * sideDirectionY[corner]) -
+              (sideDirectionY[prev] * sideDirectionX[corner]);
       final sinTurn = cross.abs();
-      _cornerSin[corner] = sinTurn;
+      cornerSin[corner] = sinTurn;
 
-      final ux = -_sdx[prev];
-      final uy = -_sdy[prev];
-      final vx = _sdx[corner];
-      final vy = _sdy[corner];
+      final ux = -sideDirectionX[prev];
+      final uy = -sideDirectionY[prev];
+      final vx = sideDirectionX[corner];
+      final vy = sideDirectionY[corner];
       final dot = _clampDouble((ux * vx) + (uy * vy), -1.0, 1.0);
       final angle = math.acos(dot);
-      final segments = math.max(1, (angle / (math.pi / 2.0)).ceil());
-      _cornerSegments[corner] = segments;
+      cornerSegments[corner] = math.max(1, (angle / (math.pi / 2.0)).ceil());
     }
 
-    _normalizeBand(_outerRx, _outerRy);
-    _normalizeBand(_innerRx, _innerRy);
+    for (var corner = 0; corner < count; corner++) {
+      final prev = wrap(corner - 1);
+      outerCorners[corner] =
+          outerCorners[corner].resolveFinite(sideLength[prev], sideLength[corner]);
+      innerCorners[corner] =
+          innerCorners[corner].resolveFinite(sideLength[prev], sideLength[corner]);
+    }
+
+    _normalizeBand(outerCorners);
+    _normalizeBand(innerCorners);
   }
 
   Path? _clipPath;
@@ -527,9 +703,6 @@ class AnyContour {
   AnyRegions? _regionsMerged;
   AnyRegions? _regionsSeparate;
 
-  /// If [backgroundMerge] is true, side regions with the same fill as
-  /// [background] are appended to the background path instead of being returned
-  /// as separate regions.
   AnyRegions regions({required bool backgroundMerge}) {
     if (backgroundMerge) {
       return _regionsMerged ??= _buildRegions(true);
@@ -567,18 +740,248 @@ class AnyContour {
     );
   }
 
+  int wrap(int index) {
+    final mod = index % count;
+    return mod < 0 ? mod + count : mod;
+  }
+
+  bool isCornerParallel(int cornerIndex) => cornerParallel[cornerIndex] != 0;
+
+  double offsetForBase(int sideIndex, AnyShapeBase base) {
+    return switch (base) {
+      AnyShapeBase.zeroBorder => 0.0,
+      AnyShapeBase.outerBorder => -sideOutsideOffset[sideIndex],
+      AnyShapeBase.innerBorder => sideInsideOffset[sideIndex],
+    };
+  }
+
+  (double, double) sharpCornerPoint(int cornerIndex, double dPrev, double dNext) {
+    if (!isCornerParallel(cornerIndex)) {
+      return worldPointFromDistanceSpace(cornerIndex, dPrev, dNext);
+    }
+
+    final prev = wrap(cornerIndex - 1);
+    final x1 = pointX[cornerIndex] + sideInsideNormalX[prev] * dPrev;
+    final y1 = pointY[cornerIndex] + sideInsideNormalY[prev] * dPrev;
+    final x2 = pointX[cornerIndex] + sideInsideNormalX[cornerIndex] * dNext;
+    final y2 = pointY[cornerIndex] + sideInsideNormalY[cornerIndex] * dNext;
+    return ((x1 + x2) * 0.5, (y1 + y2) * 0.5);
+  }
+
+  (double, double) worldPointFromDistanceSpace(
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      ) {
+    return (
+    pointX[cornerIndex] +
+        (cornerMatrix00[cornerIndex] * dPrev) +
+        (cornerMatrix01[cornerIndex] * dNext),
+    pointY[cornerIndex] +
+        (cornerMatrix10[cornerIndex] * dPrev) +
+        (cornerMatrix11[cornerIndex] * dNext),
+    );
+  }
+
+  void _normalizeBand(List<AnyCorner> corners) {
+    for (var side = 0; side < count; side++) {
+      final startCorner = side;
+      final endCorner = wrap(side + 1);
+
+      final startConsumption =
+      corners[startCorner].consumptionForNextSide(this, startCorner);
+      final endConsumption =
+      corners[endCorner].consumptionForPreviousSide(this, endCorner);
+      final total = startConsumption + endConsumption;
+
+      if (total <= sideLength[side] + _epsilon || total <= _epsilon) {
+        continue;
+      }
+
+      final scale = sideLength[side] / total;
+      corners[startCorner] = corners[startCorner].scaleForNextSide(scale);
+      corners[endCorner] = corners[endCorner].scaleForPreviousSide(scale);
+    }
+  }
+
+  Path _buildContourPath(AnyShapeBase base) {
+    final path = Path();
+    final corners =
+    base == AnyShapeBase.innerBorder ? innerCorners : outerCorners;
+
+    final prev0 = wrap(-1);
+    final dPrev0 = offsetForBase(prev0, base);
+    final dNext0 = offsetForBase(0, base);
+
+    _moveToCornerPoint(path, corners[0], 0, dPrev0, dNext0, _startAngle);
+    corners[0].appendArc(path, this, 0, dPrev0, dNext0, _startAngle, _endAngle);
+
+    for (var corner = 1; corner < count; corner++) {
+      final prev = wrap(corner - 1);
+      final dPrev = offsetForBase(prev, base);
+      final dNext = offsetForBase(corner, base);
+
+      _lineToCornerPoint(path, corners[corner], corner, dPrev, dNext, _startAngle);
+      corners[corner].appendArc(
+        path,
+        this,
+        corner,
+        dPrev,
+        dNext,
+        _startAngle,
+        _endAngle,
+      );
+    }
+
+    path.close();
+    return path;
+  }
+
+  void _appendSidePolygon(Path path, int sideIndex) {
+    final prevSide = wrap(sideIndex - 1);
+    final nextSide = wrap(sideIndex + 1);
+    final startCorner = sideIndex;
+    final endCorner = wrap(sideIndex + 1);
+
+    final startOuterCorner = outerCorners[startCorner];
+    final endOuterCorner = outerCorners[endCorner];
+    final startInnerCorner = innerCorners[startCorner];
+    final endInnerCorner = innerCorners[endCorner];
+
+    final prevHasWidth = sideHasWidth[prevSide] != 0;
+    final nextHasWidth = sideHasWidth[nextSide] != 0;
+
+    final startOuterFrom = prevHasWidth ? _midAngle : _startAngle;
+    final endOuterTo = nextHasWidth ? _midAngle : _endAngle;
+    final endInnerFrom = nextHasWidth ? _midAngle : _endAngle;
+    final startInnerTo = prevHasWidth ? _midAngle : _startAngle;
+
+    final startOuterPrev = -sideOutsideOffset[prevSide];
+    final startOuterNext = -sideOutsideOffset[sideIndex];
+    final endOuterPrev = -sideOutsideOffset[sideIndex];
+    final endOuterNext = -sideOutsideOffset[nextSide];
+
+    final startInnerPrev = sideInsideOffset[prevSide];
+    final startInnerNext = sideInsideOffset[sideIndex];
+    final endInnerPrev = sideInsideOffset[sideIndex];
+    final endInnerNext = sideInsideOffset[nextSide];
+
+    _moveToCornerPoint(
+      path,
+      startOuterCorner,
+      startCorner,
+      startOuterPrev,
+      startOuterNext,
+      startOuterFrom,
+    );
+
+    startOuterCorner.appendArc(
+      path,
+      this,
+      startCorner,
+      startOuterPrev,
+      startOuterNext,
+      startOuterFrom,
+      _endAngle,
+    );
+
+    _lineToCornerPoint(
+      path,
+      endOuterCorner,
+      endCorner,
+      endOuterPrev,
+      endOuterNext,
+      _startAngle,
+    );
+
+    endOuterCorner.appendArc(
+      path,
+      this,
+      endCorner,
+      endOuterPrev,
+      endOuterNext,
+      _startAngle,
+      endOuterTo,
+    );
+
+    _lineToCornerPoint(
+      path,
+      endInnerCorner,
+      endCorner,
+      endInnerPrev,
+      endInnerNext,
+      endInnerFrom,
+    );
+
+    endInnerCorner.appendArc(
+      path,
+      this,
+      endCorner,
+      endInnerPrev,
+      endInnerNext,
+      endInnerFrom,
+      _startAngle,
+    );
+
+    _lineToCornerPoint(
+      path,
+      startInnerCorner,
+      startCorner,
+      startInnerPrev,
+      startInnerNext,
+      _endAngle,
+    );
+
+    startInnerCorner.appendArc(
+      path,
+      this,
+      startCorner,
+      startInnerPrev,
+      startInnerNext,
+      _endAngle,
+      startInnerTo,
+    );
+
+    path.close();
+  }
+
+  void _moveToCornerPoint(
+      Path path,
+      AnyCorner corner,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) {
+    final (x, y) = corner.pointAt(this, cornerIndex, dPrev, dNext, angle);
+    path.moveTo(x, y);
+  }
+
+  void _lineToCornerPoint(
+      Path path,
+      AnyCorner corner,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) {
+    final (x, y) = corner.pointAt(this, cornerIndex, dPrev, dNext, angle);
+    path.lineTo(x, y);
+  }
+
   AnyRegions _buildRegions(bool backgroundMerge) {
     final backgroundFill = background;
     final backgroundSource = backgroundPath;
-    final backgroundTarget = backgroundSource == null ? null : Path.from(backgroundSource);
+    final backgroundTarget =
+    backgroundSource == null ? null : Path.from(backgroundSource);
 
     final regionFills = <IAnyFill>[];
     final regionPaths = <Path>[];
 
-    for (var sideIndex = 0; sideIndex < _count; sideIndex++) {
-      if (_sidePainted[sideIndex] == 0) continue;
+    for (var sideIndex = 0; sideIndex < count; sideIndex++) {
+      if (sidePainted[sideIndex] == 0) continue;
 
-      final side = _sides[sideIndex];
+      final side = sides[sideIndex];
       if (backgroundTarget != null &&
           backgroundMerge &&
           backgroundFill != null &&
@@ -615,323 +1018,6 @@ class AnyContour {
           : null,
       regions: regions,
     );
-  }
-
-  void _normalizeBand(Float64List rx, Float64List ry) {
-    for (var side = 0; side < _count; side++) {
-      final startCorner = side;
-      final endCorner = _wrap(side + 1);
-
-      final startSin = _cornerSin[startCorner];
-      final endSin = _cornerSin[endCorner];
-
-      final startConsumption =
-      startSin <= _epsilon ? 0.0 : ry[startCorner] / startSin;
-      final endConsumption =
-      endSin <= _epsilon ? 0.0 : rx[endCorner] / endSin;
-      final total = startConsumption + endConsumption;
-
-      if (total <= _slen[side] + _epsilon || total <= _epsilon) {
-        continue;
-      }
-
-      final scale = _slen[side] / total;
-      ry[startCorner] *= scale;
-      rx[endCorner] *= scale;
-    }
-
-    for (var i = 0; i < _count; i++) {
-      if (rx[i] <= _epsilon) rx[i] = 0.0;
-      if (ry[i] <= _epsilon) ry[i] = 0.0;
-    }
-  }
-
-  int _wrap(int index) {
-    final mod = index % _count;
-    return mod < 0 ? mod + _count : mod;
-  }
-
-  bool _canRound(int corner, Float64List rx, Float64List ry) {
-    return _cornerParallel[corner] == 0 &&
-        rx[corner] > _epsilon &&
-        ry[corner] > _epsilon &&
-        _cornerSin[corner] > _epsilon;
-  }
-
-  double _offsetForBase(int side, AnyShapeBase base) {
-    return switch (base) {
-      AnyShapeBase.zeroBorder => 0.0,
-      AnyShapeBase.outerBorder => -_outside[side],
-      AnyShapeBase.innerBorder => _inside[side],
-    };
-  }
-
-  Path _buildContourPath(AnyShapeBase base) {
-    final path = Path();
-    final rx = base == AnyShapeBase.innerBorder ? _innerRx : _outerRx;
-    final ry = base == AnyShapeBase.innerBorder ? _innerRy : _outerRy;
-
-    final prev0 = _wrap(-1);
-    final dPrev0 = _offsetForBase(prev0, base);
-    final dNext0 = _offsetForBase(0, base);
-
-    _moveToCornerPoint(path, 0, dPrev0, dNext0, rx, ry, _startAngle);
-    _appendCornerArc(path, 0, dPrev0, dNext0, rx, ry, _startAngle, _endAngle);
-
-    for (var corner = 1; corner < _count; corner++) {
-      final prev = _wrap(corner - 1);
-      final dPrev = _offsetForBase(prev, base);
-      final dNext = _offsetForBase(corner, base);
-
-      _lineToCornerPoint(path, corner, dPrev, dNext, rx, ry, _startAngle);
-      _appendCornerArc(
-        path,
-        corner,
-        dPrev,
-        dNext,
-        rx,
-        ry,
-        _startAngle,
-        _endAngle,
-      );
-    }
-
-    path.close();
-    return path;
-  }
-
-  void _appendSidePolygon(Path path, int sideIndex) {
-    final prevSide = _wrap(sideIndex - 1);
-    final nextSide = _wrap(sideIndex + 1);
-    final startCorner = sideIndex;
-    final endCorner = _wrap(sideIndex + 1);
-
-    final prevHasWidth = _sideHasWidth[prevSide] != 0;
-    final nextHasWidth = _sideHasWidth[nextSide] != 0;
-
-    final startOuterFrom = prevHasWidth ? _midAngle : _startAngle;
-    final endOuterTo = nextHasWidth ? _midAngle : _endAngle;
-    final endInnerFrom = nextHasWidth ? _midAngle : _endAngle;
-    final startInnerTo = prevHasWidth ? _midAngle : _startAngle;
-
-    final startOuterPrev = -_outside[prevSide];
-    final startOuterNext = -_outside[sideIndex];
-    final endOuterPrev = -_outside[sideIndex];
-    final endOuterNext = -_outside[nextSide];
-
-    final startInnerPrev = _inside[prevSide];
-    final startInnerNext = _inside[sideIndex];
-    final endInnerPrev = _inside[sideIndex];
-    final endInnerNext = _inside[nextSide];
-
-    _moveToCornerPoint(
-      path,
-      startCorner,
-      startOuterPrev,
-      startOuterNext,
-      _outerRx,
-      _outerRy,
-      startOuterFrom,
-    );
-
-    _appendCornerArc(
-      path,
-      startCorner,
-      startOuterPrev,
-      startOuterNext,
-      _outerRx,
-      _outerRy,
-      startOuterFrom,
-      _endAngle,
-    );
-
-    _lineToCornerPoint(
-      path,
-      endCorner,
-      endOuterPrev,
-      endOuterNext,
-      _outerRx,
-      _outerRy,
-      _startAngle,
-    );
-
-    _appendCornerArc(
-      path,
-      endCorner,
-      endOuterPrev,
-      endOuterNext,
-      _outerRx,
-      _outerRy,
-      _startAngle,
-      endOuterTo,
-    );
-
-    _lineToCornerPoint(
-      path,
-      endCorner,
-      endInnerPrev,
-      endInnerNext,
-      _innerRx,
-      _innerRy,
-      endInnerFrom,
-    );
-
-    _appendCornerArc(
-      path,
-      endCorner,
-      endInnerPrev,
-      endInnerNext,
-      _innerRx,
-      _innerRy,
-      endInnerFrom,
-      _startAngle,
-    );
-
-    _lineToCornerPoint(
-      path,
-      startCorner,
-      startInnerPrev,
-      startInnerNext,
-      _innerRx,
-      _innerRy,
-      _endAngle,
-    );
-
-    _appendCornerArc(
-      path,
-      startCorner,
-      startInnerPrev,
-      startInnerNext,
-      _innerRx,
-      _innerRy,
-      _endAngle,
-      startInnerTo,
-    );
-
-    path.close();
-  }
-
-  void _moveToCornerPoint(
-      Path path,
-      int corner,
-      double dPrev,
-      double dNext,
-      Float64List rx,
-      Float64List ry,
-      double angle,
-      ) {
-    final (x, y) = _cornerPoint(corner, dPrev, dNext, rx, ry, angle);
-    path.moveTo(x, y);
-  }
-
-  void _lineToCornerPoint(
-      Path path,
-      int corner,
-      double dPrev,
-      double dNext,
-      Float64List rx,
-      Float64List ry,
-      double angle,
-      ) {
-    final (x, y) = _cornerPoint(corner, dPrev, dNext, rx, ry, angle);
-    path.lineTo(x, y);
-  }
-
-  (double, double) _cornerPoint(
-      int corner,
-      double dPrev,
-      double dNext,
-      Float64List rx,
-      Float64List ry,
-      double angle,
-      ) {
-    if (!_canRound(corner, rx, ry)) {
-      return _sharpCornerPoint(corner, dPrev, dNext);
-    }
-
-    final localX = dPrev + rx[corner] + rx[corner] * math.cos(angle);
-    final localY = dNext + ry[corner] + ry[corner] * math.sin(angle);
-    return _worldPointFromDistanceSpace(corner, localX, localY);
-  }
-
-  (double, double) _sharpCornerPoint(int corner, double dPrev, double dNext) {
-    if (_cornerParallel[corner] == 0) {
-      return _worldPointFromDistanceSpace(corner, dPrev, dNext);
-    }
-
-    final prev = _wrap(corner - 1);
-    final x1 = _px[corner] + _inx[prev] * dPrev;
-    final y1 = _py[corner] + _iny[prev] * dPrev;
-    final x2 = _px[corner] + _inx[corner] * dNext;
-    final y2 = _py[corner] + _iny[corner] * dNext;
-    return ((x1 + x2) * 0.5, (y1 + y2) * 0.5);
-  }
-
-  (double, double) _worldPointFromDistanceSpace(
-      int corner,
-      double dPrev,
-      double dNext,
-      ) {
-    return (
-    _px[corner] + (_m00[corner] * dPrev) + (_m01[corner] * dNext),
-    _py[corner] + (_m10[corner] * dPrev) + (_m11[corner] * dNext),
-    );
-  }
-
-  void _appendCornerArc(
-      Path path,
-      int corner,
-      double dPrev,
-      double dNext,
-      Float64List rx,
-      Float64List ry,
-      double fromAngle,
-      double toAngle,
-      ) {
-    final delta = toAngle - fromAngle;
-    if (_nearZero(delta)) return;
-
-    if (!_canRound(corner, rx, ry)) {
-      final (x, y) = _sharpCornerPoint(corner, dPrev, dNext);
-      path.lineTo(x, y);
-      return;
-    }
-
-    final baseSegments = _cornerSegments[corner];
-    final fraction = delta.abs() / _quarterSweep;
-    final segmentCount = math.max(1, (baseSegments * fraction).ceil());
-
-    final cornerRx = rx[corner];
-    final cornerRy = ry[corner];
-    final centerX = dPrev + cornerRx;
-    final centerY = dNext + cornerRy;
-
-    for (var i = 0; i < segmentCount; i++) {
-      final t0 = i / segmentCount;
-      final t1 = (i + 1) / segmentCount;
-      final a0 = fromAngle + delta * t0;
-      final a1 = fromAngle + delta * t1;
-      final da = a1 - a0;
-      final alpha = (4.0 / 3.0) * math.tan(da / 4.0);
-
-      final cos0 = math.cos(a0);
-      final sin0 = math.sin(a0);
-      final cos1 = math.cos(a1);
-      final sin1 = math.sin(a1);
-
-      final p1x = centerX + cornerRx * cos0 - alpha * cornerRx * sin0;
-      final p1y = centerY + cornerRy * sin0 + alpha * cornerRy * cos0;
-      final p2x = centerX + cornerRx * cos1 + alpha * cornerRx * sin1;
-      final p2y = centerY + cornerRy * sin1 - alpha * cornerRy * cos1;
-      final p3x = centerX + cornerRx * cos1;
-      final p3y = centerY + cornerRy * sin1;
-
-      final (c1x, c1y) = _worldPointFromDistanceSpace(corner, p1x, p1y);
-      final (c2x, c2y) = _worldPointFromDistanceSpace(corner, p2x, p2y);
-      final (ex, ey) = _worldPointFromDistanceSpace(corner, p3x, p3y);
-
-      path.cubicTo(c1x, c1y, c2x, c2y, ex, ey);
-    }
   }
 }
 
@@ -1011,7 +1097,8 @@ abstract class AnyDecoration extends Decoration {
   AnyShapeBase get backgroundShapeBase =>
       background?.shapeBase ?? AnyShapeBase.zeroBorder;
 
-  AnyShapeBase get shadowBase => _shadowBase ?? background?.shapeBase ?? clipBase;
+  AnyShapeBase get shadowBase =>
+      _shadowBase ?? background?.shapeBase ?? clipBase;
 
   const AnyDecoration({
     this.shadows = const [],
@@ -1021,7 +1108,6 @@ abstract class AnyDecoration extends Decoration {
   }) : _shadowBase = shadowBase;
 
   AnyContour buildContour(Size size, TextDirection? textDirection) {
-
     final cached = IDecorationCache.get(this, size, textDirection);
     if (cached != null) {
       return cached;
@@ -1288,7 +1374,7 @@ class _AnyDecorationPainter extends BoxPainter {
 
 class AnyBoxDecoration extends AnyDecoration {
   static const AnySide zeroSide = AnySide();
-  static const AnyCorner cornersBase = AnyCorner();
+  static const AnyCorner cornersBase = RoundedCorner();
 
   final AnySide? _left;
   AnySide get left => _left ?? sides;
@@ -1327,10 +1413,12 @@ class AnyBoxDecoration extends AnyDecoration {
   AnyCorner get innerTopRight => _innerTopRight ?? innerCorners ?? topRight;
 
   final AnyCorner? _innerBottomRight;
-  AnyCorner get innerBottomRight => _innerBottomRight ?? innerCorners ?? bottomRight;
+  AnyCorner get innerBottomRight =>
+      _innerBottomRight ?? innerCorners ?? bottomRight;
 
   final AnyCorner? _innerBottomLeft;
-  AnyCorner get innerBottomLeft => _innerBottomLeft ?? innerCorners ?? bottomLeft;
+  AnyCorner get innerBottomLeft =>
+      _innerBottomLeft ?? innerCorners ?? bottomLeft;
 
   final AnyCorner? innerCorners;
 
@@ -1360,8 +1448,9 @@ class AnyBoxDecoration extends AnyDecoration {
     AnyCorner? innerBottomLeft,
     this.innerCorners,
   })  : ratio = circle ? 1.0 : ratio,
-        _corners =
-        circle ? const AnyCorner(Radius.circular(double.infinity)) : corners,
+        _corners = circle
+            ? const RoundedCorner(Radius.circular(double.infinity))
+            : corners,
         _sides = sides,
         _left = left,
         _top = top,
@@ -1379,42 +1468,30 @@ class AnyBoxDecoration extends AnyDecoration {
   @override
   List<AnyPoint> points(Size size, TextDirection? textDirection) {
     final fitted = _fitRectToRatio(Offset.zero & size, ratio);
-    final width = fitted.width;
-    final height = fitted.height;
-
-    final tlOuter = _resolveFiniteCorner(topLeft, height, width);
-    final trOuter = _resolveFiniteCorner(topRight, width, height);
-    final brOuter = _resolveFiniteCorner(bottomRight, height, width);
-    final blOuter = _resolveFiniteCorner(bottomLeft, width, height);
-
-    final tlInner = _resolveFiniteCorner(innerTopLeft, height, width);
-    final trInner = _resolveFiniteCorner(innerTopRight, width, height);
-    final brInner = _resolveFiniteCorner(innerBottomRight, height, width);
-    final blInner = _resolveFiniteCorner(innerBottomLeft, width, height);
 
     return <AnyPoint>[
       AnyPoint(
         point: fitted.topLeft,
-        outer: tlOuter,
-        inner: tlInner,
+        outer: topLeft,
+        inner: innerTopLeft,
         side: top,
       ),
       AnyPoint(
         point: fitted.topRight,
-        outer: trOuter,
-        inner: trInner,
+        outer: topRight,
+        inner: innerTopRight,
         side: right,
       ),
       AnyPoint(
         point: fitted.bottomRight,
-        outer: brOuter,
-        inner: brInner,
+        outer: bottomRight,
+        inner: innerBottomRight,
         side: bottom,
       ),
       AnyPoint(
         point: fitted.bottomLeft,
-        outer: blOuter,
-        inner: blInner,
+        outer: bottomLeft,
+        inner: innerBottomLeft,
         side: left,
       ),
     ];
