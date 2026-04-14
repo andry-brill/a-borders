@@ -1,6 +1,6 @@
 
 import 'package:collection/collection.dart';
-import 'package:example/next.dart';
+import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
 
 import 'helpers/builders.dart';
@@ -336,19 +336,27 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 }
 
-/*
 
-[
-                Center(child: Container(
-                  constraints: BoxConstraints.tightFor(width: 200, height:  100),
-                  decoration: AnyTriDecoration(
-                    base: AnySide(width: 10, color: Colors.orange),
-                    f: AnyCorner(Radius.circular(20)),
-                    r: AnyCorner(Radius.circular(30)),
-                    background: AnyBackground(color: Colors.blue),
-                    type: TriType.topLeft
-                  ),
-                  child: Center(child: Text("Triangle")),
-              ))]
+class StarDecoration extends AnyDecoration {
 
-*/
+  const StarDecoration({super.background, super.sides, super.corners, super.innerCorners});
+
+  @override
+  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+    // TODO: implement points
+    throw UnimplementedError();
+  }
+
+}
+
+class AnitStarDecoration extends AnyDecoration {
+
+  const AnitStarDecoration({super.background, super.sides, super.corners, super.innerCorners});
+
+  @override
+  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+    // TODO: implement points
+    throw UnimplementedError();
+  }
+
+}

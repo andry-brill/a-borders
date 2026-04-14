@@ -1,8 +1,8 @@
 
 import 'package:flutter/material.dart';
 
-// import '../polygon_stroke_regions_rounded.dart';
-import '../next.dart';
+import 'package:any_borders/any_borders.dart';
+
 
 class AnySideBuilder {
   double width = 0.0;
