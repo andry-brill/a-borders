@@ -278,12 +278,10 @@ enum AnyShapeBase {
 
 class AnyRegions {
   final (IAnyFill, Path)? background;
-  final Path clip;
   final List<(IAnyFill, Path)> regions;
 
   const AnyRegions({
     this.background,
-    required this.clip,
     this.regions = const [],
   });
 }
@@ -302,22 +300,27 @@ class AnyRegions {
 /// - points are ordered along the contour
 /// - negative corner radii are ignored
 class AnyContour {
+
+  final AnyShapeBase shadowBase;
   final AnyShapeBase clipBase;
   final AnyShapeBase backgroundBase;
   final IAnyFill? background;
 
-  /// If true, side regions with the same fill as [background] are appended to
-  /// the background path instead of being returned as separate regions.
-  final bool backgroundMerge;
+  final List<AnyPoint> points;
 
   AnyContour({
-    this.background,
-    this.backgroundMerge = true,
-    this.backgroundBase = AnyShapeBase.zeroBorder,
-    this.clipBase = AnyShapeBase.zeroBorder,
-  });
+    required this.background,
+    required this.backgroundBase,
+    required this.clipBase,
+    required this.shadowBase,
+    required this.points
+  }) {
+    if (points.length < 3) {
+      throw ArgumentError('At least 3 points are required to build a contour.');
+    }
+    _prepare(points);
+  }
 
-  Object? _preparedToken;
   int _count = 0;
 
   Float64List _px = Float64List(0);
@@ -351,19 +354,8 @@ class AnyContour {
 
   List<AnySide> _sides = List<AnySide>.empty(growable: false);
 
-  bool get isPrepared => _count > 0;
-  int get count => _count;
+  void _prepare(List<AnyPoint> points) {
 
-  void prepare(List<AnyPoint> points) {
-    if (points.length < 3) {
-      throw ArgumentError('At least 3 points are required to build a contour.');
-    }
-
-    if (identical(_preparedToken, points) && _count == points.length) {
-      return;
-    }
-
-    _preparedToken = points;
     _count = points.length;
 
     _px = Float64List(_count);
@@ -487,26 +479,19 @@ class AnyContour {
     _normalizeBand(_innerRx, _innerRy);
   }
 
-  Path buildClipPath(List<AnyPoint> points) {
-    if (!identical(_preparedToken, points) || _count != points.length) {
-      prepare(points);
-    }
-    return _buildContourPath(clipBase);
-  }
+  Path? _clipPath;
+  Path get clipPath => _clipPath ?? (_clipPath = _buildContourPath(clipBase));
 
-  Path buildBasePath(List<AnyPoint> points, AnyShapeBase base) {
-    if (!identical(_preparedToken, points) || _count != points.length) {
-      prepare(points);
-    }
-    return _buildContourPath(base);
-  }
+  Path? _shadowPath;
+  Path get shadowPath => _shadowPath ?? (_shadowPath = _buildContourPath(shadowBase));
 
-  AnyRegions build(List<AnyPoint> points) {
-    if (!identical(_preparedToken, points) || _count != points.length) {
-      prepare(points);
-    }
+  AnyRegions? _regions;
 
-    final clip = _buildContourPath(clipBase);
+  /// If backgroundMerge, side regions with the same fill as [background] are appended to
+  /// the background path instead of being returned as separate regions.
+  AnyRegions regions({required bool backgroundMerge}) => _regions ?? (_regions = _buildRegions(backgroundMerge));
+
+  AnyRegions _buildRegions(bool backgroundMerge) {
 
     Path? backgroundPath;
     final backgroundFill = background;
@@ -555,7 +540,6 @@ class AnyContour {
       background: backgroundPath != null && backgroundFill != null
           ? (backgroundFill, backgroundPath)
           : null,
-      clip: clip,
       regions: regions,
     );
   }
@@ -930,6 +914,10 @@ class AnyShadow with MAnyFill {
   );
 }
 
+class IDecorationCache {
+
+}
+
 abstract class AnyDecoration extends Decoration {
   /// Build final contour points for this rect.
   ///
@@ -954,12 +942,14 @@ abstract class AnyDecoration extends Decoration {
     AnyShapeBase? shadowBase,
   }) : _shadowBase = shadowBase;
 
-  AnyContour buildContour({bool backgroundMerge = true}) {
+  // TODO add contour cache
+  AnyContour buildContour(Rect rect, TextDirection textDirection) {
     return AnyContour(
+      points: points(rect, textDirection),
       background: background,
-      backgroundMerge: backgroundMerge,
       backgroundBase: backgroundShapeBase,
       clipBase: clipBase,
+      shadowBase: shadowBase
     );
   }
 
@@ -970,9 +960,8 @@ abstract class AnyDecoration extends Decoration {
 
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {
-    final builtPoints = points(rect, textDirection);
-    final contour = buildContour(backgroundMerge: false);
-    return contour.buildClipPath(builtPoints);
+    final contour = buildContour(rect, textDirection);
+    return contour.clipPath;
   }
 
   @override
@@ -1015,17 +1004,15 @@ class _AnyDecorationPainter extends BoxPainter {
     }
 
     final rect = topLeft & size;
-    final builtPoints = decoration.points(rect, configuration.textDirection);
-    final contour = decoration.buildContour(
-      backgroundMerge: innerShadows.isEmpty,
-    );
-    final regions = contour.build(builtPoints);
+
+    final contour = decoration.buildContour(rect, configuration.textDirection!);
+    final regions = contour.regions(backgroundMerge: innerShadows.isEmpty);
 
     final backgroundRegion = regions.background;
 
     Path? shadowPath;
     if (innerShadows.isNotEmpty || otherShadows.isNotEmpty) {
-      shadowPath = contour.buildBasePath(builtPoints, decoration.shadowBase);
+      shadowPath = contour.shadowPath;
     }
 
     for (final shadow in otherShadows) {
