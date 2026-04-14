@@ -48,27 +48,6 @@ class AnyUtils {
     return a.lerpTo(b, t);
   }
 
-  static Rect fitRectToRatio(Rect rect, double? ratio) {
-    if (ratio == null || ratio <= 0.0) {
-      return rect;
-    }
-
-    var width = rect.width;
-    var height = width / ratio;
-
-    if (height > rect.height) {
-      height = rect.height;
-      width = height * ratio;
-    }
-
-    return Rect.fromLTWH(
-      rect.left + (rect.width - width) / 2.0,
-      rect.top + (rect.height - height) / 2.0,
-      width,
-      height,
-    );
-  }
-
   static AnySide lerpSide(AnySide a, AnySide b, double t) {
     return AnySide(
       width: lerpDouble(a.width, b.width, t),
@@ -863,6 +842,13 @@ class AnyRegions {
     this.background,
     this.regions = const [],
   });
+
+  AnyRegions withOffset(Offset offset) {
+    return AnyRegions(
+      background: background == null ? null : (background!.$1, background!.$2.shift(offset)),
+      regions: regions.map((el) => (el.$1, el.$2.shift(offset))).toList(growable: false),
+    );
+  }
 }
 
 /// Small shared cache for contours.
@@ -904,8 +890,12 @@ class IDecorationCache {
 }
 
 class AnyContour {
+
+  // Options that uses in cache to check that contour could be re-used
   final Size size;
   final TextDirection? textDirection;
+
+  // Decoration options
   final AnyShapeBase shadowBase;
   final AnyShapeBase clipBase;
   final AnyShapeBase backgroundBase;
@@ -983,34 +973,16 @@ class AnyContour {
     return _regionsSeparate ??= _buildRegions(false);
   }
 
-  Path shiftedClipPath(Offset offset) =>
-      offset == Offset.zero ? clipPath : clipPath.shift(offset);
+  Path shiftedClipPath(Offset offset) => clipPath.shift(offset);
 
-  Path shiftedShadowPath(Offset offset) =>
-      offset == Offset.zero ? shadowPath : shadowPath.shift(offset);
+  Path shiftedShadowPath(Offset offset) => shadowPath.shift(offset);
 
   AnyRegions shiftedRegions({
     required Offset offset,
     required bool backgroundMerge,
   }) {
-    if (offset == Offset.zero) {
-      return regions(backgroundMerge: backgroundMerge);
-    }
-
     final source = regions(backgroundMerge: backgroundMerge);
-    return AnyRegions(
-      background: source.background == null
-          ? null
-          : (source.background!.$1, source.background!.$2.shift(offset)),
-      regions: List<(IAnyFill, Path)>.generate(
-        source.regions.length,
-            (index) => (
-        source.regions[index].$1,
-        source.regions[index].$2.shift(offset),
-        ),
-        growable: false,
-      ),
-    );
+    return source.withOffset(offset);
   }
 
   int wrap(int index) {
@@ -1399,21 +1371,23 @@ class AnyContour {
   }
 
   AnyRegions _buildRegions(bool backgroundMerge) {
+
     final backgroundFill = background;
     final backgroundSource = backgroundPath;
-    final backgroundTarget =
-    backgroundSource == null ? null : Path.from(backgroundSource);
+    final backgroundTarget = backgroundSource == null ? null : Path.from(backgroundSource);
 
     final regionFills = <IAnyFill>[];
     final regionPaths = <Path>[];
 
     for (var sideIndex = 0; sideIndex < count; sideIndex++) {
+
       if (sidePainted[sideIndex] == 0) continue;
 
       final side = sides[sideIndex];
       if (backgroundTarget != null &&
           backgroundMerge &&
           backgroundFill != null &&
+          side.align == AnySide.alignOutside && // we can merge only sides that goes outside of background
           side.isSameAs(backgroundFill)) {
         _appendSidePolygon(backgroundTarget, sideIndex);
         continue;
@@ -1524,7 +1498,7 @@ abstract class AnyDecoration extends Decoration {
   final AnyShapeBase? _shadowBase;
   final bool enableCache;
 
-  AnyShapeBase get backgroundShapeBase =>
+  AnyShapeBase get backgroundBase =>
       background?.shapeBase ?? AnyShapeBase.zeroBorder;
 
   AnyShapeBase get shadowBase =>
@@ -1552,7 +1526,7 @@ abstract class AnyDecoration extends Decoration {
       textDirection: textDirection,
       points: points(size, textDirection),
       background: background,
-      backgroundBase: backgroundShapeBase,
+      backgroundBase: backgroundBase,
       clipBase: clipBase,
       shadowBase: shadowBase,
     );
@@ -1990,9 +1964,32 @@ class AnyBoxDecoration extends AnyDecoration {
         _innerBottomRight = innerBottomRight,
         _innerBottomLeft = innerBottomLeft;
 
+  static Rect fitRatio(Size size, double? ratio) {
+
+    if (ratio == null || ratio <= 0.0) {
+      return Offset.zero & size;
+    }
+
+    var width = size.width;
+    var height = width / ratio;
+
+    if (height > size.height) {
+      height = size.height;
+      width = height * ratio;
+    }
+
+    return Rect.fromLTWH(
+      (size.width - width) / 2.0,
+      (size.height - height) / 2.0,
+      width,
+      height,
+    );
+  }
+
   @override
   List<AnyPoint> points(Size size, TextDirection? textDirection) {
-    final fitted = AnyUtils.fitRectToRatio(Offset.zero & size, ratio);
+
+    final fitted = fitRatio(size, ratio);
 
     return <AnyPoint>[
       AnyPoint(
