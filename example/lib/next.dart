@@ -68,6 +68,64 @@ class AnyUtils {
       height,
     );
   }
+
+  static AnySide lerpSide(AnySide a, AnySide b, double t) {
+    return AnySide(
+      width: lerpDouble(a.width, b.width, t),
+      align: lerpDouble(a.align, b.align, t),
+      color: Color.lerp(a.color, b.color, t),
+      gradient: pickLerpNullable(a.gradient, b.gradient, t),
+      image: pickLerpNullable(a.image, b.image, t),
+      blendMode: pickLerpNullable(a.blendMode, b.blendMode, t),
+      isAntiAlias: pickLerp(a.isAntiAlias, b.isAntiAlias, t),
+    );
+  }
+
+  static AnyBackground? lerpBackground(
+      AnyBackground? a,
+      AnyBackground? b,
+      double t,
+      ) {
+    if (a == null && b == null) return null;
+    if (a == null || b == null) return pickLerpNullable(a, b, t);
+
+    return AnyBackground(
+      color: Color.lerp(a.color, b.color, t),
+      gradient: pickLerpNullable(a.gradient, b.gradient, t),
+      image: pickLerpNullable(a.image, b.image, t),
+      blendMode: pickLerpNullable(a.blendMode, b.blendMode, t),
+      isAntiAlias: pickLerp(a.isAntiAlias, b.isAntiAlias, t),
+      shapeBase: pickLerp(a.shapeBase, b.shapeBase, t),
+    );
+  }
+
+  static AnyShadow lerpShadow(AnyShadow a, AnyShadow b, double t) {
+    return AnyShadow(
+      color: Color.lerp(a.color, b.color, t),
+      gradient: pickLerpNullable(a.gradient, b.gradient, t),
+      image: pickLerpNullable(a.image, b.image, t),
+      blendMode: pickLerpNullable(a.blendMode, b.blendMode, t),
+      blurRadius: lerpDouble(a.blurRadius, b.blurRadius, t),
+      offset: Offset.lerp(a.offset, b.offset, t) ?? pickLerp(a.offset, b.offset, t),
+      spreadRadius: Offset.lerp(a.spreadRadius, b.spreadRadius, t) ??
+          pickLerp(a.spreadRadius, b.spreadRadius, t),
+      style: pickLerp(a.style, b.style, t),
+      isAntiAlias: pickLerp(a.isAntiAlias, b.isAntiAlias, t),
+    );
+  }
+
+  static List<AnyShadow> lerpShadowList(
+      List<AnyShadow> a,
+      List<AnyShadow> b,
+      double t,
+      ) {
+    final count = math.max(a.length, b.length);
+    return List<AnyShadow>.generate(count, (index) {
+      if (index >= a.length) return b[index];
+      if (index >= b.length) return a[index];
+      return lerpShadow(a[index], b[index], t);
+    }, growable: false);
+  }
 }
 
 abstract class IAnyFill {
@@ -218,6 +276,7 @@ class AnyBackground extends AnySide {
 /// length it consumes, how it scales during normalization, and how it emits
 /// the corresponding geometry into a [Path].
 abstract class AnyCorner {
+
   const AnyCorner();
 
   /// Resolve infinities / other size-dependent values using the local side
@@ -1463,6 +1522,7 @@ abstract class AnyDecoration extends Decoration {
   final List<AnyShadow> shadows;
   final AnyShapeBase clipBase;
   final AnyShapeBase? _shadowBase;
+  final bool enableCache;
 
   AnyShapeBase get backgroundShapeBase =>
       background?.shapeBase ?? AnyShapeBase.zeroBorder;
@@ -1475,12 +1535,16 @@ abstract class AnyDecoration extends Decoration {
     this.background,
     this.clipBase = AnyShapeBase.zeroBorder,
     AnyShapeBase? shadowBase,
+    this.enableCache = true,
   }) : _shadowBase = shadowBase;
 
   AnyContour buildContour(Size size, TextDirection? textDirection) {
-    final cached = IDecorationCache.get(this, size, textDirection);
-    if (cached != null) {
-      return cached;
+
+    if (enableCache) {
+      final cached = IDecorationCache.get(this, size, textDirection);
+      if (cached != null) {
+        return cached;
+      }
     }
 
     final contour = AnyContour(
@@ -1493,7 +1557,9 @@ abstract class AnyDecoration extends Decoration {
       shadowBase: shadowBase,
     );
 
-    IDecorationCache.put(this, contour);
+    if (enableCache) {
+      IDecorationCache.put(this, contour);
+    }
     return contour;
   }
 
@@ -1515,13 +1581,101 @@ abstract class AnyDecoration extends Decoration {
     return other is AnyDecoration &&
         other.shadowBase == shadowBase &&
         other.clipBase == clipBase &&
+        other.enableCache == enableCache &&
         other.background == background &&
         listEquals(other.shadows, shadows);
   }
 
   @override
   int get hashCode =>
-      Object.hash(clipBase, shadowBase, background, Object.hashAll(shadows));
+      Object.hash(
+        clipBase,
+        shadowBase,
+        enableCache,
+        background,
+        Object.hashAll(shadows),
+      );
+}
+
+class AnyDecorationTween extends Tween<AnyDecoration> {
+
+  AnyDecorationTween({
+    required AnyDecoration super.begin,
+    required AnyDecoration super.end,
+  });
+
+  @override
+  AnyDecoration lerp(double t) {
+    if (t <= 0.0) return begin!;
+    if (t >= 1.0) return end!;
+
+    return _TweenDecoration(
+      beginDecoration: begin!,
+      endDecoration: end!,
+      t: t,
+    );
+  }
+}
+
+class _TweenDecoration extends AnyDecoration {
+
+  final AnyDecoration beginDecoration;
+  final AnyDecoration endDecoration;
+  final double t;
+
+  _TweenDecoration({
+    required this.beginDecoration,
+    required this.endDecoration,
+    required this.t,
+  }) : super(
+    background: AnyUtils.lerpBackground(
+      beginDecoration.background,
+      endDecoration.background,
+      t,
+    ),
+    shadows: AnyUtils.lerpShadowList(
+      beginDecoration.shadows,
+      endDecoration.shadows,
+      t,
+    ),
+    clipBase: AnyUtils.pickLerp(
+      beginDecoration.clipBase,
+      endDecoration.clipBase,
+      t,
+    ),
+    shadowBase: AnyUtils.pickLerp(
+      beginDecoration.shadowBase,
+      endDecoration.shadowBase,
+      t,
+    ),
+    enableCache: false
+  );
+
+  @override
+  List<AnyPoint> points(Size size, TextDirection? textDirection) {
+    final a = beginDecoration.points(size, textDirection);
+    final b = endDecoration.points(size, textDirection);
+    return AnyPoint.lerp(a, b, t)!;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is _TweenDecoration &&
+        other.beginDecoration == beginDecoration &&
+        other.endDecoration == endDecoration &&
+        other.t == t &&
+        super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    super.hashCode,
+    beginDecoration,
+    endDecoration,
+    t,
+  );
 }
 
 class _AnyDecorationPainter extends BoxPainter {
@@ -1802,6 +1956,7 @@ class AnyBoxDecoration extends AnyDecoration {
     super.clipBase,
     super.shadowBase,
     super.background,
+    super.enableCache,
     AnySide? left,
     AnySide? top,
     AnySide? right,
