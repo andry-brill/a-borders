@@ -1536,3 +1536,342 @@ class AnyBoxDecoration extends AnyDecoration {
     innerBottomLeft,
   );
 }
+
+
+const double _implEpsilon = 1.0e-6;
+const double _implStartAngle = math.pi;
+const double _implEndAngle = math.pi * 1.5;
+const double _implQuarterSweep = math.pi * 0.5;
+
+bool _implNearZero(double value, [double epsilon = _implEpsilon]) =>
+    value.abs() <= epsilon;
+
+double _implLerpDouble(double a, double b, double t) => a + ((b - a) * t);
+
+double _implClamp01(double value) {
+  if (value <= 0.0) return 0.0;
+  if (value >= 1.0) return 1.0;
+  return value;
+}
+
+/// Concave rounded corner.
+///
+/// This keeps the same tangent points and side-consumption semantics as
+/// [RoundedCorner], but the curve is traced on the opposite side of the local
+/// quarter ellipse, producing an inward notch instead of an outward round.
+///
+/// Negative values are ignored. Infinity is resolved against the adjacent side
+/// lengths during contour preparation.
+class InverseRoundedCorner extends AnyCorner {
+  final Radius radius;
+
+  const InverseRoundedCorner([this.radius = Radius.zero]);
+
+  bool _canBuild(AnyContour contour, int cornerIndex) {
+    return !contour.isCornerParallel(cornerIndex) &&
+        radius.x > _implEpsilon &&
+        radius.y > _implEpsilon &&
+        contour.cornerSin[cornerIndex] > _implEpsilon;
+  }
+
+  double _localAngleFromCommon(double angle) => _implEndAngle - angle;
+
+  @override
+  InverseRoundedCorner resolveFinite(
+      double maxPreviousExtent,
+      double maxNextExtent,
+      ) {
+    final rawX = radius.x;
+    final rawY = radius.y;
+
+    final rx = rawX.isFinite ? math.max(0.0, rawX) : math.max(0.0, maxPreviousExtent);
+    final ry = rawY.isFinite ? math.max(0.0, rawY) : math.max(0.0, maxNextExtent);
+
+    return InverseRoundedCorner(Radius.elliptical(rx, ry));
+  }
+
+  @override
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _implEpsilon) return 0.0;
+    return math.max(0.0, radius.x) / sinTurn;
+  }
+
+  @override
+  double consumptionForNextSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _implEpsilon) return 0.0;
+    return math.max(0.0, radius.y) / sinTurn;
+  }
+
+  @override
+  InverseRoundedCorner scaleForPreviousSide(double factor) {
+    return InverseRoundedCorner(
+      Radius.elliptical(radius.x * factor, radius.y),
+    );
+  }
+
+  @override
+  InverseRoundedCorner scaleForNextSide(double factor) {
+    return InverseRoundedCorner(
+      Radius.elliptical(radius.x, radius.y * factor),
+    );
+  }
+
+  @override
+  (double, double) pointAt(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) {
+    if (!_canBuild(contour, cornerIndex)) {
+      return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+    }
+
+    final localAngle = _localAngleFromCommon(angle);
+    final localX = dPrev + radius.x * math.cos(localAngle);
+    final localY = dNext + radius.y * math.sin(localAngle);
+    return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
+  }
+
+  @override
+  void appendArc(
+      Path path,
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double fromAngle,
+      double toAngle,
+      ) {
+    final delta = toAngle - fromAngle;
+    if (_implNearZero(delta)) return;
+
+    if (!_canBuild(contour, cornerIndex)) {
+      final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+      path.lineTo(x, y);
+      return;
+    }
+
+    final fraction = delta.abs() / _implQuarterSweep;
+    final baseSegments = contour.cornerSegments[cornerIndex];
+    final segmentCount = math.max(1, (baseSegments * fraction).ceil());
+
+    final centerX = dPrev;
+    final centerY = dNext;
+    final localFromAngle = _localAngleFromCommon(fromAngle);
+    final localToAngle = _localAngleFromCommon(toAngle);
+    final localDelta = localToAngle - localFromAngle;
+
+    for (var i = 0; i < segmentCount; i++) {
+      final t0 = i / segmentCount;
+      final t1 = (i + 1) / segmentCount;
+      final a0 = localFromAngle + localDelta * t0;
+      final a1 = localFromAngle + localDelta * t1;
+      final da = a1 - a0;
+      final alpha = (4.0 / 3.0) * math.tan(da / 4.0);
+
+      final cos0 = math.cos(a0);
+      final sin0 = math.sin(a0);
+      final cos1 = math.cos(a1);
+      final sin1 = math.sin(a1);
+
+      final p1x = centerX + radius.x * cos0 - alpha * radius.x * sin0;
+      final p1y = centerY + radius.y * sin0 + alpha * radius.y * cos0;
+      final p2x = centerX + radius.x * cos1 + alpha * radius.x * sin1;
+      final p2y = centerY + radius.y * sin1 - alpha * radius.y * cos1;
+      final p3x = centerX + radius.x * cos1;
+      final p3y = centerY + radius.y * sin1;
+
+      final (c1x, c1y) =
+      contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
+      final (c2x, c2y) =
+      contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
+      final (ex, ey) =
+      contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
+
+      path.cubicTo(c1x, c1y, c2x, c2y, ex, ey);
+    }
+  }
+
+  @override
+  InverseRoundedCorner lerpTo(AnyCorner other, double t) {
+    if (other is! InverseRoundedCorner) {
+      return t < 0.5 ? this : const InverseRoundedCorner();
+    }
+
+    return InverseRoundedCorner(
+      Radius.elliptical(
+        _implLerpDouble(radius.x, other.radius.x, t),
+        _implLerpDouble(radius.y, other.radius.y, t),
+      ),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is InverseRoundedCorner && other.radius == radius;
+  }
+
+  @override
+  int get hashCode => radius.hashCode;
+}
+
+/// Straight chamfer / bevel corner.
+///
+/// This uses the same side-consumption semantics as [RoundedCorner], but the
+/// tangent points are connected by a straight segment instead of a curve.
+///
+/// The existing corner split logic in [AnyContour] can still request partial
+/// segments using the shared angle parameter range. This implementation maps
+/// that angle range linearly onto the bevel segment.
+class BevelCorner extends AnyCorner {
+  final Radius radius;
+
+  const BevelCorner([this.radius = Radius.zero]);
+
+  bool _canBuild(AnyContour contour, int cornerIndex) {
+    return !contour.isCornerParallel(cornerIndex) &&
+        radius.x > _implEpsilon &&
+        radius.y > _implEpsilon &&
+        contour.cornerSin[cornerIndex] > _implEpsilon;
+  }
+
+  double _tForAngle(double angle) {
+    final span = _implEndAngle - _implStartAngle;
+    if (span <= _implEpsilon) return 0.0;
+    return _implClamp01((angle - _implStartAngle) / span);
+  }
+
+  (double, double) _startPoint(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      ) {
+    return contour.worldPointFromDistanceSpace(
+      cornerIndex,
+      dPrev,
+      dNext + radius.y,
+    );
+  }
+
+  (double, double) _endPoint(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      ) {
+    return contour.worldPointFromDistanceSpace(
+      cornerIndex,
+      dPrev + radius.x,
+      dNext,
+    );
+  }
+
+  @override
+  BevelCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
+    final rawX = radius.x;
+    final rawY = radius.y;
+
+    final rx = rawX.isFinite ? math.max(0.0, rawX) : math.max(0.0, maxPreviousExtent);
+    final ry = rawY.isFinite ? math.max(0.0, rawY) : math.max(0.0, maxNextExtent);
+
+    return BevelCorner(Radius.elliptical(rx, ry));
+  }
+
+  @override
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _implEpsilon) return 0.0;
+    return math.max(0.0, radius.x) / sinTurn;
+  }
+
+  @override
+  double consumptionForNextSide(AnyContour contour, int cornerIndex) {
+    final sinTurn = contour.cornerSin[cornerIndex];
+    if (sinTurn <= _implEpsilon) return 0.0;
+    return math.max(0.0, radius.y) / sinTurn;
+  }
+
+  @override
+  BevelCorner scaleForPreviousSide(double factor) {
+    return BevelCorner(
+      Radius.elliptical(radius.x * factor, radius.y),
+    );
+  }
+
+  @override
+  BevelCorner scaleForNextSide(double factor) {
+    return BevelCorner(
+      Radius.elliptical(radius.x, radius.y * factor),
+    );
+  }
+
+  @override
+  (double, double) pointAt(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) {
+    if (!_canBuild(contour, cornerIndex)) {
+      return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+    }
+
+    final t = _tForAngle(angle);
+    final (sx, sy) = _startPoint(contour, cornerIndex, dPrev, dNext);
+    final (ex, ey) = _endPoint(contour, cornerIndex, dPrev, dNext);
+    return (
+    _implLerpDouble(sx, ex, t),
+    _implLerpDouble(sy, ey, t),
+    );
+  }
+
+  @override
+  void appendArc(
+      Path path,
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double fromAngle,
+      double toAngle,
+      ) {
+    if (_implNearZero(toAngle - fromAngle)) return;
+
+    if (!_canBuild(contour, cornerIndex)) {
+      final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
+      path.lineTo(x, y);
+      return;
+    }
+
+    final (x, y) = pointAt(contour, cornerIndex, dPrev, dNext, toAngle);
+    path.lineTo(x, y);
+  }
+
+  @override
+  BevelCorner lerpTo(AnyCorner other, double t) {
+    if (other is! BevelCorner) {
+      return t < 0.5 ? this : const BevelCorner();
+    }
+
+    return BevelCorner(
+      Radius.elliptical(
+        _implLerpDouble(radius.x, other.radius.x, t),
+        _implLerpDouble(radius.y, other.radius.y, t),
+      ),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BevelCorner && other.radius == radius;
+  }
+
+  @override
+  int get hashCode => radius.hashCode;
+}
