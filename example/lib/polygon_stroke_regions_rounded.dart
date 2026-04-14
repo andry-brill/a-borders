@@ -3304,20 +3304,6 @@ class AnyTriDecoration extends AnyDecoration {
         _r = r,
         _f = f;
 
-  double _turnRightAngle(Offset from, Offset to) {
-    final a1 = atan2(from.dy, from.dx);
-    final a2 = atan2(to.dy, to.dx);
-
-    double delta = a2 - a1;
-    while (delta <= 0) {
-      delta += pi * 2.0;
-    }
-    while (delta > pi * 2.0) {
-      delta -= pi * 2.0;
-    }
-    return delta;
-  }
-
   ({Offset l, Offset r, Offset f}) _pointsForType(double width, double height) {
     final tl = Offset.zero;
     final tr = Offset(width, 0);

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -286,39 +287,71 @@ class AnyRegions {
   });
 }
 
-/// Array-driven contour builder.
+/// Small shared cache for contours.
 ///
-/// Main goals:
-/// - use [AnyPoint] corner-points directly
-/// - cache geometry in typed arrays
-/// - build final [Path]s directly, without an intermediate path-plan model
-/// - keep allocations low while still supporting separate outer/inner corner
-///   radii and rounded corners with cubic Béziers
-///
-/// Assumptions:
-/// - polygon is simple and closed
-/// - points are ordered along the contour
-/// - negative corner radii are ignored
-class AnyContour {
+/// Keyed by decoration instance. The cached contour is reusable only if its
+/// local size and text direction still match.
+class IDecorationCache {
 
+  static int limit = 1000;
+
+  static final LinkedHashMap<AnyDecoration, AnyContour> _contours = LinkedHashMap<AnyDecoration, AnyContour>();
+
+  static AnyContour? get(
+      AnyDecoration decoration,
+      Size size,
+      TextDirection? textDirection,
+      ) {
+    final contour = _contours[decoration];
+    if (contour == null) return null;
+    if (!contour.canReuseFor(size, textDirection)) return null;
+
+    // This decoration becomes the most recently used one (so will not be removed in case of limit)
+    _contours.remove(decoration);
+    _contours[decoration] = contour;
+    return contour;
+  }
+
+  static void put(AnyDecoration decoration, AnyContour contour) {
+    _contours.remove(decoration);
+    _contours[decoration] = contour;
+
+    while (_contours.length > limit) {
+      _contours.remove(_contours.keys.first);
+    }
+  }
+
+  static void clear() {
+    _contours.clear();
+  }
+}
+
+
+class AnyContour {
+  final Size size;
+  final TextDirection? textDirection;
   final AnyShapeBase shadowBase;
   final AnyShapeBase clipBase;
   final AnyShapeBase backgroundBase;
   final IAnyFill? background;
 
-  final List<AnyPoint> points;
-
   AnyContour({
+    required this.size,
+    required this.textDirection,
     required this.background,
     required this.backgroundBase,
     required this.clipBase,
     required this.shadowBase,
-    required this.points
+    required List<AnyPoint> points,
   }) {
     if (points.length < 3) {
       throw ArgumentError('At least 3 points are required to build a contour.');
     }
     _prepare(points);
+  }
+
+  bool canReuseFor(Size otherSize, TextDirection? otherTextDirection) {
+    return size == otherSize && textDirection == otherTextDirection;
   }
 
   int _count = 0;
@@ -355,7 +388,6 @@ class AnyContour {
   List<AnySide> _sides = List<AnySide>.empty(growable: false);
 
   void _prepare(List<AnyPoint> points) {
-
     _count = points.length;
 
     _px = Float64List(_count);
@@ -480,24 +512,65 @@ class AnyContour {
   }
 
   Path? _clipPath;
-  Path get clipPath => _clipPath ?? (_clipPath = _buildContourPath(clipBase));
+  Path get clipPath => _clipPath ??= _buildContourPath(clipBase);
 
   Path? _shadowPath;
-  Path get shadowPath => _shadowPath ?? (_shadowPath = _buildContourPath(shadowBase));
+  Path get shadowPath => _shadowPath ??= _buildContourPath(shadowBase);
 
-  AnyRegions? _regions;
+  Path? _backgroundPath;
+  Path? get backgroundPath {
+    final backgroundFill = background;
+    if (backgroundFill == null || !backgroundFill.hasFill) return null;
+    return _backgroundPath ??= _buildContourPath(backgroundBase);
+  }
 
-  /// If backgroundMerge, side regions with the same fill as [background] are appended to
-  /// the background path instead of being returned as separate regions.
-  AnyRegions regions({required bool backgroundMerge}) => _regions ?? (_regions = _buildRegions(backgroundMerge));
+  AnyRegions? _regionsMerged;
+  AnyRegions? _regionsSeparate;
+
+  /// If [backgroundMerge] is true, side regions with the same fill as
+  /// [background] are appended to the background path instead of being returned
+  /// as separate regions.
+  AnyRegions regions({required bool backgroundMerge}) {
+    if (backgroundMerge) {
+      return _regionsMerged ??= _buildRegions(true);
+    }
+    return _regionsSeparate ??= _buildRegions(false);
+  }
+
+  Path shiftedClipPath(Offset offset) =>
+      offset == Offset.zero ? clipPath : clipPath.shift(offset);
+
+  Path shiftedShadowPath(Offset offset) =>
+      offset == Offset.zero ? shadowPath : shadowPath.shift(offset);
+
+  AnyRegions shiftedRegions({
+    required Offset offset,
+    required bool backgroundMerge,
+  }) {
+    if (offset == Offset.zero) {
+      return regions(backgroundMerge: backgroundMerge);
+    }
+
+    final source = regions(backgroundMerge: backgroundMerge);
+    return AnyRegions(
+      background: source.background == null
+          ? null
+          : (source.background!.$1, source.background!.$2.shift(offset)),
+      regions: List<(IAnyFill, Path)>.generate(
+        source.regions.length,
+            (index) => (
+        source.regions[index].$1,
+        source.regions[index].$2.shift(offset),
+        ),
+        growable: false,
+      ),
+    );
+  }
 
   AnyRegions _buildRegions(bool backgroundMerge) {
-
-    Path? backgroundPath;
     final backgroundFill = background;
-    if (backgroundFill != null && backgroundFill.hasFill) {
-      backgroundPath = _buildContourPath(backgroundBase);
-    }
+    final backgroundSource = backgroundPath;
+    final backgroundTarget = backgroundSource == null ? null : Path.from(backgroundSource);
 
     final regionFills = <IAnyFill>[];
     final regionPaths = <Path>[];
@@ -506,11 +579,11 @@ class AnyContour {
       if (_sidePainted[sideIndex] == 0) continue;
 
       final side = _sides[sideIndex];
-      if (backgroundPath != null &&
+      if (backgroundTarget != null &&
           backgroundMerge &&
           backgroundFill != null &&
           side.isSameAs(backgroundFill)) {
-        _appendSidePolygon(backgroundPath, sideIndex);
+        _appendSidePolygon(backgroundTarget, sideIndex);
         continue;
       }
 
@@ -537,8 +610,8 @@ class AnyContour {
     }
 
     return AnyRegions(
-      background: backgroundPath != null && backgroundFill != null
-          ? (backgroundFill, backgroundPath)
+      background: backgroundTarget != null && backgroundFill != null
+          ? (backgroundFill, backgroundTarget)
           : null,
       regions: regions,
     );
@@ -611,7 +684,16 @@ class AnyContour {
       final dNext = _offsetForBase(corner, base);
 
       _lineToCornerPoint(path, corner, dPrev, dNext, rx, ry, _startAngle);
-      _appendCornerArc(path, corner, dPrev, dNext, rx, ry, _startAngle, _endAngle);
+      _appendCornerArc(
+        path,
+        corner,
+        dPrev,
+        dNext,
+        rx,
+        ry,
+        _startAngle,
+        _endAngle,
+      );
     }
 
     path.close();
@@ -914,16 +996,12 @@ class AnyShadow with MAnyFill {
   );
 }
 
-class IDecorationCache {
-
-}
-
 abstract class AnyDecoration extends Decoration {
-  /// Build final contour points for this rect.
+  /// Build final contour points in local coordinates for this size.
   ///
   /// Each [AnyPoint.side] belongs to the segment that starts at this point and
   /// goes to the next point.
-  List<AnyPoint> points(Rect rect, TextDirection? textDirection);
+  List<AnyPoint> points(Size size, TextDirection? textDirection);
 
   final AnyBackground? background;
   final List<AnyShadow> shadows;
@@ -942,15 +1020,25 @@ abstract class AnyDecoration extends Decoration {
     AnyShapeBase? shadowBase,
   }) : _shadowBase = shadowBase;
 
-  // TODO add contour cache
-  AnyContour buildContour(Rect rect, TextDirection textDirection) {
-    return AnyContour(
-      points: points(rect, textDirection),
+  AnyContour buildContour(Size size, TextDirection? textDirection) {
+
+    final cached = IDecorationCache.get(this, size, textDirection);
+    if (cached != null) {
+      return cached;
+    }
+
+    final contour = AnyContour(
+      size: size,
+      textDirection: textDirection,
+      points: points(size, textDirection),
       background: background,
       backgroundBase: backgroundShapeBase,
       clipBase: clipBase,
-      shadowBase: shadowBase
+      shadowBase: shadowBase,
     );
+
+    IDecorationCache.put(this, contour);
+    return contour;
   }
 
   @override
@@ -960,8 +1048,8 @@ abstract class AnyDecoration extends Decoration {
 
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {
-    final contour = buildContour(rect, textDirection);
-    return contour.clipPath;
+    final contour = buildContour(rect.size, textDirection);
+    return contour.shiftedClipPath(rect.topLeft);
   }
 
   @override
@@ -1003,16 +1091,17 @@ class _AnyDecorationPainter extends BoxPainter {
       }
     }
 
-    final rect = topLeft & size;
-
-    final contour = decoration.buildContour(rect, configuration.textDirection!);
-    final regions = contour.regions(backgroundMerge: innerShadows.isEmpty);
+    final contour = decoration.buildContour(size, configuration.textDirection);
+    final regions = contour.shiftedRegions(
+      offset: topLeft,
+      backgroundMerge: innerShadows.isEmpty,
+    );
 
     final backgroundRegion = regions.background;
 
     Path? shadowPath;
     if (innerShadows.isNotEmpty || otherShadows.isNotEmpty) {
-      shadowPath = contour.shadowPath;
+      shadowPath = contour.shiftedShadowPath(topLeft);
     }
 
     for (final shadow in otherShadows) {
@@ -1020,7 +1109,12 @@ class _AnyDecorationPainter extends BoxPainter {
     }
 
     if (backgroundRegion != null && backgroundRegion.$1.hasFill) {
-      _paintRegion(canvas, backgroundRegion.$1, backgroundRegion.$2, configuration);
+      _paintRegion(
+        canvas,
+        backgroundRegion.$1,
+        backgroundRegion.$2,
+        configuration,
+      );
     }
 
     for (final shadow in innerShadows) {
@@ -1266,7 +1360,8 @@ class AnyBoxDecoration extends AnyDecoration {
     AnyCorner? innerBottomLeft,
     this.innerCorners,
   })  : ratio = circle ? 1.0 : ratio,
-        _corners = circle ? const AnyCorner(Radius.circular(double.infinity)) : corners,
+        _corners =
+        circle ? const AnyCorner(Radius.circular(double.infinity)) : corners,
         _sides = sides,
         _left = left,
         _top = top,
@@ -1282,8 +1377,8 @@ class AnyBoxDecoration extends AnyDecoration {
         _innerBottomLeft = innerBottomLeft;
 
   @override
-  List<AnyPoint> points(Rect rect, TextDirection? textDirection) {
-    final fitted = _fitRectToRatio(rect, ratio);
+  List<AnyPoint> points(Size size, TextDirection? textDirection) {
+    final fitted = _fitRectToRatio(Offset.zero & size, ratio);
     final width = fitted.width;
     final height = fitted.height;
 
