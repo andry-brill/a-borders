@@ -2,13 +2,13 @@ library any_borders;
 
 import 'dart:collection';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 abstract class AnyUtils {
-
   static const double epsilon = 1.0e-6;
   static const double startAngle = math.pi;
   static const double midAngle = math.pi * 1.25;
@@ -108,7 +108,6 @@ abstract class AnyUtils {
       return lerpShadow(a[index], b[index], t);
     }, growable: false);
   }
-
 }
 
 abstract class IAnyFill {
@@ -259,7 +258,6 @@ class AnyBackground extends AnySide {
 /// length it consumes, how it scales during normalization, and how it emits
 /// the corresponding geometry into a [Path].
 abstract class AnyCorner {
-
   const AnyCorner();
 
   /// Resolve infinities / other size-dependent values using the local side
@@ -321,6 +319,10 @@ class RoundedCorner extends AnyCorner {
         contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
   }
 
+  double _turnSign(AnyContour contour, int cornerIndex) {
+    return contour.cornerHandedness(cornerIndex);
+  }
+
   @override
   RoundedCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
     final rawX = radius.x;
@@ -376,8 +378,11 @@ class RoundedCorner extends AnyCorner {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
 
-    final localX = dPrev + radius.x + radius.x * math.cos(angle);
-    final localY = dNext + radius.y + radius.y * math.sin(angle);
+    final sign = _turnSign(contour, cornerIndex);
+    final rx = sign * radius.x;
+    final ry = sign * radius.y;
+    final localX = dPrev + rx + rx * math.cos(angle);
+    final localY = dNext + ry + ry * math.sin(angle);
     return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
   }
 
@@ -404,8 +409,11 @@ class RoundedCorner extends AnyCorner {
     final baseSegments = contour.cornerSegments[cornerIndex];
     final segmentCount = math.max(1, (baseSegments * fraction).ceil());
 
-    final centerX = dPrev + radius.x;
-    final centerY = dNext + radius.y;
+    final sign = _turnSign(contour, cornerIndex);
+    final rx = sign * radius.x;
+    final ry = sign * radius.y;
+    final centerX = dPrev + rx;
+    final centerY = dNext + ry;
 
     for (var i = 0; i < segmentCount; i++) {
       final t0 = i / segmentCount;
@@ -420,12 +428,12 @@ class RoundedCorner extends AnyCorner {
       final cos1 = math.cos(a1);
       final sin1 = math.sin(a1);
 
-      final p1x = centerX + radius.x * cos0 - alpha * radius.x * sin0;
-      final p1y = centerY + radius.y * sin0 + alpha * radius.y * cos0;
-      final p2x = centerX + radius.x * cos1 + alpha * radius.x * sin1;
-      final p2y = centerY + radius.y * sin1 - alpha * radius.y * cos1;
-      final p3x = centerX + radius.x * cos1;
-      final p3y = centerY + radius.y * sin1;
+      final p1x = centerX + rx * cos0 - alpha * rx * sin0;
+      final p1y = centerY + ry * sin0 + alpha * ry * cos0;
+      final p2x = centerX + rx * cos1 + alpha * rx * sin1;
+      final p2y = centerY + ry * sin1 - alpha * ry * cos1;
+      final p3x = centerX + rx * cos1;
+      final p3y = centerY + ry * sin1;
 
       final (c1x, c1y) =
       contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
@@ -479,6 +487,10 @@ class InverseRoundedCorner extends AnyCorner {
         radius.x > AnyUtils.epsilon &&
         radius.y > AnyUtils.epsilon &&
         contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
+  }
+
+  double _turnSign(AnyContour contour, int cornerIndex) {
+    return contour.cornerHandedness(cornerIndex);
   }
 
   double _localAngleFromCommon(double angle) => AnyUtils.endAngle - angle;
@@ -541,9 +553,12 @@ class InverseRoundedCorner extends AnyCorner {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
 
+    final sign = _turnSign(contour, cornerIndex);
+    final rx = sign * radius.x;
+    final ry = sign * radius.y;
     final localAngle = _localAngleFromCommon(angle);
-    final localX = dPrev + radius.x * math.cos(localAngle);
-    final localY = dNext + radius.y * math.sin(localAngle);
+    final localX = dPrev + rx * math.cos(localAngle);
+    final localY = dNext + ry * math.sin(localAngle);
     return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
   }
 
@@ -570,6 +585,9 @@ class InverseRoundedCorner extends AnyCorner {
     final baseSegments = contour.cornerSegments[cornerIndex];
     final segmentCount = math.max(1, (baseSegments * fraction).ceil());
 
+    final sign = _turnSign(contour, cornerIndex);
+    final rx = sign * radius.x;
+    final ry = sign * radius.y;
     final centerX = dPrev;
     final centerY = dNext;
     final localFromAngle = _localAngleFromCommon(fromAngle);
@@ -589,12 +607,12 @@ class InverseRoundedCorner extends AnyCorner {
       final cos1 = math.cos(a1);
       final sin1 = math.sin(a1);
 
-      final p1x = centerX + radius.x * cos0 - alpha * radius.x * sin0;
-      final p1y = centerY + radius.y * sin0 + alpha * radius.y * cos0;
-      final p2x = centerX + radius.x * cos1 + alpha * radius.x * sin1;
-      final p2y = centerY + radius.y * sin1 - alpha * radius.y * cos1;
-      final p3x = centerX + radius.x * cos1;
-      final p3y = centerY + radius.y * sin1;
+      final p1x = centerX + rx * cos0 - alpha * rx * sin0;
+      final p1y = centerY + ry * sin0 + alpha * ry * cos0;
+      final p2x = centerX + rx * cos1 + alpha * rx * sin1;
+      final p2y = centerY + ry * sin1 - alpha * ry * cos1;
+      final p3x = centerX + rx * cos1;
+      final p3y = centerY + ry * sin1;
 
       final (c1x, c1y) =
       contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
@@ -650,6 +668,10 @@ class BevelCorner extends AnyCorner {
         contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
   }
 
+  double _turnSign(AnyContour contour, int cornerIndex) {
+    return contour.cornerHandedness(cornerIndex);
+  }
+
   double _tForAngle(double angle) {
     final span = AnyUtils.endAngle - AnyUtils.startAngle;
     if (span <= AnyUtils.epsilon) return 0.0;
@@ -662,10 +684,11 @@ class BevelCorner extends AnyCorner {
       double dPrev,
       double dNext,
       ) {
+    final sign = _turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
       dPrev,
-      dNext + radius.y,
+      dNext + sign * radius.y,
     );
   }
 
@@ -675,9 +698,10 @@ class BevelCorner extends AnyCorner {
       double dPrev,
       double dNext,
       ) {
+    final sign = _turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
-      dPrev + radius.x,
+      dPrev + sign * radius.x,
       dNext,
     );
   }
@@ -891,7 +915,6 @@ class IDecorationCache {
 }
 
 class AnyContour {
-
   // Options that uses in cache to check that contour could be re-used
   final Size size;
   final TextDirection? textDirection;
@@ -943,6 +966,7 @@ class AnyContour {
 
   late final Float64List cornerSin;
   late final Int32List cornerSegments;
+  late final Int8List cornerTurnSign;
   late final Uint8List cornerParallel;
   late final Uint8List sideHasWidth;
   late final Uint8List sidePainted;
@@ -992,6 +1016,10 @@ class AnyContour {
   }
 
   bool isCornerParallel(int cornerIndex) => cornerParallel[cornerIndex] != 0;
+
+  double cornerHandedness(int cornerIndex) {
+    return cornerTurnSign[cornerIndex] < 0 ? -1.0 : 1.0;
+  }
 
   double offsetForBase(int sideIndex, AnyShapeBase base) {
     return switch (base) {
@@ -1047,6 +1075,7 @@ class AnyContour {
     cornerMatrix11 = Float64List(count);
     cornerSin = Float64List(count);
     cornerSegments = Int32List(count);
+    cornerTurnSign = Int8List(count);
     cornerParallel = Uint8List(count);
     sideHasWidth = Uint8List(count);
     sidePainted = Uint8List(count);
@@ -1140,6 +1169,7 @@ class AnyContour {
           (sideDirectionY[prev] * sideDirectionX[corner]);
       final sinTurn = cross.abs();
       cornerSin[corner] = sinTurn;
+      cornerTurnSign[corner] = cross < -AnyUtils.epsilon ? -1 : 1;
 
       final ux = -sideDirectionX[prev];
       final uy = -sideDirectionY[prev];
@@ -1372,7 +1402,6 @@ class AnyContour {
   }
 
   AnyRegions _buildRegions(bool backgroundMerge) {
-
     final backgroundFill = background;
     final backgroundSource = backgroundPath;
     final backgroundTarget = backgroundSource == null ? null : Path.from(backgroundSource);
@@ -1381,14 +1410,13 @@ class AnyContour {
     final regionPaths = <Path>[];
 
     for (var sideIndex = 0; sideIndex < count; sideIndex++) {
-
       if (sidePainted[sideIndex] == 0) continue;
 
       final side = sides[sideIndex];
       if (backgroundTarget != null &&
           backgroundMerge &&
           backgroundFill != null &&
-          side.align == AnySide.alignOutside && // we can merge only sides that goes outside of background
+          side.align == AnySide.alignOutside &&
           side.isSameAs(backgroundFill)) {
         _appendSidePolygon(backgroundTarget, sideIndex);
         continue;
@@ -1487,7 +1515,6 @@ class AnyShadow with MAnyFill {
 }
 
 abstract class AnyDecoration extends Decoration {
-
   /// Build final contour points in local coordinates for this size.
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection);
 
@@ -1511,11 +1538,9 @@ abstract class AnyDecoration extends Decoration {
     this.ratio,
     AnySide? sides,
     AnyCorner? corners,
-    this.innerCorners
-  }) :
-    sides = sides ?? const AnySide(),
-    corners = corners ?? const RoundedCorner()
-  ;
+    this.innerCorners,
+  })  : sides = sides ?? const AnySide(),
+        corners = corners ?? const RoundedCorner();
 
   AnyPoint point(Offset point, {AnyCorner? outer, AnyCorner? inner, AnySide? side}) {
     return AnyPoint(
@@ -1527,7 +1552,6 @@ abstract class AnyDecoration extends Decoration {
   }
 
   Rect fitRatio(Size size, double? ratio) {
-
     if (ratio == null || ratio <= 0.0) {
       return Offset.zero & size;
     }
@@ -1549,7 +1573,6 @@ abstract class AnyDecoration extends Decoration {
   }
 
   AnyContour buildContour(Size size, TextDirection? textDirection) {
-
     if (enableCache) {
       final cached = IDecorationCache.get(this, size, textDirection);
       if (cached != null) {
@@ -1618,7 +1641,6 @@ abstract class AnyDecoration extends Decoration {
 }
 
 class AnyDecorationTween extends Tween<AnyDecoration> {
-
   AnyDecorationTween({
     required AnyDecoration super.begin,
     required AnyDecoration super.end,
@@ -1638,7 +1660,6 @@ class AnyDecorationTween extends Tween<AnyDecoration> {
 }
 
 class _TweenDecoration extends AnyDecoration {
-
   final AnyDecoration beginDecoration;
   final AnyDecoration endDecoration;
   final double t;
@@ -1648,27 +1669,27 @@ class _TweenDecoration extends AnyDecoration {
     required this.endDecoration,
     required this.t,
   }) : super(
-      background: AnyUtils.lerpBackground(
-        beginDecoration.background,
-        endDecoration.background,
-        t,
-      ),
-      shadows: AnyUtils.lerpShadowList(
-        beginDecoration.shadows,
-        endDecoration.shadows,
-        t,
-      ),
-      clipBase: AnyUtils.pickLerp(
-        beginDecoration.clipBase,
-        endDecoration.clipBase,
-        t,
-      ),
-      shadowBase: AnyUtils.pickLerp(
-        beginDecoration.shadowBase,
-        endDecoration.shadowBase,
-        t,
-      ),
-      enableCache: false
+    background: AnyUtils.lerpBackground(
+      beginDecoration.background,
+      endDecoration.background,
+      t,
+    ),
+    shadows: AnyUtils.lerpShadowList(
+      beginDecoration.shadows,
+      endDecoration.shadows,
+      t,
+    ),
+    clipBase: AnyUtils.pickLerp(
+      beginDecoration.clipBase,
+      endDecoration.clipBase,
+      t,
+    ),
+    shadowBase: AnyUtils.pickLerp(
+      beginDecoration.shadowBase,
+      endDecoration.shadowBase,
+      t,
+    ),
+    enableCache: false,
   );
 
   @override
@@ -1917,7 +1938,6 @@ class _AnyDecorationPainter extends BoxPainter {
 }
 
 class AnyBoxDecoration extends AnyDecoration {
-
   static const AnyCorner cornersBase = RoundedCorner();
 
   final AnySide? left;
@@ -1958,31 +1978,33 @@ class AnyBoxDecoration extends AnyDecoration {
     this.innerTopRight,
     this.innerBottomRight,
     this.innerBottomLeft,
-  })  :
-      super(
-        corners: circle ? const RoundedCorner(Radius.circular(double.infinity)) : corners,
-        ratio: circle ? 1.0 : ratio,
-      );
-
+  }) : super(
+    corners: circle ? const RoundedCorner(Radius.circular(double.infinity)) : corners,
+    ratio: circle ? 1.0 : ratio,
+  );
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) => [
-    point(bounds.topLeft,
+    point(
+      bounds.topLeft,
       outer: topLeft,
       inner: innerTopLeft,
       side: top,
     ),
-    point(bounds.topRight,
+    point(
+      bounds.topRight,
       outer: topRight,
       inner: innerTopRight,
       side: right,
     ),
-    point(bounds.bottomRight,
+    point(
+      bounds.bottomRight,
       outer: bottomRight,
       inner: innerBottomRight,
       side: bottom,
     ),
-    point(bounds.bottomLeft,
+    point(
+      bounds.bottomLeft,
       outer: bottomLeft,
       inner: innerBottomLeft,
       side: left,
@@ -2026,4 +2048,3 @@ class AnyBoxDecoration extends AnyDecoration {
     innerBottomLeft,
   );
 }
-

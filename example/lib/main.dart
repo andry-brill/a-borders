@@ -11,14 +11,14 @@ void main() {
 const blueLight = Colors.lightBlueAccent;
 const blue = Colors.blue;
 
-const goldLight = Colors.orangeAccent;
+const goldLight = Colors.red;
 const gold = Colors.orange;
 
 List<Widget> examples() {
   return [
     E2(
       title: 'Crown',
-      begin: const CrownDecoration(type: CrownType.flat),
+      begin: const CrownDecoration(type: CrownType.flat, corners: BevelCorner(Radius.circular(15))),
       end: const CrownDecoration(
         type: CrownType.spike,
         corners: RoundedCorner(Radius.circular(20)),
