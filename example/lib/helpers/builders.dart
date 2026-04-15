@@ -197,3 +197,52 @@ class ExampleGenerator {
     return result;
   }
 }
+
+
+
+final c = Colors.blue[400];
+final cl = Colors.amber[200];
+final ct = Colors.purple[300];
+final cr = Colors.red[300];
+final cb = Colors.green[400];
+
+const w0 = 00.0;
+const w1 = 10.0;
+const w2 = 20.0;
+const w3 = 30.0;
+const w4 = 40.0;
+
+final generator = ExampleGenerator([
+
+  ChangeGroup('BACK', [Change('N', (d) => d.color = null), Change('C', (d) => d.color = c)]),
+
+  ChangeGroup('TOP', [
+    Change('INN', (d) => d.top.align = AnySide.alignInside),
+    Change('CEN', (d) => d.top.align = AnySide.alignCenter),
+    Change('OUT', (d) => d.top.align = AnySide.alignOutside),
+  ]),
+  ChangeGroup('TOP', [
+    Change('W0', (d) => d.top.width = w0),
+    Change('W1', (d) => d.top.width = w1),
+  ]),
+  ChangeGroup('TOP', [
+    Change('C', (d) => d.top.color = c),
+    Change('CT', (d) => d.top.color = ct),
+  ]),
+
+  ChangeGroup('RIGHT', [
+    Change('INN', (d) => d.right.align = AnySide.alignInside),
+    Change('CEN', (d) => d.right.align = AnySide.alignCenter),
+    Change('OUT', (d) => d.right.align = AnySide.alignOutside),
+  ]),
+  ChangeGroup('RIGHT', [
+    Change('W0', (d) => d.right.width = w0),
+    Change('W1', (d) => d.right.width = w1),
+    Change('W2', (d) => d.right.width = w2),
+  ]),
+  ChangeGroup('RIGHT', [
+    Change('C', (d) => d.right.color = c),
+    Change('CT', (d) => d.right.color = ct),
+    Change('CR', (d) => d.right.color = cr),
+  ]),
+]);

@@ -824,14 +824,11 @@ class AnyPoint {
         side: AnySide(
           width: AnyUtils.lerpDouble(pa.side.width, pb.side.width, t),
           align: AnyUtils.lerpDouble(pa.side.align, pb.side.align, t),
-          color: AnyUtils.pickLerpNullable(pa.side.color, pb.side.color, t),
-          gradient:
-          AnyUtils.pickLerpNullable(pa.side.gradient, pb.side.gradient, t),
+          color: Color.lerp(pa.side.color, pb.side.color, t),
+          gradient: Gradient.lerp(pa.side.gradient, pb.side.gradient, t),
           image: AnyUtils.pickLerpNullable(pa.side.image, pb.side.image, t),
-          blendMode:
-          AnyUtils.pickLerpNullable(pa.side.blendMode, pb.side.blendMode, t),
-          isAntiAlias:
-          AnyUtils.pickLerp(pa.side.isAntiAlias, pb.side.isAntiAlias, t),
+          blendMode: AnyUtils.pickLerpNullable(pa.side.blendMode, pb.side.blendMode, t),
+          isAntiAlias: AnyUtils.pickLerp(pa.side.isAntiAlias, pb.side.isAntiAlias, t),
         ),
       );
     }, growable: false);
