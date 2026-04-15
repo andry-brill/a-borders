@@ -1,4 +1,3 @@
-
 import 'package:collection/collection.dart';
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
@@ -20,18 +19,28 @@ List<Widget> examples() {
     E2(
       title: 'Crown',
       begin: const CrownDecoration(type: CrownType.flat),
-      end: const CrownDecoration(type: CrownType.spike, corners: RoundedCorner(Radius.circular(20)))
-    )
+      end: const CrownDecoration(
+        type: CrownType.spike,
+        corners: RoundedCorner(Radius.circular(20)),
+      ),
+    ),
+    E2(
+      title: 'CrownInv',
+      begin: const CrownDecoration(type: CrownType.spike, corners: RoundedCorner(Radius.circular(20)),),
+      end: const CrownDecoration(
+        type: CrownType.flat,
+      ),
+    ),
   ];
 }
 
 const constraints = BoxConstraints.tightFor(width: 200, height: 100);
-const double spacing = 40;
+const double spacing = 60;
 
 const duration = Duration(milliseconds: 500);
 const curve = Curves.easeInOut;
 
-const titleStyle = const TextStyle(color: Colors.black45);
+const titleStyle = TextStyle(color: Colors.black45);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -50,6 +59,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class _ExampleToggleBus extends ChangeNotifier {
+  _ExampleToggleBus._();
+
+  static final _ExampleToggleBus instance = _ExampleToggleBus._();
+
+  void toggleAll() {
+    notifyListeners();
+  }
+}
+
 class _ExamplePage extends StatefulWidget {
   const _ExamplePage();
 
@@ -57,13 +76,10 @@ class _ExamplePage extends StatefulWidget {
   State<_ExamplePage> createState() => _ExamplePageState();
 }
 
-
 class _ExamplePageState extends State<_ExamplePage> {
-
   List<Widget> cache = [];
 
   List<Widget> buildExamples() {
-
     if (cache.isNotEmpty) return cache;
 
     // if (cache.isEmpty) {
@@ -78,7 +94,6 @@ class _ExamplePageState extends State<_ExamplePage> {
     return cache = examples();
   }
 
-
   Widget row(List<Widget> children) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -90,58 +105,72 @@ class _ExamplePageState extends State<_ExamplePage> {
 
   @override
   Widget build(BuildContext context) {
-
-    var ex = buildExamples();
+    final ex = buildExamples();
     final children = ex.slices(4).map(row).toList();
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsetsGeometry.all(100),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: spacing,
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: _ExampleToggleBus.instance.toggleAll,
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(100),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: spacing,
               children: children,
-        ))
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-
 class StarDecoration extends AnyDecoration {
-
-  const StarDecoration({super.background, super.sides, super.corners, super.innerCorners});
+  const StarDecoration({
+    super.background,
+    super.sides,
+    super.corners,
+    super.innerCorners,
+  });
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
     // TODO: implement points
     throw UnimplementedError();
   }
-
 }
 
 class AntiStarDecoration extends AnyDecoration {
-
-  const AntiStarDecoration({super.background, super.sides, super.corners, super.innerCorners});
+  const AntiStarDecoration({
+    super.background,
+    super.sides,
+    super.corners,
+    super.innerCorners,
+  });
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
     // TODO: implement points
     throw UnimplementedError();
   }
-
 }
 
 class TabDecoration extends AnyDecoration {
-
-  const TabDecoration({super.background, super.sides, super.corners, super.innerCorners});
+  const TabDecoration({
+    super.background,
+    super.sides,
+    super.corners,
+    super.innerCorners,
+  });
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
     // TODO: implement points
     throw UnimplementedError();
   }
-
 }
 
 enum CrownType {
@@ -150,17 +179,22 @@ enum CrownType {
 
   final double mainDy, subDy;
   final Color light, dark;
+
   const CrownType(this.mainDy, this.subDy, this.light, this.dark);
 }
 
 class CrownDecoration extends AnyDecoration {
-
   final CrownType type;
-  const CrownDecoration({super.background, super.corners, required this.type});
+
+  const CrownDecoration({
+    super.background,
+    super.corners,
+    required this.type,
+  });
 
   @override
   bool operator ==(Object other) {
-    return other is CrownDecoration && other.type == type && super == other ;
+    return other is CrownDecoration && other.type == type && super == other;
   }
 
   @override
@@ -168,22 +202,37 @@ class CrownDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+    final w4 = bounds.width / 4.0;
+    final w2 = bounds.width / 2.0;
 
-    double w4 = bounds.width / 4.0;
-    double w2 = bounds.width / 2.0;
-
-    final outer = AnySide(width: 20, align: AnySide.alignOutside, color: type.light);
-    final inner = AnySide(width: 20, align: AnySide.alignInside, color: type.dark);
+    final outer = AnySide(
+      width: 20,
+      align: AnySide.alignOutside,
+      color: type.light,
+    );
+    final inner = AnySide(
+      width: 20,
+      align: AnySide.alignInside,
+      color: type.dark,
+    );
 
     final subLx = bounds.left + w4;
     final subRx = bounds.right - w4;
 
     return [
       point(bounds.topLeft, side: inner),
-      point(Offset(subLx, bounds.top + bounds.height * type.subDy), side: outer),
-      point(Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy), side: outer),
-      point(Offset(subRx, bounds.top + bounds.height * type.subDy), side: inner),
-
+      point(
+        Offset(subLx, bounds.top + bounds.height * type.subDy),
+        side: outer,
+      ),
+      point(
+        Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy),
+        side: outer,
+      ),
+      point(
+        Offset(subRx, bounds.top + bounds.height * type.subDy),
+        side: inner,
+      ),
       point(bounds.topRight, side: outer),
       point(bounds.bottomRight, side: outer),
       point(Offset(subRx, bounds.bottom), side: inner),
@@ -191,17 +240,19 @@ class CrownDecoration extends AnyDecoration {
       point(bounds.bottomLeft, side: outer),
     ];
   }
-
 }
 
-
 class E1 extends StatelessWidget {
-
   final bool border;
   final String title;
   final AnyDecoration decoration;
 
-  const E1({super.key, required this.title, required this.decoration, this.border = true});
+  const E1({
+    super.key,
+    required this.title,
+    required this.decoration,
+    this.border = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -212,24 +263,26 @@ class E1 extends StatelessWidget {
     );
 
     if (border) {
-      result = Stack(children: [
-        result,
-        Positioned(child: Container(
-          constraints: constraints,
-          decoration: BoxDecoration(
-              border: Border.all(color: Colors.black12)
+      result = Stack(
+        children: [
+          result,
+          Positioned(
+            child: Container(
+              constraints: constraints,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black12),
+              ),
+            ),
           ),
-        ))
-      ]);
+        ],
+      );
     }
 
     return result;
   }
-
 }
 
 class E2 extends StatefulWidget {
-
   final String title;
   final AnyDecoration begin;
   final AnyDecoration end;
@@ -246,7 +299,6 @@ class E2 extends StatefulWidget {
 }
 
 class _E2State extends State<E2> with SingleTickerProviderStateMixin {
-
   late final AnimationController _controller;
   late final Animation<double> _animation;
   late AnyDecorationTween _tween;
@@ -265,6 +317,7 @@ class _E2State extends State<E2> with SingleTickerProviderStateMixin {
       begin: widget.begin,
       end: widget.end,
     );
+    _ExampleToggleBus.instance.addListener(_toggle);
   }
 
   @override
@@ -280,6 +333,8 @@ class _E2State extends State<E2> with SingleTickerProviderStateMixin {
   }
 
   void _toggle() {
+    if (!mounted) return;
+
     if (_expanded) {
       _controller.reverse();
     } else {
@@ -289,31 +344,27 @@ class _E2State extends State<E2> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
+    _ExampleToggleBus.instance.removeListener(_toggle);
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget result = GestureDetector(
-      onTap: _toggle,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, _) {
 
-          final decoration = _tween.evaluate(_animation);
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        final decoration = _tween.evaluate(_animation);
 
-          return Container(
-            constraints: constraints,
-            decoration: decoration,
-            child: Center(
-              child: Text(widget.title, style: titleStyle),
-            ),
-          );
-        },
-      ),
+        return Container(
+          constraints: constraints,
+          decoration: decoration,
+          child: Center(
+            child: Text(widget.title, style: titleStyle),
+          ),
+        );
+      },
     );
-
-    return result;
   }
 }
