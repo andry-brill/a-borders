@@ -287,8 +287,8 @@ enum CornerConverter {
 /// length it consumes, how it scales during normalization, and how it emits
 /// the corresponding geometry into a [Path].
 abstract class AnyCorner {
-  final CornerConverter innerCorner;
-  const AnyCorner({this.innerCorner = CornerConverter.preserveRatio});
+
+  const AnyCorner();
 
   /// Resolve infinities / other size-dependent values using the local side
   /// extents around this corner.
@@ -361,11 +361,13 @@ abstract class AnyCorner {
 /// Negative values are ignored. Infinity is resolved against the adjacent side
 /// lengths during contour preparation.
 class RoundedCorner extends AnyCorner {
+
   final Radius radius;
+  final CornerConverter converter;
 
   const RoundedCorner({
     this.radius = Radius.zero,
-    super.innerCorner,
+    this.converter = CornerConverter.preserveRatio
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
@@ -509,7 +511,7 @@ class RoundedCorner extends AnyCorner {
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
-      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
+      converter: AnyUtils.pickLerp(converter, other.converter, t),
     );
   }
 
@@ -518,22 +520,22 @@ class RoundedCorner extends AnyCorner {
 
   @override
   RoundedCorner convert(double insetX, double insetY, bool inner) =>
-      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
+      copyWith(radius: converter.convert(radius, insetX, insetY, inner));
 
   @override
   bool operator ==(Object other) {
     return other is RoundedCorner &&
         other.radius == radius &&
-        other.innerCorner == innerCorner;
+        other.converter == converter;
   }
 
   @override
-  int get hashCode => Object.hash(radius, innerCorner);
+  int get hashCode => Object.hash(runtimeType, radius, converter);
 
   RoundedCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
       RoundedCorner(
         radius: radius ?? this.radius,
-        innerCorner: innerCorner ?? this.innerCorner,
+        converter: innerCorner ?? this.converter,
       );
 }
 
@@ -546,11 +548,10 @@ class RoundedCorner extends AnyCorner {
 /// Negative values are ignored. Infinity is resolved against the adjacent side
 /// lengths during contour preparation.
 class InverseRoundedCorner extends AnyCorner {
-  final Radius radius;
 
+  final Radius radius;
   const InverseRoundedCorner({
     this.radius = Radius.zero,
-    super.innerCorner,
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
@@ -703,7 +704,6 @@ class InverseRoundedCorner extends AnyCorner {
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
-      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
     );
   }
 
@@ -711,18 +711,16 @@ class InverseRoundedCorner extends AnyCorner {
   InverseRoundedCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  InverseRoundedCorner convert(double insetX, double insetY, bool inner) =>
-      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
+  InverseRoundedCorner convert(double insetX, double insetY, bool inner) => this;
 
   @override
   bool operator ==(Object other) {
     return other is InverseRoundedCorner &&
-        other.radius == radius &&
-        other.innerCorner == innerCorner;
+        other.radius == radius;
   }
 
   @override
-  int get hashCode => Object.hash(radius, innerCorner);
+  int get hashCode => Object.hash(runtimeType, radius);
 
   InverseRoundedCorner copyWith({
     Radius? radius,
@@ -730,7 +728,6 @@ class InverseRoundedCorner extends AnyCorner {
   }) =>
       InverseRoundedCorner(
         radius: radius ?? this.radius,
-        innerCorner: innerCorner ?? this.innerCorner,
       );
 }
 
@@ -743,12 +740,12 @@ class InverseRoundedCorner extends AnyCorner {
 /// segments using the shared angle parameter range. This implementation maps
 /// that angle range linearly onto the bevel segment.
 class BevelCorner extends AnyCorner {
+
   final Radius radius;
 
   const BevelCorner({
-        this.radius = Radius.zero,
-        super.innerCorner,
-      });
+    this.radius = Radius.zero,
+  });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
     return !contour.isCornerParallel(cornerIndex) &&
@@ -888,7 +885,6 @@ class BevelCorner extends AnyCorner {
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
-      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
     );
   }
 
@@ -896,23 +892,20 @@ class BevelCorner extends AnyCorner {
   BevelCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  BevelCorner convert(double insetX, double insetY, bool inner) =>
-      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
+  BevelCorner convert(double insetX, double insetY, bool inner) => this;
 
   @override
   bool operator ==(Object other) {
     return other is BevelCorner &&
-        other.radius == radius &&
-        other.innerCorner == innerCorner;
+        other.radius == radius;
   }
 
   @override
-  int get hashCode => Object.hash(radius, innerCorner);
+  int get hashCode => Object.hash(runtimeType, radius);
 
   BevelCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
       BevelCorner(
         radius: radius ?? this.radius,
-        innerCorner: innerCorner ?? this.innerCorner,
       );
 }
 

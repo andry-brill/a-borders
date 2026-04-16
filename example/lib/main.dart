@@ -25,7 +25,7 @@ List<Widget> examples() {
       title: 'Crown',
       begin: const CrownDecoration(
           type: CrownType.flat,
-          corners: BevelCorner(radius: Radius.circular(15)),
+          corners: BevelCorner(radius: Radius.circular(0)),
       ),
       end: const CrownDecoration(
         type: CrownType.spike,
@@ -34,7 +34,7 @@ List<Widget> examples() {
     ),
     E2(
       title: 'CrownInv',
-      begin: const CrownDecoration(type: CrownType.spike, corners: RoundedCorner(radius: Radius.circular(20)),),
+      begin: const CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: Radius.circular(10)),),
       end: const CrownDecoration(
         type: CrownType.flat,
       ),
