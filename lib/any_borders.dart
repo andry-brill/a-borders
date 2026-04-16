@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 abstract class AnyUtils {
+
   static const double epsilon = 1.0e-6;
   static const double startAngle = math.pi;
   static const double midAngle = math.pi * 1.25;
@@ -1077,7 +1078,16 @@ class AnyContour {
 
   late final List<AnySide> sides;
   late List<AnyCorner> outerCorners;
+  late List<AnyCorner> zeroCorners;
   late List<AnyCorner> innerCorners;
+
+  List<AnyCorner> _cornersForBase(AnyShapeBase base) {
+    return switch (base) {
+      AnyShapeBase.outerBorder => outerCorners,
+      AnyShapeBase.zeroBorder => zeroCorners,
+      AnyShapeBase.innerBorder => innerCorners,
+    };
+  }
 
   Path? _clipPath;
   Path get clipPath => _clipPath ??= _buildContourPath(clipBase);
@@ -1292,6 +1302,18 @@ class AnyContour {
 
     _normalizeBand(outerCorners);
 
+    zeroCorners = List<AnyCorner>.generate(count, (corner) {
+      final prev = wrap(corner - 1);
+
+      return outerCorners[corner].convert(
+        sideOutsideOffset[prev],
+        sideOutsideOffset[corner],
+        cornerTurnSign[corner] > 0,
+      );
+    }, growable: false);
+
+    _normalizeBand(zeroCorners);
+
     innerCorners = List<AnyCorner>.generate(count, (corner) {
 
       final prev = wrap(corner - 1);
@@ -1333,9 +1355,9 @@ class AnyContour {
   }
 
   Path _buildContourPath(AnyShapeBase base) {
+
     final path = Path();
-    final corners =
-    base == AnyShapeBase.innerBorder ? innerCorners : outerCorners;
+    final corners = _cornersForBase(base);
 
     final prev0 = wrap(-1);
     final dPrev0 = offsetForBase(prev0, base);
