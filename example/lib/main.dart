@@ -29,12 +29,12 @@ List<Widget> examples() {
       ),
       end: const CrownDecoration(
         type: CrownType.spike,
-        corners: RoundedCorner(Radius.circular(20)),
+        corners: RoundedCorner(radius: Radius.circular(20)),
       ),
     ),
     E2(
       title: 'CrownInv',
-      begin: const CrownDecoration(type: CrownType.spike, corners: RoundedCorner(Radius.circular(20)),),
+      begin: const CrownDecoration(type: CrownType.spike, corners: RoundedCorner(radius: Radius.circular(20)),),
       end: const CrownDecoration(
         type: CrownType.flat,
       ),
@@ -44,10 +44,13 @@ List<Widget> examples() {
       begin: const TabDecoration(
           offset: 20,
           background: AnyBackground(color: alpha02),
-          corners: RoundedCorner(Radius.circular(20)),
+          corners: RoundedCorner(radius: Radius.circular(20)),
           sides: AnySide(width: 20, color: alpha08, align: AnySide.alignOutside)
       ),
       end: const TabDecoration(offset: 30),
+    ),
+    E2(
+      title: '',
     )
   ];
 }
@@ -163,7 +166,7 @@ class TabDecoration extends AnyDecoration {
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
 
     final offset = min(this.offset, bounds.width / 4.0);
-    final c = RoundedCorner(Radius.circular(offset));
+    final c = RoundedCorner(radius: Radius.circular(offset));
     final xL = bounds.left + offset;
     final xR = bounds.right - offset;
 

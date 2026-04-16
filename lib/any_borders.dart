@@ -242,6 +242,31 @@ class AnyBackground extends AnySide {
   int get hashCode => Object.hash(super.hashCode, shapeBase);
 }
 
+enum InnerCorner {
+
+  preserveRatio,
+  dynamicRatio;
+
+  Radius innerRadius(Radius outer, double insetX, double insetY) {
+
+    if (outer.x <= 0 || outer.y <= 0) return Radius.zero;
+
+    double kx = (outer.x - insetX) / outer.x;
+    double ky = (outer.y - insetY) / outer.y;
+    if (this == preserveRatio) {
+      kx = ky = AnyUtils.clamp01(math.min(kx, ky));
+    } else {
+      kx = AnyUtils.clamp01(kx);
+      ky = AnyUtils.clamp01(ky);
+    }
+
+    return Radius.elliptical(
+      outer.x * kx,
+      outer.y * ky,
+    );
+  }
+}
+
 /// Contract for a corner strategy.
 ///
 /// The contour owns shared geometric caches such as side directions, normals,
@@ -250,7 +275,8 @@ class AnyBackground extends AnySide {
 /// length it consumes, how it scales during normalization, and how it emits
 /// the corresponding geometry into a [Path].
 abstract class AnyCorner {
-  const AnyCorner();
+  final InnerCorner innerCorner;
+  const AnyCorner({this.innerCorner = InnerCorner.preserveRatio});
 
   /// Resolve infinities / other size-dependent values using the local side
   /// extents around this corner.
@@ -297,6 +323,8 @@ abstract class AnyCorner {
   /// Creates the same corner but scaled
   AnyCorner scale(double scale);
 
+  AnyCorner toInner(double insetX, double insetY);
+
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
 
     if (identical(a, b) || a == b) return a;
@@ -322,9 +350,13 @@ abstract class AnyCorner {
 /// Negative values are ignored. Infinity is resolved against the adjacent side
 /// lengths during contour preparation.
 class RoundedCorner extends AnyCorner {
+
   final Radius radius;
 
-  const RoundedCorner([this.radius = Radius.zero]);
+  const RoundedCorner({
+    this.radius = Radius.zero,
+    super.innerCorner
+  });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
     return !contour.isCornerParallel(cornerIndex) &&
@@ -349,7 +381,7 @@ class RoundedCorner extends AnyCorner {
         ? math.max(0.0, rawY)
         : math.max(0.0, maxNextExtent);
 
-    return RoundedCorner(Radius.elliptical(rx, ry));
+    return copyWith(radius: Radius.elliptical(rx, ry));
   }
 
   @override
@@ -368,16 +400,12 @@ class RoundedCorner extends AnyCorner {
 
   @override
   RoundedCorner scaleForPreviousSide(double factor) {
-    return RoundedCorner(
-      Radius.elliptical(radius.x * factor, radius.y),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
   }
 
   @override
   RoundedCorner scaleForNextSide(double factor) {
-    return RoundedCorner(
-      Radius.elliptical(radius.x, radius.y * factor),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
   }
 
   @override
@@ -468,15 +496,19 @@ class RoundedCorner extends AnyCorner {
     }
 
     return RoundedCorner(
-      Radius.elliptical(
+      radius: Radius.elliptical(
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
+      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t)
     );
   }
 
   @override
-  AnyCorner scale(double scale) => RoundedCorner(radius * scale);
+  AnyCorner scale(double scale) => copyWith(radius: radius * scale);
+
+  @override
+  AnyCorner toInner(double insetX, double insetY) => copyWith(radius: innerCorner.innerRadius(radius, insetX, insetY));
 
   @override
   bool operator ==(Object other) {
@@ -485,6 +517,11 @@ class RoundedCorner extends AnyCorner {
 
   @override
   int get hashCode => radius.hashCode;
+
+  RoundedCorner copyWith({Radius? radius, InnerCorner? innerCorner}) => RoundedCorner(
+    radius: radius ?? this.radius,
+    innerCorner: innerCorner ?? this.innerCorner
+  );
 }
 
 /// Concave rounded corner.
@@ -2008,7 +2045,7 @@ class AnyBoxDecoration extends AnyDecoration {
     this.innerBottomRight,
     this.innerBottomLeft,
   }) : super(
-    corners: circle ? const RoundedCorner(Radius.circular(double.infinity)) : corners,
+    corners: circle ? const RoundedCorner(radius: Radius.circular(double.infinity)) : corners,
     ratio: circle ? 1.0 : ratio,
   );
 
