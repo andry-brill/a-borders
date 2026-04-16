@@ -43,14 +43,6 @@ abstract class AnyUtils {
     return t < 0.5 ? a : b;
   }
 
-  static AnyCorner lerpCorner(AnyCorner a, AnyCorner b, double t) {
-    if (identical(a, b) || a == b) return a;
-    if (a.runtimeType != b.runtimeType) {
-      return t < 0.5 ? a : b;
-    }
-    return a.lerpTo(b, t);
-  }
-
   static AnySide lerpSide(AnySide a, AnySide b, double t) {
     return AnySide(
       width: lerpDouble(a.width, b.width, t),
@@ -301,6 +293,28 @@ abstract class AnyCorner {
 
   /// Interpolates to another corner of the same type when possible.
   AnyCorner lerpTo(AnyCorner other, double t);
+
+  /// Creates the same corner but scaled
+  AnyCorner scale(double scale);
+
+  static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
+
+    if (identical(a, b) || a == b) return a;
+
+    if (t <= 0.0) return a;
+    if (t >= 1.0) return b;
+
+    if (a.runtimeType == b.runtimeType) {
+      return a.lerpTo(b, t);
+    }
+
+    if (t < 0.5) {
+      return a.scale((0.5 - t) / 0.5);
+    }
+
+    return b.scale((t - 0.5) / 0.5);
+  }
+
 }
 
 /// Current rounded-corner implementation.
@@ -448,8 +462,9 @@ class RoundedCorner extends AnyCorner {
 
   @override
   RoundedCorner lerpTo(AnyCorner other, double t) {
+
     if (other is! RoundedCorner) {
-      return t < 0.5 ? this : const RoundedCorner();
+      throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
     return RoundedCorner(
@@ -459,6 +474,9 @@ class RoundedCorner extends AnyCorner {
       ),
     );
   }
+
+  @override
+  AnyCorner scale(double scale) => RoundedCorner(radius * scale);
 
   @override
   bool operator ==(Object other) {
@@ -627,9 +645,11 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   InverseRoundedCorner lerpTo(AnyCorner other, double t) {
+
     if (other is! InverseRoundedCorner) {
-      return t < 0.5 ? this : const InverseRoundedCorner();
+      throw 'Not the same runtime type: ${other.runtimeType}';
     }
+
 
     return InverseRoundedCorner(
       Radius.elliptical(
@@ -638,6 +658,9 @@ class InverseRoundedCorner extends AnyCorner {
       ),
     );
   }
+
+  @override
+  AnyCorner scale(double scale) => InverseRoundedCorner(radius * scale);
 
   @override
   bool operator ==(Object other) {
@@ -794,8 +817,9 @@ class BevelCorner extends AnyCorner {
 
   @override
   BevelCorner lerpTo(AnyCorner other, double t) {
+
     if (other is! BevelCorner) {
-      return t < 0.5 ? this : const BevelCorner();
+      throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
     return BevelCorner(
@@ -805,6 +829,9 @@ class BevelCorner extends AnyCorner {
       ),
     );
   }
+
+  @override
+  AnyCorner scale(double scale) => BevelCorner(radius * scale);
 
   @override
   bool operator ==(Object other) {
@@ -832,7 +859,7 @@ class AnyPoint {
   static List<AnyPoint>? lerp(List<AnyPoint>? a, List<AnyPoint>? b, double t) {
     if (a == null || b == null) return null;
     if (identical(a, b)) return a;
-    if (a.length != b.length) return AnyUtils.pickLerpNullable(a, b, t);
+    if (a.length != b.length) return AnyUtils.pickLerp(a, b, t);
 
     return List<AnyPoint>.generate(a.length, (index) {
       final pa = a[index];
@@ -843,8 +870,8 @@ class AnyPoint {
           AnyUtils.lerpDouble(pa.point.dx, pb.point.dx, t),
           AnyUtils.lerpDouble(pa.point.dy, pb.point.dy, t),
         ),
-        outer: AnyUtils.lerpCorner(pa.outer, pb.outer, t),
-        inner: AnyUtils.lerpCorner(pa.inner, pb.inner, t),
+        outer: AnyCorner.lerp(pa.outer, pb.outer, t),
+        inner: AnyCorner.lerp(pa.inner, pb.inner, t),
         side: AnySide(
           width: AnyUtils.lerpDouble(pa.side.width, pb.side.width, t),
           align: AnyUtils.lerpDouble(pa.side.align, pb.side.align, t),

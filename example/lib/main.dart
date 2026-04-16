@@ -18,7 +18,10 @@ List<Widget> examples() {
   return [
     E2(
       title: 'Crown',
-      begin: const CrownDecoration(type: CrownType.flat, corners: BevelCorner(Radius.circular(15))),
+      begin: const CrownDecoration(
+          type: CrownType.flat,
+          corners: BevelCorner(Radius.circular(15)),
+      ),
       end: const CrownDecoration(
         type: CrownType.spike,
         corners: RoundedCorner(Radius.circular(20)),
