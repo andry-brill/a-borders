@@ -1541,7 +1541,9 @@ class AnyShadow with MAnyFill {
   );
 }
 
+/// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
 abstract class AnyDecoration extends Decoration {
+
   /// Build final contour points in local coordinates for this size.
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection);
 

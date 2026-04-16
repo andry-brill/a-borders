@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +15,9 @@ const blue = Colors.blue;
 
 const goldLight = Colors.red;
 const gold = Colors.orange;
+
+const alpha08 = Color(0x883399AA);
+const alpha02 = Color(0x223399AA);
 
 List<Widget> examples() {
   return [
@@ -34,6 +39,16 @@ List<Widget> examples() {
         type: CrownType.flat,
       ),
     ),
+    E2(
+      title: 'Tab',
+      begin: const TabDecoration(
+          offset: 20,
+          background: AnyBackground(color: alpha02),
+          corners: RoundedCorner(Radius.circular(20)),
+          sides: AnySide(width: 20, color: alpha08, align: AnySide.alignOutside)
+      ),
+      end: const TabDecoration(offset: 30),
+    )
   ];
 }
 
@@ -131,49 +146,45 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 }
 
-class StarDecoration extends AnyDecoration {
-  const StarDecoration({
-    super.background,
-    super.sides,
-    super.corners,
-    super.innerCorners,
-  });
-
-  @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
-    // TODO: implement points
-    throw UnimplementedError();
-  }
-}
-
-class AntiStarDecoration extends AnyDecoration {
-  const AntiStarDecoration({
-    super.background,
-    super.sides,
-    super.corners,
-    super.innerCorners,
-  });
-
-  @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
-    // TODO: implement points
-    throw UnimplementedError();
-  }
-}
 
 class TabDecoration extends AnyDecoration {
+
+  final double offset;
+
   const TabDecoration({
     super.background,
     super.sides,
     super.corners,
     super.innerCorners,
-  });
+    required this.offset
+  }) : assert(offset > 0.0);
 
   @override
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
-    // TODO: implement points
-    throw UnimplementedError();
+
+    final offset = min(this.offset, bounds.width / 4.0);
+    final c = RoundedCorner(Radius.circular(offset));
+    final xL = bounds.left + offset;
+    final xR = bounds.right - offset;
+
+    return [
+      point(bounds.bottomLeft),
+      point(Offset(xL, bounds.bottom), outer: c, inner: c),
+      point(Offset(xL, bounds.top)),
+      point(Offset(xR, bounds.top)),
+      point(Offset(xR, bounds.bottom), outer: c, inner: c),
+      point(bounds.bottomRight),
+    ];
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TabDecoration && other.offset == offset && super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, offset);
+
 }
 
 enum CrownType {
