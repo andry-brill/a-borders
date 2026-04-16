@@ -1,10 +1,7 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
-
-// import 'helpers/builders.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,49 +13,114 @@ const blue = Colors.blue;
 const goldLight = Colors.red;
 const gold = Colors.orange;
 
-const alpha08 = Color(0x883399AA);
-const alpha02 = Color(0x223399AA);
+const alpha26 = Colors.black26;
+const alpha45 = Colors.black45;
 
 List<Widget> examples() {
-  return [
+  return const [
+    Header('AnyBoxDecoration'),
+    E2(
+      title: 'L10:inside T20:center\nR30:outside B40:center' ,
+      begin: AnyBoxDecoration(
+        left: AnySide(color: alpha45, width: 10, align: AnySide.alignInside),
+        top: AnySide(color: alpha45, width: 20, align: AnySide.alignCenter),
+        right: AnySide(color: alpha45, width: 30, align: AnySide.alignOutside),
+        bottom: AnySide(color: alpha45, width: 40, align: AnySide.alignCenter),
+        background: AnyBackground(color: alpha26)
+      ),
+      end: AnyBoxDecoration(
+          left: AnySide(color: alpha45, width: 40, align: AnySide.alignOutside),
+          top: AnySide(color: alpha45, width: 30, align: AnySide.alignInside),
+          right: AnySide(color: alpha45, width: 20, align: AnySide.alignCenter),
+          bottom: AnySide(color: alpha45, width: 10, align: AnySide.alignOutside),
+          background: AnyBackground(color: alpha26)
+      ),
+    ),
+    E2(
+      title: 'Back+T+B' ,
+      begin: AnyBoxDecoration(
+          left: AnySide(color: blue, width: 30, align: AnySide.alignInside),
+          top: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
+          right: AnySide(color: blue, width: 30, align: AnySide.alignInside),
+          bottom: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
+          background: AnyBackground(color: blueLight)
+      ),
+      end: AnyBoxDecoration(
+          left: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
+          top: AnySide(color: blueLight, align: AnySide.alignInside),
+          right: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
+          bottom: AnySide(color: blueLight, align: AnySide.alignInside),
+          background: AnyBackground(color: blueLight)
+      ),
+    ),
+    E2(
+      title: 'No background\nRounded' ,
+      begin: AnyBoxDecoration(
+          left: AnySide(color: blue, width: 30, align: AnySide.alignInside),
+          top: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
+          right: AnySide(color: blue, width: 30, align: AnySide.alignInside),
+          bottom: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
+          corners: RoundedCorner(radius: Radius.circular(40))
+      ),
+      end: AnyBoxDecoration(
+          left: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
+          top: AnySide(color: blueLight, align: AnySide.alignInside),
+          right: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
+          bottom: AnySide(color: blueLight, align: AnySide.alignInside),
+          corners: RoundedCorner(radius: Radius.circular(10))
+      ),
+    ),
+    Header('Experimental'),
     E2(
       title: 'Crown',
-      begin: const CrownDecoration(
+      begin: CrownDecoration(
           type: CrownType.flat,
           corners: BevelCorner(radius: Radius.circular(0)),
       ),
-      end: const CrownDecoration(
+      end: CrownDecoration(
         type: CrownType.spike,
         corners: RoundedCorner(radius: Radius.circular(20)),
       ),
     ),
     E2(
       title: 'CrownInv',
-      begin: const CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: Radius.circular(10)),),
-      end: const CrownDecoration(
+      begin: CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: Radius.circular(10)),),
+      end: CrownDecoration(
         type: CrownType.flat,
       ),
     ),
     E2(
       title: 'Tab',
-      begin: const TabDecoration(
+      begin: TabDecoration(
           offset: 20,
-          background: AnyBackground(color: alpha02),
+          background: AnyBackground(color: alpha45),
           corners: RoundedCorner(radius: Radius.circular(20)),
-          sides: AnySide(width: 20, color: alpha08, align: AnySide.alignOutside)
+          sides: AnySide(width: 20, color: alpha26, align: AnySide.alignOutside)
       ),
-      end: const TabDecoration(offset: 30),
+      end: TabDecoration(offset: 30),
     ),
   ];
 }
 
 const constraints = BoxConstraints.tightFor(width: 200, height: 100);
-const double spacing = 60;
+const double spacing = 100;
+const rowLimit = 3;
 
 const duration = Duration(milliseconds: 500);
 const curve = Curves.easeInOut;
 
 const titleStyle = TextStyle(color: Colors.black45);
+const headerStyle = TextStyle(color: Colors.black54, fontSize: 24);
+
+class Header extends StatelessWidget {
+
+  final String title;
+  const Header(this.title);
+
+  @override
+  Widget build(BuildContext context) => Text(title, style: headerStyle);
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -98,6 +160,7 @@ class _ExamplePageState extends State<_ExamplePage> {
   List<Widget> cache = [];
 
   List<Widget> buildExamples() {
+
     if (cache.isNotEmpty) return cache;
 
     // if (cache.isEmpty) {
@@ -123,8 +186,30 @@ class _ExamplePageState extends State<_ExamplePage> {
 
   @override
   Widget build(BuildContext context) {
+
     final ex = buildExamples();
-    final children = ex.slices(4).map(row).toList();
+
+    List<Widget> children = [];
+    List<Widget> row = [];
+
+    void flush() {
+      if (row.isNotEmpty) {
+        children.add(this.row(row));
+        row = [];
+      }
+    }
+
+    for (var e in ex) {
+      if (e is Header) {
+        flush();
+        children.add(e);
+      } else {
+        row.add(e);
+        if (row.length >= rowLimit) flush();
+      }
+    }
+
+    flush();
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -136,7 +221,7 @@ class _ExamplePageState extends State<_ExamplePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: spacing,
+              spacing: spacing / 2.0,
               children: children,
             ),
           ),
