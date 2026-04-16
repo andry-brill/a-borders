@@ -25,7 +25,7 @@ List<Widget> examples() {
       title: 'Crown',
       begin: const CrownDecoration(
           type: CrownType.flat,
-          corners: BevelCorner(Radius.circular(15)),
+          corners: BevelCorner(radius: Radius.circular(15)),
       ),
       end: const CrownDecoration(
         type: CrownType.spike,
@@ -49,9 +49,6 @@ List<Widget> examples() {
       ),
       end: const TabDecoration(offset: 30),
     ),
-    E2(
-      title: '',
-    )
   ];
 }
 

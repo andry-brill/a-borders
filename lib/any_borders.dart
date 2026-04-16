@@ -80,7 +80,8 @@ abstract class AnyUtils {
       image: pickLerpNullable(a.image, b.image, t),
       blendMode: pickLerpNullable(a.blendMode, b.blendMode, t),
       blurRadius: lerpDouble(a.blurRadius, b.blurRadius, t),
-      offset: Offset.lerp(a.offset, b.offset, t) ?? pickLerp(a.offset, b.offset, t),
+      offset:
+      Offset.lerp(a.offset, b.offset, t) ?? pickLerp(a.offset, b.offset, t),
       spreadRadius: Offset.lerp(a.spreadRadius, b.spreadRadius, t) ??
           pickLerp(a.spreadRadius, b.spreadRadius, t),
       style: pickLerp(a.style, b.style, t),
@@ -233,37 +234,48 @@ class AnyBackground extends AnySide {
 
   @override
   bool operator ==(Object other) {
-    return other is AnyBackground &&
-        super == other &&
-        other.shapeBase == shapeBase;
+    return other is AnyBackground && super == other && other.shapeBase == shapeBase;
   }
 
   @override
   int get hashCode => Object.hash(super.hashCode, shapeBase);
 }
-
-enum InnerCorner {
-
+enum CornerConverter {
   preserveRatio,
-  dynamicRatio;
+  dynamicRatio,
+  equal;
 
-  Radius innerRadius(Radius outer, double insetX, double insetY) {
+  Radius convert(Radius source, double insetX, double insetY, bool inner) {
+    if (this == equal) return source;
+    if (source.x <= 0.0 || source.y <= 0.0) return Radius.zero;
+    return inner
+        ? _innerRadius(source, insetX, insetY)
+        : _outerRadius(source, insetX, insetY);
+  }
 
-    if (outer.x <= 0 || outer.y <= 0) return Radius.zero;
+  Radius _innerRadius(Radius outer, double insetX, double insetY) {
 
-    double kx = (outer.x - insetX) / outer.x;
-    double ky = (outer.y - insetY) / outer.y;
-    if (this == preserveRatio) {
-      kx = ky = AnyUtils.clamp01(math.min(kx, ky));
-    } else {
-      kx = AnyUtils.clamp01(kx);
-      ky = AnyUtils.clamp01(ky);
-    }
+    final kx = AnyUtils.clamp01((outer.x - insetX) / outer.x);
+    final ky = AnyUtils.clamp01((outer.y - insetY) / outer.y);
+    var factor = math.min(kx, ky);
 
-    return Radius.elliptical(
-      outer.x * kx,
-      outer.y * ky,
-    );
+    return switch (this) {
+      preserveRatio => outer * factor,
+      dynamicRatio => Radius.elliptical(outer.x * kx, outer.y * ky),
+      equal => outer,
+    };
+  }
+
+  Radius _outerRadius(Radius inner, double insetX, double insetY) {
+    var factor = math.max(
+          (inner.x + insetX) / inner.x,
+          (inner.y + insetY) / inner.y,
+        );
+    return switch (this) {
+      dynamicRatio => Radius.elliptical(inner.x + insetX, inner.y + insetY),
+      preserveRatio => inner * factor,
+      equal => inner,
+    };
   }
 }
 
@@ -275,8 +287,8 @@ enum InnerCorner {
 /// length it consumes, how it scales during normalization, and how it emits
 /// the corresponding geometry into a [Path].
 abstract class AnyCorner {
-  final InnerCorner innerCorner;
-  const AnyCorner({this.innerCorner = InnerCorner.preserveRatio});
+  final CornerConverter innerCorner;
+  const AnyCorner({this.innerCorner = CornerConverter.preserveRatio});
 
   /// Resolve infinities / other size-dependent values using the local side
   /// extents around this corner.
@@ -320,13 +332,13 @@ abstract class AnyCorner {
   /// Interpolates to another corner of the same type when possible.
   AnyCorner lerpTo(AnyCorner other, double t);
 
-  /// Creates the same corner but scaled
+  /// Creates the same corner but scaled.
   AnyCorner scale(double scale);
 
-  AnyCorner toInner(double insetX, double insetY);
+  /// Creates an auto-derived inner/outer corner for the provided adjacent side insets.
+  AnyCorner convert(double insetX, double insetY, bool inner);
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
-
     if (identical(a, b) || a == b) return a;
 
     if (t <= 0.0) return a;
@@ -342,7 +354,6 @@ abstract class AnyCorner {
 
     return b.scale((t - 0.5) / 0.5);
   }
-
 }
 
 /// Current rounded-corner implementation.
@@ -350,12 +361,11 @@ abstract class AnyCorner {
 /// Negative values are ignored. Infinity is resolved against the adjacent side
 /// lengths during contour preparation.
 class RoundedCorner extends AnyCorner {
-
   final Radius radius;
 
   const RoundedCorner({
     this.radius = Radius.zero,
-    super.innerCorner
+    super.innerCorner,
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
@@ -490,7 +500,6 @@ class RoundedCorner extends AnyCorner {
 
   @override
   RoundedCorner lerpTo(AnyCorner other, double t) {
-
     if (other is! RoundedCorner) {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
@@ -500,28 +509,32 @@ class RoundedCorner extends AnyCorner {
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
-      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t)
+      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
     );
   }
 
   @override
-  AnyCorner scale(double scale) => copyWith(radius: radius * scale);
+  RoundedCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  AnyCorner toInner(double insetX, double insetY) => copyWith(radius: innerCorner.innerRadius(radius, insetX, insetY));
+  RoundedCorner convert(double insetX, double insetY, bool inner) =>
+      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
 
   @override
   bool operator ==(Object other) {
-    return other is RoundedCorner && other.radius == radius;
+    return other is RoundedCorner &&
+        other.radius == radius &&
+        other.innerCorner == innerCorner;
   }
 
   @override
-  int get hashCode => radius.hashCode;
+  int get hashCode => Object.hash(radius, innerCorner);
 
-  RoundedCorner copyWith({Radius? radius, InnerCorner? innerCorner}) => RoundedCorner(
-    radius: radius ?? this.radius,
-    innerCorner: innerCorner ?? this.innerCorner
-  );
+  RoundedCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
+      RoundedCorner(
+        radius: radius ?? this.radius,
+        innerCorner: innerCorner ?? this.innerCorner,
+      );
 }
 
 /// Concave rounded corner.
@@ -535,7 +548,10 @@ class RoundedCorner extends AnyCorner {
 class InverseRoundedCorner extends AnyCorner {
   final Radius radius;
 
-  const InverseRoundedCorner([this.radius = Radius.zero]);
+  const InverseRoundedCorner({
+    this.radius = Radius.zero,
+    super.innerCorner,
+  });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
     return !contour.isCornerParallel(cornerIndex) &&
@@ -565,7 +581,7 @@ class InverseRoundedCorner extends AnyCorner {
         ? math.max(0.0, rawY)
         : math.max(0.0, maxNextExtent);
 
-    return InverseRoundedCorner(Radius.elliptical(rx, ry));
+    return copyWith(radius: Radius.elliptical(rx, ry));
   }
 
   @override
@@ -584,16 +600,12 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   InverseRoundedCorner scaleForPreviousSide(double factor) {
-    return InverseRoundedCorner(
-      Radius.elliptical(radius.x * factor, radius.y),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
   }
 
   @override
   InverseRoundedCorner scaleForNextSide(double factor) {
-    return InverseRoundedCorner(
-      Radius.elliptical(radius.x, radius.y * factor),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
   }
 
   @override
@@ -682,30 +694,44 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   InverseRoundedCorner lerpTo(AnyCorner other, double t) {
-
     if (other is! InverseRoundedCorner) {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
-
     return InverseRoundedCorner(
-      Radius.elliptical(
+      radius: Radius.elliptical(
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
+      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
     );
   }
 
   @override
-  AnyCorner scale(double scale) => InverseRoundedCorner(radius * scale);
+  InverseRoundedCorner scale(double scale) => copyWith(radius: radius * scale);
+
+  @override
+  InverseRoundedCorner convert(double insetX, double insetY, bool inner) =>
+      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
 
   @override
   bool operator ==(Object other) {
-    return other is InverseRoundedCorner && other.radius == radius;
+    return other is InverseRoundedCorner &&
+        other.radius == radius &&
+        other.innerCorner == innerCorner;
   }
 
   @override
-  int get hashCode => radius.hashCode;
+  int get hashCode => Object.hash(radius, innerCorner);
+
+  InverseRoundedCorner copyWith({
+    Radius? radius,
+    CornerConverter? innerCorner,
+  }) =>
+      InverseRoundedCorner(
+        radius: radius ?? this.radius,
+        innerCorner: innerCorner ?? this.innerCorner,
+      );
 }
 
 /// Straight chamfer / bevel corner.
@@ -719,7 +745,10 @@ class InverseRoundedCorner extends AnyCorner {
 class BevelCorner extends AnyCorner {
   final Radius radius;
 
-  const BevelCorner([this.radius = Radius.zero]);
+  const BevelCorner({
+        this.radius = Radius.zero,
+        super.innerCorner,
+      });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
     return !contour.isCornerParallel(cornerIndex) &&
@@ -778,7 +807,7 @@ class BevelCorner extends AnyCorner {
         ? math.max(0.0, rawY)
         : math.max(0.0, maxNextExtent);
 
-    return BevelCorner(Radius.elliptical(rx, ry));
+    return copyWith(radius: Radius.elliptical(rx, ry));
   }
 
   @override
@@ -797,16 +826,12 @@ class BevelCorner extends AnyCorner {
 
   @override
   BevelCorner scaleForPreviousSide(double factor) {
-    return BevelCorner(
-      Radius.elliptical(radius.x * factor, radius.y),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
   }
 
   @override
   BevelCorner scaleForNextSide(double factor) {
-    return BevelCorner(
-      Radius.elliptical(radius.x, radius.y * factor),
-    );
+    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
   }
 
   @override
@@ -854,49 +879,67 @@ class BevelCorner extends AnyCorner {
 
   @override
   BevelCorner lerpTo(AnyCorner other, double t) {
-
     if (other is! BevelCorner) {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
     return BevelCorner(
-      Radius.elliptical(
+      radius: Radius.elliptical(
         AnyUtils.lerpDouble(radius.x, other.radius.x, t),
         AnyUtils.lerpDouble(radius.y, other.radius.y, t),
       ),
+      innerCorner: AnyUtils.pickLerp(innerCorner, other.innerCorner, t),
     );
   }
 
   @override
-  AnyCorner scale(double scale) => BevelCorner(radius * scale);
+  BevelCorner scale(double scale) => copyWith(radius: radius * scale);
+
+  @override
+  BevelCorner convert(double insetX, double insetY, bool inner) =>
+      copyWith(radius: innerCorner.convert(radius, insetX, insetY, inner));
 
   @override
   bool operator ==(Object other) {
-    return other is BevelCorner && other.radius == radius;
+    return other is BevelCorner &&
+        other.radius == radius &&
+        other.innerCorner == innerCorner;
   }
 
   @override
-  int get hashCode => radius.hashCode;
+  int get hashCode => Object.hash(radius, innerCorner);
+
+  BevelCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
+      BevelCorner(
+        radius: radius ?? this.radius,
+        innerCorner: innerCorner ?? this.innerCorner,
+      );
 }
 
 class AnyPoint {
   final AnyCorner outer;
-  final AnyCorner inner;
+  final AnyCorner? inner;
 
   final Offset point;
   final AnySide side;
 
   const AnyPoint({
     required this.outer,
-    AnyCorner? inner,
+    this.inner,
     required this.point,
     required this.side,
-  }) : inner = inner ?? outer;
+  });
 
   static List<AnyPoint>? lerp(List<AnyPoint>? a, List<AnyPoint>? b, double t) {
     if (a == null || b == null) return null;
     if (identical(a, b)) return a;
     if (a.length != b.length) return AnyUtils.pickLerp(a, b, t);
+
+    AnyCorner? lerpInner(AnyCorner? a, AnyCorner? b) {
+      if (a == null && b == null) return null;
+      if (a == null || b == null) return AnyUtils.pickLerpNullable(a, b, t);
+      return AnyCorner.lerp(a, b, t);
+    }
 
     return List<AnyPoint>.generate(a.length, (index) {
       final pa = a[index];
@@ -908,15 +951,17 @@ class AnyPoint {
           AnyUtils.lerpDouble(pa.point.dy, pb.point.dy, t),
         ),
         outer: AnyCorner.lerp(pa.outer, pb.outer, t),
-        inner: AnyCorner.lerp(pa.inner, pb.inner, t),
+        inner: lerpInner(pa.inner, pb.inner),
         side: AnySide(
           width: AnyUtils.lerpDouble(pa.side.width, pb.side.width, t),
           align: AnyUtils.lerpDouble(pa.side.align, pb.side.align, t),
           color: Color.lerp(pa.side.color, pb.side.color, t),
           gradient: Gradient.lerp(pa.side.gradient, pb.side.gradient, t),
           image: AnyUtils.pickLerpNullable(pa.side.image, pb.side.image, t),
-          blendMode: AnyUtils.pickLerpNullable(pa.side.blendMode, pb.side.blendMode, t),
-          isAntiAlias: AnyUtils.pickLerp(pa.side.isAntiAlias, pb.side.isAntiAlias, t),
+          blendMode:
+          AnyUtils.pickLerpNullable(pa.side.blendMode, pb.side.blendMode, t),
+          isAntiAlias:
+          AnyUtils.pickLerp(pa.side.isAntiAlias, pb.side.isAntiAlias, t),
         ),
       );
     }, growable: false);
@@ -934,8 +979,10 @@ class AnyRegions {
 
   AnyRegions withOffset(Offset offset) {
     return AnyRegions(
-      background: background == null ? null : (background!.$1, background!.$2.shift(offset)),
-      regions: regions.map((el) => (el.$1, el.$2.shift(offset))).toList(growable: false),
+      background:
+      background == null ? null : (background!.$1, background!.$2.shift(offset)),
+      regions:
+      regions.map((el) => (el.$1, el.$2.shift(offset))).toList(growable: false),
     );
   }
 }
@@ -1153,7 +1200,7 @@ class AnyContour {
           (index) => points[index].outer,
       growable: false,
     );
-    innerCorners = List<AnyCorner>.generate(
+    final explicitInnerCorners = List<AnyCorner?>.generate(
       count,
           (index) => points[index].inner,
       growable: false,
@@ -1248,11 +1295,25 @@ class AnyContour {
       final prev = wrap(corner - 1);
       outerCorners[corner] =
           outerCorners[corner].resolveFinite(sideLength[prev], sideLength[corner]);
-      innerCorners[corner] =
-          innerCorners[corner].resolveFinite(sideLength[prev], sideLength[corner]);
     }
 
     _normalizeBand(outerCorners);
+
+    innerCorners = List<AnyCorner>.generate(count, (corner) {
+
+      final prev = wrap(corner - 1);
+      final explicitInner = explicitInnerCorners[corner];
+      if (explicitInner != null) {
+        return explicitInner.resolveFinite(sideLength[prev], sideLength[corner]);
+      }
+
+      return outerCorners[corner].convert(
+        sideInsideOffset[prev] + sideOutsideOffset[prev],
+        sideInsideOffset[corner] + sideOutsideOffset[corner],
+        cornerTurnSign[corner] > 0
+      );
+    }, growable: false);
+
     _normalizeBand(innerCorners);
   }
 
@@ -1468,7 +1529,8 @@ class AnyContour {
   AnyRegions _buildRegions(bool backgroundMerge) {
     final backgroundFill = background;
     final backgroundSource = backgroundPath;
-    final backgroundTarget = backgroundSource == null ? null : Path.from(backgroundSource);
+    final backgroundTarget =
+    backgroundSource == null ? null : Path.from(backgroundSource);
 
     final regionFills = <IAnyFill>[];
     final regionPaths = <Path>[];
@@ -1580,7 +1642,6 @@ class AnyShadow with MAnyFill {
 
 /// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
 abstract class AnyDecoration extends Decoration {
-
   /// Build final contour points in local coordinates for this size.
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection);
 
@@ -1608,11 +1669,16 @@ abstract class AnyDecoration extends Decoration {
   })  : sides = sides ?? const AnySide(),
         corners = corners ?? const RoundedCorner();
 
-  AnyPoint point(Offset point, {AnyCorner? outer, AnyCorner? inner, AnySide? side}) {
+  AnyPoint point(
+      Offset point, {
+        AnyCorner? outer,
+        AnyCorner? inner,
+        AnySide? side,
+      }) {
     return AnyPoint(
       point: point,
       outer: outer ?? corners,
-      inner: inner ?? innerCorners ?? outer ?? corners,
+      inner: inner ?? innerCorners,
       side: side ?? sides,
     );
   }
@@ -1692,18 +1758,17 @@ abstract class AnyDecoration extends Decoration {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(
-        clipBase,
-        shadowBase,
-        enableCache,
-        background,
-        ratio,
-        sides,
-        corners,
-        innerCorners,
-        Object.hashAll(shadows),
-      );
+  int get hashCode => Object.hash(
+    clipBase,
+    shadowBase,
+    enableCache,
+    background,
+    ratio,
+    sides,
+    corners,
+    innerCorners,
+    Object.hashAll(shadows),
+  );
 }
 
 class AnyDecorationTween extends Tween<AnyDecoration> {

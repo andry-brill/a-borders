@@ -61,7 +61,7 @@ class AnyDecorationBuilder {
       right: right.buildOrNull(),
       bottom: bottom.buildOrNull(),
       sides: sides.buildOrNull(),
-      topRight: BevelCorner(Radius.circular(10)),
+      topRight: BevelCorner(radius: Radius.circular(10)),
       shadows: shadows,
       clipBase: clip ?? AnyShapeBase.zeroBorder,
       background: AnyBackground(
