@@ -17,7 +17,22 @@ const alpha33 = Color(0x662196F3);
 const alpha99 = Color(0x992196F3);
 
 const gradientBG = LinearGradient(colors: [blue, gold]);
-const gradientBGL = LinearGradient(colors: [blueLight, goldLight]);
+const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignment.topCenter, end: Alignment.bottomCenter);
+
+const marbleBlue = const DecorationImage(
+  image: AssetImage('images/marble-blue.jpg'),
+  fit: BoxFit.cover,
+);
+
+const marbleGreen = const DecorationImage(
+  image: AssetImage('images/marble-green.jpg'),
+  fit: BoxFit.cover,
+);
+
+const confetti = const DecorationImage(
+  image: AssetImage('images/confetti.png'),
+  fit: BoxFit.cover,
+);
 
 List<Widget> examples() {
   return const [
@@ -59,17 +74,13 @@ List<Widget> examples() {
     E2(
       title: 'No background\nRounded' ,
       begin: AnyBoxDecoration(
-          left: AnySide(color: blue, width: 30, align: AnySide.alignInside),
-          top: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
-          right: AnySide(color: blue, width: 30, align: AnySide.alignInside),
-          bottom: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
+          vertical: AnySide(color: blue, width: 30, align: AnySide.alignInside),
+          horizontal: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
           corners: RoundedCorner(radius: Radius.circular(40))
       ),
       end: AnyBoxDecoration(
-          left: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
-          top: AnySide(color: blueLight, align: AnySide.alignInside),
-          right: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
-          bottom: AnySide(color: blueLight, align: AnySide.alignInside),
+          vertical: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
+          horizontal: AnySide(color: blueLight, align: AnySide.alignInside),
           corners: RoundedCorner(radius: Radius.circular(10))
       ),
     ),
@@ -84,7 +95,69 @@ List<Widget> examples() {
           corners: RoundedCorner(radius: Radius.circular(40))
       ),
     ),
-    Header('Experimental'),
+    E2(
+      title: 'Gradient HV' ,
+      begin: AnyBoxDecoration(
+          left: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
+          right: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
+          top: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          bottom: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          corners: BevelCorner(radius: Radius.circular(30))
+      ),
+      end: AnyBoxDecoration(
+          left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
+          right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
+          top: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
+          bottom: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
+          corners: RoundedCorner(radius: Radius.circular(50))
+      ),
+    ),
+    E2(
+      title: 'Images' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
+          background: AnyBackground(image: marbleGreen),
+          corners: BevelCorner(radius: Radius.circular(30))
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+          background: AnyBackground(image: marbleGreen),
+          corners: BevelCorner(radius: Radius.circular(double.infinity))
+      ),
+    ),
+    E2(
+      title: 'Images' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
+          background: AnyBackground(image: marbleGreen),
+          corners: RoundedCorner(radius: Radius.circular(30))
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+          background: AnyBackground(image: marbleGreen),
+          corners: RoundedCorner(radius: Radius.circular(double.infinity))
+      ),
+    ),
+    Stack(children: [
+      SizedBox(width: w, height: h, child:
+      DecoratedBox(decoration: BoxDecoration(
+        border: Border.symmetric(horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside), vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)),
+        borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))
+      ),
+    )),
+    E2(
+      title: 'BoxDecoration elliptical\nDiff when Outer' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
+          topLeft: RoundedCorner(radius: Radius.elliptical(80, 40))
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
+          topLeft: RoundedCorner(radius: Radius.elliptical(80, 40))
+      ),
+    ),
+    ]),
+    Header('Custom (experimental)'),
     E2(
       title: 'Crown',
       begin: CrownDecoration(
@@ -116,7 +189,8 @@ List<Widget> examples() {
   ];
 }
 
-const constraints = BoxConstraints.tightFor(width: 200, height: 100);
+const double w = 200, h = 100;
+const constraints = BoxConstraints.tightFor(width: w, height: h);
 const double spacing = 100;
 const rowLimit = 3;
 
@@ -132,7 +206,7 @@ class Header extends StatelessWidget {
   const Header(this.title);
 
   @override
-  Widget build(BuildContext context) => Text(title, style: headerStyle);
+  Widget build(BuildContext context) => Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4), child: Text(title, style: headerStyle));
 }
 
 
@@ -230,8 +304,7 @@ class _ExamplePageState extends State<_ExamplePage> {
       onTap: _ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(100),
+          child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -200,7 +200,9 @@ class AnyBackground with MAnyFill {
 enum CornerConverter {
   preserveRatio,
   dynamicRatio,
-  equal
+  equal;
+
+  static const base = CornerConverter.dynamicRatio;
 }
 
 /// Contract for a corner strategy.
@@ -300,7 +302,7 @@ class RoundedCorner extends AnyCorner {
 
   const RoundedCorner({
     this.radius = Radius.zero,
-    this.converter = CornerConverter.preserveRatio
+    this.converter = CornerConverter.base
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
@@ -703,7 +705,7 @@ class BevelCorner extends AnyCorner {
 
   const BevelCorner({
     this.radius = Radius.zero,
-    this.converter = CornerConverter.preserveRatio
+    this.converter = CornerConverter.base
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {

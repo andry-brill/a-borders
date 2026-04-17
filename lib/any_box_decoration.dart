@@ -10,6 +10,8 @@ class AnyBoxDecoration extends AnyDecoration {
   final AnySide? top;
   final AnySide? right;
   final AnySide? bottom;
+  final AnySide? horizontal;
+  final AnySide? vertical;
 
   final AnyCorner? topLeft;
   final AnyCorner? topRight;
@@ -36,6 +38,8 @@ class AnyBoxDecoration extends AnyDecoration {
     this.top,
     this.right,
     this.bottom,
+    this.horizontal,
+    this.vertical,
     this.topLeft,
     this.topRight,
     this.bottomRight,
@@ -55,25 +59,25 @@ class AnyBoxDecoration extends AnyDecoration {
       bounds.topLeft,
       outer: topLeft,
       inner: innerTopLeft,
-      side: top,
+      side: top ?? horizontal,
     ),
     point(
       bounds.topRight,
       outer: topRight,
       inner: innerTopRight,
-      side: right,
+      side: right ?? vertical,
     ),
     point(
       bounds.bottomRight,
       outer: bottomRight,
       inner: innerBottomRight,
-      side: bottom,
+      side: bottom ?? horizontal,
     ),
     point(
       bounds.bottomLeft,
       outer: bottomLeft,
       inner: innerBottomLeft,
-      side: left,
+      side: left ?? vertical,
     ),
   ];
 
@@ -86,6 +90,8 @@ class AnyBoxDecoration extends AnyDecoration {
         other.top == top &&
         other.right == right &&
         other.bottom == bottom &&
+        other.horizontal == horizontal &&
+        other.vertical == vertical &&
         other.topLeft == topLeft &&
         other.topRight == topRight &&
         other.bottomRight == bottomRight &&
@@ -104,6 +110,8 @@ class AnyBoxDecoration extends AnyDecoration {
     top,
     right,
     bottom,
+    horizontal,
+    vertical,
     topLeft,
     topRight,
     bottomRight,
