@@ -49,7 +49,7 @@ class AnyBoxDecoration extends AnyDecoration {
     this.innerBottomRight,
     this.innerBottomLeft,
   }) : super(
-    corners: circle ? const RoundedCorner(radius: Radius.circular(double.infinity)) : corners,
+    corners: circle ? const RoundedCorner.infinity() : corners,
     ratio: circle ? 1.0 : ratio,
   );
 

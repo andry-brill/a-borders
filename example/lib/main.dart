@@ -76,23 +76,23 @@ List<Widget> examples() {
       begin: AnyBoxDecoration(
           vertical: AnySide(color: blue, width: 30, align: AnySide.alignInside),
           horizontal: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
-          corners: RoundedCorner(radius: Radius.circular(40))
+          corners: RoundedCorner(radius: 40)
       ),
       end: AnyBoxDecoration(
           vertical: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
           horizontal: AnySide(color: blueLight, align: AnySide.alignInside),
-          corners: RoundedCorner(radius: Radius.circular(10))
+          corners: RoundedCorner(radius: 10)
       ),
     ),
     E2(
       title: 'Gradient' ,
       begin: AnyBoxDecoration(
           sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          corners: BevelCorner(radius: Radius.circular(30))
+          corners: BevelCorner(radius: 30)
       ),
       end: AnyBoxDecoration(
           sides: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignOutside),
-          corners: RoundedCorner(radius: Radius.circular(40))
+          corners: RoundedCorner(radius: 40)
       ),
     ),
     E2(
@@ -102,14 +102,14 @@ List<Widget> examples() {
           right: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
           top: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
           bottom: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          corners: BevelCorner(radius: Radius.circular(30))
+          corners: BevelCorner(radius: 30)
       ),
       end: AnyBoxDecoration(
           left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
           right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
           top: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
           bottom: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: Radius.circular(50))
+          corners: RoundedCorner(radius: 50)
       ),
     ),
     E2(
@@ -117,12 +117,12 @@ List<Widget> examples() {
       begin: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
           background: AnyBackground(image: marbleGreen),
-          corners: BevelCorner(radius: Radius.circular(30))
+          corners: BevelCorner(radius: 30)
       ),
       end: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(image: marbleGreen),
-          corners: BevelCorner(radius: Radius.circular(double.infinity))
+          corners: BevelCorner(radius: double.infinity)
       ),
     ),
     E2(
@@ -130,12 +130,12 @@ List<Widget> examples() {
       begin: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
           background: AnyBackground(image: marbleGreen),
-          corners: RoundedCorner(radius: Radius.circular(30))
+          corners: RoundedCorner(radius:30)
       ),
       end: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(image: marbleGreen),
-          corners: RoundedCorner(radius: Radius.circular(double.infinity))
+          corners: RoundedCorner(radius: double.infinity)
       ),
     ),
     Stack(children: [
@@ -149,11 +149,11 @@ List<Widget> examples() {
       title: 'BoxDecoration elliptical\nDiff when Outer' ,
       begin: AnyBoxDecoration(
           sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
-          topLeft: RoundedCorner(radius: Radius.elliptical(80, 40))
+          topLeft: RoundedCorner.elliptical(n: 80, p: 40)
       ),
       end: AnyBoxDecoration(
           sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
-          topLeft: RoundedCorner(radius: Radius.elliptical(80, 40))
+          topLeft: RoundedCorner.elliptical(n: 80, p: 40)
       ),
     ),
     ]),
@@ -162,16 +162,16 @@ List<Widget> examples() {
       title: 'Crown',
       begin: CrownDecoration(
           type: CrownType.flat,
-          corners: BevelCorner(radius: Radius.circular(0)),
+          corners: BevelCorner(radius: 0),
       ),
       end: CrownDecoration(
         type: CrownType.spike,
-        corners: RoundedCorner(radius: Radius.circular(20)),
+        corners: RoundedCorner(radius: 20),
       ),
     ),
     E2(
       title: 'CrownInv',
-      begin: CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: Radius.circular(10)),),
+      begin: CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: 10),),
       end: CrownDecoration(
         type: CrownType.flat,
       ),
@@ -181,7 +181,7 @@ List<Widget> examples() {
       begin: TabDecoration(
           offset: 20,
           background: AnyBackground(color: alpha99),
-          corners: RoundedCorner(radius: Radius.circular(20)),
+          corners: RoundedCorner(radius: 20),
           sides: AnySide(width: 20, color: alpha33, align: AnySide.alignOutside)
       ),
       end: TabDecoration(offset: 30),
@@ -335,7 +335,7 @@ class TabDecoration extends AnyDecoration {
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
 
     final offset = min(this.offset, bounds.width / 4.0);
-    final c = RoundedCorner(radius: Radius.circular(offset));
+    final c = RoundedCorner(radius: offset);
     final xL = bounds.left + offset;
     final xR = bounds.right - offset;
 

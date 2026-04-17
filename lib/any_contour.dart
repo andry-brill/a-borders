@@ -204,38 +204,51 @@ enum CornerConverter {
 
   static const base = CornerConverter.dynamicRatio;
 }
-
-/// Contract for a corner strategy.
-///
-/// The contour owns shared geometric caches such as side directions, normals,
-/// offset-line transforms and side widths. A corner object owns the actual
-/// corner semantics: how it resolves itself for finite bounds, how much side
-/// length it consumes, how it scales during normalization, and how it emits
-/// the corresponding geometry into a [Path].
 abstract class AnyCorner {
+  /// Corner extent along the previous side.
+  final double p;
 
-  const AnyCorner();
+  /// Corner extent along the next side.
+  final double n;
 
-  /// Resolve infinities / other size-dependent values using the local side
-  /// extents around this corner.
-  ///
-  /// `maxPreviousExtent` corresponds to the side before the corner, and
-  /// `maxNextExtent` corresponds to the side after the corner.
+  const AnyCorner({
+    this.p = 0.0,
+    this.n = 0.0,
+  });
+
+  @protected
+  bool canBuild(AnyContour contour, int cornerIndex) {
+    return !contour.isCornerParallel(cornerIndex) &&
+        p > AnyUtils.epsilon &&
+        n > AnyUtils.epsilon &&
+        contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
+  }
+
+  @protected
+  double turnSign(AnyContour contour, int cornerIndex) {
+    return contour.cornerHandedness(cornerIndex);
+  }
+
+  @protected
+  double resolvedPrevious(double maxPreviousExtent) {
+    return p.isFinite ? math.max(0.0, p) : math.max(0.0, maxPreviousExtent);
+  }
+
+  @protected
+  double resolvedNext(double maxNextExtent) {
+    return n.isFinite ? math.max(0.0, n) : math.max(0.0, maxNextExtent);
+  }
+
   AnyCorner resolveFinite(double maxPreviousExtent, double maxNextExtent);
 
-  /// Returns the consumption on the previous side of this corner.
   double consumptionForPreviousSide(AnyContour contour, int cornerIndex);
 
-  /// Returns the consumption on the next side of this corner.
   double consumptionForNextSide(AnyContour contour, int cornerIndex);
 
-  /// Scales only the part of this corner that affects the previous side.
   AnyCorner scaleForPreviousSide(double factor);
 
-  /// Scales only the part of this corner that affects the next side.
   AnyCorner scaleForNextSide(double factor);
 
-  /// Returns the world-space point for the requested local corner parameter.
   (double, double) pointAt(
       AnyContour contour,
       int cornerIndex,
@@ -244,7 +257,6 @@ abstract class AnyCorner {
       double angle,
       );
 
-  /// Emits the requested corner segment directly into [path].
   void appendArc(
       Path path,
       AnyContour contour,
@@ -255,23 +267,21 @@ abstract class AnyCorner {
       double toAngle,
       );
 
-  /// Interpolates to another corner of the same type when possible.
   AnyCorner lerpTo(AnyCorner other, double t);
 
-  /// Creates the same corner but scaled.
-  AnyCorner scale(double scale);
+  AnyCorner operator *(double factor);
 
   /// Creates an auto-derived inner/outer corner for the provided adjacent side insets.
-  /// [insetX] = inset on previous side
-  /// [insetY] = inset on next side
-  /// [inner]  = convex/inner turn conversion (same meaning as before)
+  /// [insetP] = inset on previous side
+  /// [insetN] = inset on next side
+  /// [inner]  = convex/inner turn conversion
   /// [angle]  = local corner angle in radians
   AnyCorner convert(
-      double insetX,
-      double insetY,
+      double insetP,
+      double insetN,
       bool inner,
       double angle,
-  );
+      );
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
     if (identical(a, b) || a == b) return a;
@@ -284,75 +294,59 @@ abstract class AnyCorner {
     }
 
     if (t < 0.5) {
-      return a.scale((0.5 - t) / 0.5);
+      return a * ((0.5 - t) / 0.5);
     }
 
-    return b.scale((t - 0.5) / 0.5);
+    return b * ((t - 0.5) / 0.5);
   }
 }
 
-/// Current rounded-corner implementation.
-///
-/// Negative values are ignored. Infinity is resolved against the adjacent side
-/// lengths during contour preparation.
 class RoundedCorner extends AnyCorner {
-
-  final Radius radius;
   final CornerConverter converter;
 
   const RoundedCorner({
-    this.radius = Radius.zero,
-    this.converter = CornerConverter.base
-  });
+    double radius = 0.0,
+    this.converter = CornerConverter.base,
+  }) : super(p: radius, n: radius);
 
-  bool _canBuild(AnyContour contour, int cornerIndex) {
-    return !contour.isCornerParallel(cornerIndex) &&
-        radius.x > AnyUtils.epsilon &&
-        radius.y > AnyUtils.epsilon &&
-        contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
-  }
+  const RoundedCorner.elliptical({
+    double p = 0.0,
+    double n = 0.0,
+    this.converter = CornerConverter.base,
+  }) : super(p: p, n: n);
 
-  double _turnSign(AnyContour contour, int cornerIndex) {
-    return contour.cornerHandedness(cornerIndex);
-  }
+  const RoundedCorner.infinity({this.converter = CornerConverter.base}) : super(p: double.infinity, n: double.infinity);
 
   @override
   RoundedCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
-    final rawX = radius.x;
-    final rawY = radius.y;
-
-    final rx = rawX.isFinite
-        ? math.max(0.0, rawX)
-        : math.max(0.0, maxPreviousExtent);
-    final ry = rawY.isFinite
-        ? math.max(0.0, rawY)
-        : math.max(0.0, maxNextExtent);
-
-    return copyWith(radius: Radius.elliptical(rx, ry));
+    return copyWith(
+      p: resolvedPrevious(maxPreviousExtent),
+      n: resolvedNext(maxNextExtent),
+    );
   }
 
   @override
   double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.x) / sinTurn;
+    return math.max(0.0, p) / sinTurn;
   }
 
   @override
   double consumptionForNextSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.y) / sinTurn;
+    return math.max(0.0, n) / sinTurn;
   }
 
   @override
   RoundedCorner scaleForPreviousSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
+    return copyWith(p: p * factor);
   }
 
   @override
   RoundedCorner scaleForNextSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
+    return copyWith(n: n * factor);
   }
 
   @override
@@ -363,15 +357,17 @@ class RoundedCorner extends AnyCorner {
       double dNext,
       double angle,
       ) {
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
 
-    final sign = _turnSign(contour, cornerIndex);
-    final rx = sign * radius.x;
-    final ry = sign * radius.y;
-    final localX = dPrev + rx + rx * math.cos(angle);
-    final localY = dNext + ry + ry * math.sin(angle);
+    final sign = turnSign(contour, cornerIndex);
+    final localN = sign * n;
+    final localP = sign * p;
+
+    final localX = dPrev + localN + localN * math.cos(angle);
+    final localY = dNext + localP + localP * math.sin(angle);
+
     return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
   }
 
@@ -388,7 +384,7 @@ class RoundedCorner extends AnyCorner {
     final delta = toAngle - fromAngle;
     if (AnyUtils.nearZero(delta)) return;
 
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
       path.lineTo(x, y);
       return;
@@ -398,11 +394,12 @@ class RoundedCorner extends AnyCorner {
     final baseSegments = contour.cornerSegments[cornerIndex];
     final segmentCount = math.max(1, (baseSegments * fraction).ceil());
 
-    final sign = _turnSign(contour, cornerIndex);
-    final rx = sign * radius.x;
-    final ry = sign * radius.y;
-    final centerX = dPrev + rx;
-    final centerY = dNext + ry;
+    final sign = turnSign(contour, cornerIndex);
+    final localN = sign * n;
+    final localP = sign * p;
+
+    final centerX = dPrev + localN;
+    final centerY = dNext + localP;
 
     for (var i = 0; i < segmentCount; i++) {
       final t0 = i / segmentCount;
@@ -417,12 +414,12 @@ class RoundedCorner extends AnyCorner {
       final cos1 = math.cos(a1);
       final sin1 = math.sin(a1);
 
-      final p1x = centerX + rx * cos0 - alpha * rx * sin0;
-      final p1y = centerY + ry * sin0 + alpha * ry * cos0;
-      final p2x = centerX + rx * cos1 + alpha * rx * sin1;
-      final p2y = centerY + ry * sin1 - alpha * ry * cos1;
-      final p3x = centerX + rx * cos1;
-      final p3y = centerY + ry * sin1;
+      final p1x = centerX + localN * cos0 - alpha * localN * sin0;
+      final p1y = centerY + localP * sin0 + alpha * localP * cos0;
+      final p2x = centerX + localN * cos1 + alpha * localN * sin1;
+      final p2y = centerY + localP * sin1 - alpha * localP * cos1;
+      final p3x = centerX + localN * cos1;
+      final p3y = centerY + localP * sin1;
 
       final (c1x, c1y) =
       contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
@@ -441,91 +438,102 @@ class RoundedCorner extends AnyCorner {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
-    return RoundedCorner(
-      radius: Radius.lerp(radius, other.radius, t)!,
+    return RoundedCorner.elliptical(
+      p: lerpDouble(p, other.p, t)!,
+      n: lerpDouble(n, other.n, t)!,
       converter: AnyUtils.pickLerp(converter, other.converter, t),
     );
   }
 
   @override
-  RoundedCorner scale(double scale) => copyWith(radius: radius * scale);
-
-  @override
-  RoundedCorner convert(double insetX, double insetY, bool inner, double angle) {
-    if (converter == CornerConverter.equal) return this;
-    if (radius.x <= 0.0 || radius.y <= 0.0) return const RoundedCorner();
-    return RoundedCorner(radius: inner
-        ? _innerRadius(radius, insetX, insetY)
-        : _outerRadius(radius, insetX, insetY));
+  RoundedCorner operator *(double factor) {
+    return copyWith(
+      p: p * factor,
+      n: n * factor,
+    );
   }
 
-  Radius _innerRadius(Radius outer, double insetX, double insetY) {
+  @override
+  RoundedCorner convert(double insetP, double insetN, bool inner, double angle) {
+    if (converter == CornerConverter.equal) return this;
+    if (p <= 0.0 || n <= 0.0) return const RoundedCorner();
 
-    final kx = AnyUtils.clamp01((outer.x - insetX) / outer.x);
-    final ky = AnyUtils.clamp01((outer.y - insetY) / outer.y);
-    var factor = math.min(kx, ky);
+    return inner
+        ? _innerCorner(insetP, insetN)
+        : _outerCorner(insetP, insetN);
+  }
+
+  RoundedCorner _innerCorner(double insetP, double insetN) {
+    final kp = AnyUtils.clamp01((p - insetP) / p);
+    final kn = AnyUtils.clamp01((n - insetN) / n);
+    final factor = math.min(kp, kn);
 
     return switch (converter) {
-      CornerConverter.preserveRatio => outer * factor,
-      CornerConverter.dynamicRatio => Radius.elliptical(outer.x * kx, outer.y * ky),
-      CornerConverter.equal => outer,
+      CornerConverter.preserveRatio => copyWith(
+        p: p * factor,
+        n: n * factor,
+      ),
+      CornerConverter.dynamicRatio => copyWith(
+        p: p * kp,
+        n: n * kn,
+      ),
+      CornerConverter.equal => this,
     };
   }
 
-  Radius _outerRadius(Radius inner, double insetX, double insetY) {
-    var factor = math.max(
-      (inner.x + insetX) / inner.x,
-      (inner.y + insetY) / inner.y,
+  RoundedCorner _outerCorner(double insetP, double insetN) {
+    final factor = math.max(
+      (p + insetP) / p,
+      (n + insetN) / n,
     );
+
     return switch (converter) {
-      CornerConverter.dynamicRatio => Radius.elliptical(inner.x + insetX, inner.y + insetY),
-      CornerConverter.preserveRatio => inner * factor,
-      CornerConverter.equal => inner,
+      CornerConverter.dynamicRatio => copyWith(
+        p: p + insetP,
+        n: n + insetN,
+      ),
+      CornerConverter.preserveRatio => copyWith(
+        p: p * factor,
+        n: n * factor,
+      ),
+      CornerConverter.equal => this,
     };
   }
 
   @override
   bool operator ==(Object other) {
     return other is RoundedCorner &&
-        other.radius == radius &&
+        other.p == p &&
+        other.n == n &&
         other.converter == converter;
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, radius, converter);
+  int get hashCode => Object.hash(runtimeType, p, n, converter);
 
-  RoundedCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
-      RoundedCorner(
-        radius: radius ?? this.radius,
-        converter: innerCorner ?? this.converter,
-      );
+  RoundedCorner copyWith({
+    double? p,
+    double? n,
+    CornerConverter? converter,
+  }) {
+    return RoundedCorner.elliptical(
+      p: p ?? this.p,
+      n: n ?? this.n,
+      converter: converter ?? this.converter,
+    );
+  }
 }
 
-/// Concave rounded corner.
-///
-/// This keeps the same tangent points and side-consumption semantics as
-/// [RoundedCorner], but the curve is traced on the opposite side of the local
-/// quarter ellipse, producing an inward notch instead of an outward round.
-///
-/// Negative values are ignored. Infinity is resolved against the adjacent side
-/// lengths during contour preparation.
 class InverseRoundedCorner extends AnyCorner {
 
-  final Radius radius;
   const InverseRoundedCorner({
-    this.radius = Radius.zero,
-  });
+    double radius = 0.0
+  }) : super(p: radius, n: radius);
 
-  bool _canBuild(AnyContour contour, int cornerIndex) {
-    return !contour.isCornerParallel(cornerIndex) &&
-        radius.x > AnyUtils.epsilon &&
-        radius.y > AnyUtils.epsilon &&
-        contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
-  }
-
-  double _turnSign(AnyContour contour, int cornerIndex) {
-    return contour.cornerHandedness(cornerIndex);
-  }
+  const InverseRoundedCorner.elliptical({
+    double p = 0.0,
+    double n = 0.0,
+  }) : super(p: p, n: n);
 
   double _localAngleFromCommon(double angle) => AnyUtils.endAnglePi1d5 - angle;
 
@@ -534,41 +542,34 @@ class InverseRoundedCorner extends AnyCorner {
       double maxPreviousExtent,
       double maxNextExtent,
       ) {
-    final rawX = radius.x;
-    final rawY = radius.y;
-
-    final rx = rawX.isFinite
-        ? math.max(0.0, rawX)
-        : math.max(0.0, maxPreviousExtent);
-    final ry = rawY.isFinite
-        ? math.max(0.0, rawY)
-        : math.max(0.0, maxNextExtent);
-
-    return copyWith(radius: Radius.elliptical(rx, ry));
+    return copyWith(
+      p: resolvedPrevious(maxPreviousExtent),
+      n: resolvedNext(maxNextExtent),
+    );
   }
 
   @override
   double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.x) / sinTurn;
+    return math.max(0.0, p) / sinTurn;
   }
 
   @override
   double consumptionForNextSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.y) / sinTurn;
+    return math.max(0.0, n) / sinTurn;
   }
 
   @override
   InverseRoundedCorner scaleForPreviousSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
+    return copyWith(p: p * factor);
   }
 
   @override
   InverseRoundedCorner scaleForNextSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
+    return copyWith(n: n * factor);
   }
 
   @override
@@ -579,16 +580,18 @@ class InverseRoundedCorner extends AnyCorner {
       double dNext,
       double angle,
       ) {
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
 
-    final sign = _turnSign(contour, cornerIndex);
-    final rx = sign * radius.x;
-    final ry = sign * radius.y;
+    final sign = turnSign(contour, cornerIndex);
+    final localN = sign * n;
+    final localP = sign * p;
     final localAngle = _localAngleFromCommon(angle);
-    final localX = dPrev + rx * math.cos(localAngle);
-    final localY = dNext + ry * math.sin(localAngle);
+
+    final localX = dPrev + localN * math.cos(localAngle);
+    final localY = dNext + localP * math.sin(localAngle);
+
     return contour.worldPointFromDistanceSpace(cornerIndex, localX, localY);
   }
 
@@ -605,7 +608,7 @@ class InverseRoundedCorner extends AnyCorner {
     final delta = toAngle - fromAngle;
     if (AnyUtils.nearZero(delta)) return;
 
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
       path.lineTo(x, y);
       return;
@@ -615,9 +618,10 @@ class InverseRoundedCorner extends AnyCorner {
     final baseSegments = contour.cornerSegments[cornerIndex];
     final segmentCount = math.max(1, (baseSegments * fraction).ceil());
 
-    final sign = _turnSign(contour, cornerIndex);
-    final rx = sign * radius.x;
-    final ry = sign * radius.y;
+    final sign = turnSign(contour, cornerIndex);
+    final localN = sign * n;
+    final localP = sign * p;
+
     final centerX = dPrev;
     final centerY = dNext;
     final localFromAngle = _localAngleFromCommon(fromAngle);
@@ -637,12 +641,12 @@ class InverseRoundedCorner extends AnyCorner {
       final cos1 = math.cos(a1);
       final sin1 = math.sin(a1);
 
-      final p1x = centerX + rx * cos0 - alpha * rx * sin0;
-      final p1y = centerY + ry * sin0 + alpha * ry * cos0;
-      final p2x = centerX + rx * cos1 + alpha * rx * sin1;
-      final p2y = centerY + ry * sin1 - alpha * ry * cos1;
-      final p3x = centerX + rx * cos1;
-      final p3y = centerY + ry * sin1;
+      final p1x = centerX + localN * cos0 - alpha * localN * sin0;
+      final p1y = centerY + localP * sin0 + alpha * localP * cos0;
+      final p2x = centerX + localN * cos1 + alpha * localN * sin1;
+      final p2y = centerY + localP * sin1 - alpha * localP * cos1;
+      final p3x = centerX + localN * cos1;
+      final p3y = centerY + localP * sin1;
 
       final (c1x, c1y) =
       contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
@@ -661,63 +665,65 @@ class InverseRoundedCorner extends AnyCorner {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
-    return InverseRoundedCorner(
-      radius: Radius.lerp(radius, other.radius, t)!,
+    return InverseRoundedCorner.elliptical(
+      p: lerpDouble(p, other.p, t)!,
+      n: lerpDouble(n, other.n, t)!,
     );
   }
 
   @override
-  InverseRoundedCorner scale(double scale) => copyWith(radius: radius * scale);
+  InverseRoundedCorner operator *(double factor) {
+    return copyWith(
+      p: p * factor,
+      n: n * factor,
+    );
+  }
 
   @override
-  InverseRoundedCorner convert(double insetX, double insetY, bool inner, double angle) => this;
+  InverseRoundedCorner convert(
+      double insetP,
+      double insetN,
+      bool inner,
+      double angle,
+      ) {
+    return this;
+  }
 
   @override
   bool operator ==(Object other) {
     return other is InverseRoundedCorner &&
-        other.radius == radius;
+        other.p == p &&
+        other.n == n;
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, radius);
+  int get hashCode => Object.hash(runtimeType, p, n);
 
   InverseRoundedCorner copyWith({
-    Radius? radius,
-    CornerConverter? innerCorner,
-  }) =>
-      InverseRoundedCorner(
-        radius: radius ?? this.radius,
-      );
+    double? p,
+    double? n,
+  }) {
+    return InverseRoundedCorner.elliptical(
+      p: p ?? this.p,
+      n: n ?? this.n,
+    );
+  }
 }
 
-/// Straight chamfer / bevel corner.
-///
-/// This uses the same side-consumption semantics as [RoundedCorner], but the
-/// tangent points are connected by a straight segment instead of a curve.
-///
-/// The existing corner split logic in [AnyContour] can still request partial
-/// segments using the shared angle parameter range. This implementation maps
-/// that angle range linearly onto the bevel segment.
 class BevelCorner extends AnyCorner {
 
-  final Radius radius;
   final CornerConverter converter;
 
   const BevelCorner({
-    this.radius = Radius.zero,
-    this.converter = CornerConverter.base
-  });
+    double radius = 0.0,
+    this.converter = CornerConverter.base,
+  }) : super(p: radius, n: radius);
 
-  bool _canBuild(AnyContour contour, int cornerIndex) {
-    return !contour.isCornerParallel(cornerIndex) &&
-        radius.x > AnyUtils.epsilon &&
-        radius.y > AnyUtils.epsilon &&
-        contour.cornerSin[cornerIndex] > AnyUtils.epsilon;
-  }
-
-  double _turnSign(AnyContour contour, int cornerIndex) {
-    return contour.cornerHandedness(cornerIndex);
-  }
+  const BevelCorner.elliptical({
+    double p = 0.0,
+    double n = 0.0,
+    this.converter = CornerConverter.base,
+  }) : super(p: p, n: n);
 
   double _tForAngle(double angle) {
     final span = AnyUtils.endAnglePi1d5 - AnyUtils.startAnglePi1d;
@@ -731,11 +737,11 @@ class BevelCorner extends AnyCorner {
       double dPrev,
       double dNext,
       ) {
-    final sign = _turnSign(contour, cornerIndex);
+    final sign = turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
       dPrev,
-      dNext + sign * radius.y,
+      dNext + sign * p,
     );
   }
 
@@ -745,51 +751,44 @@ class BevelCorner extends AnyCorner {
       double dPrev,
       double dNext,
       ) {
-    final sign = _turnSign(contour, cornerIndex);
+    final sign = turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
-      dPrev + sign * radius.x,
+      dPrev + sign * n,
       dNext,
     );
   }
 
   @override
   BevelCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
-    final rawX = radius.x;
-    final rawY = radius.y;
-
-    final rx = rawX.isFinite
-        ? math.max(0.0, rawX)
-        : math.max(0.0, maxPreviousExtent);
-    final ry = rawY.isFinite
-        ? math.max(0.0, rawY)
-        : math.max(0.0, maxNextExtent);
-
-    return copyWith(radius: Radius.elliptical(rx, ry));
+    return copyWith(
+      p: resolvedPrevious(maxPreviousExtent),
+      n: resolvedNext(maxNextExtent),
+    );
   }
 
   @override
   double consumptionForPreviousSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.x) / sinTurn;
+    return math.max(0.0, p) / sinTurn;
   }
 
   @override
   double consumptionForNextSide(AnyContour contour, int cornerIndex) {
     final sinTurn = contour.cornerSin[cornerIndex];
     if (sinTurn <= AnyUtils.epsilon) return 0.0;
-    return math.max(0.0, radius.y) / sinTurn;
+    return math.max(0.0, n) / sinTurn;
   }
 
   @override
   BevelCorner scaleForPreviousSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x * factor, radius.y));
+    return copyWith(p: p * factor);
   }
 
   @override
   BevelCorner scaleForNextSide(double factor) {
-    return copyWith(radius: Radius.elliptical(radius.x, radius.y * factor));
+    return copyWith(n: n * factor);
   }
 
   @override
@@ -800,16 +799,17 @@ class BevelCorner extends AnyCorner {
       double dNext,
       double angle,
       ) {
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
 
     final t = _tForAngle(angle);
     final (sx, sy) = _startPoint(contour, cornerIndex, dPrev, dNext);
     final (ex, ey) = _endPoint(contour, cornerIndex, dPrev, dNext);
+
     return (
-      lerpDouble(sx, ex, t)!,
-      lerpDouble(sy, ey, t)!,
+    lerpDouble(sx, ex, t)!,
+    lerpDouble(sy, ey, t)!,
     );
   }
 
@@ -825,7 +825,7 @@ class BevelCorner extends AnyCorner {
       ) {
     if (AnyUtils.nearZero(toAngle - fromAngle)) return;
 
-    if (!_canBuild(contour, cornerIndex)) {
+    if (!canBuild(contour, cornerIndex)) {
       final (x, y) = contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
       path.lineTo(x, y);
       return;
@@ -841,49 +841,44 @@ class BevelCorner extends AnyCorner {
       throw 'Not the same runtime type: ${other.runtimeType}';
     }
 
-    return BevelCorner(
-      radius: Radius.lerp(radius, other.radius, t)!,
+    return BevelCorner.elliptical(
+      p: lerpDouble(p, other.p, t)!,
+      n: lerpDouble(n, other.n, t)!,
+      converter: AnyUtils.pickLerp(converter, other.converter, t),
     );
   }
 
   @override
-  BevelCorner scale(double scale) => copyWith(radius: radius * scale);
-
-  @override
-  BevelCorner convert(double insetX, double insetY, bool inner, double angle) {
-    if (converter == CornerConverter.equal) return this;
-    if (radius.x <= 0.0 || radius.y <= 0.0) {
-      return const BevelCorner();
-    }
-
-    final convertedRadius = switch (converter) {
-      CornerConverter.dynamicRatio =>
-          _convertedRadius(insetX, insetY, inner, angle, fixedRatio: false),
-
-      CornerConverter.preserveRatio =>
-          _convertedRadius(insetX, insetY, inner, angle, fixedRatio: true),
-
-      CornerConverter.equal => radius,
-    };
-
+  BevelCorner operator *(double factor) {
     return copyWith(
-      radius: convertedRadius,
-      converter: converter,
+      p: p * factor,
+      n: n * factor,
     );
   }
 
-  Radius _convertedRadius(
-      double insetX,
-      double insetY,
-      bool inner,
-      double angle,
-      {required bool fixedRatio}
-      ) {
-    final rx = radius.x;
-    final ry = radius.y;
+  @override
+  BevelCorner convert(double insetP, double insetN, bool inner, double angle) {
+    if (converter == CornerConverter.equal) return this;
+    if (p <= 0.0 || n <= 0.0) return const BevelCorner();
 
-    if (rx <= AnyUtils.epsilon || ry <= AnyUtils.epsilon) {
-      return Radius.zero;
+    return switch (converter) {
+      CornerConverter.dynamicRatio =>
+          _convertedCorner(insetP, insetN, inner, angle, fixedRatio: false),
+      CornerConverter.preserveRatio =>
+          _convertedCorner(insetP, insetN, inner, angle, fixedRatio: true),
+      CornerConverter.equal => this,
+    };
+  }
+
+  BevelCorner _convertedCorner(
+      double insetP,
+      double insetN,
+      bool inner,
+      double angle, {
+        required bool fixedRatio,
+      }) {
+    if (p <= AnyUtils.epsilon || n <= AnyUtils.epsilon) {
+      return const BevelCorner();
     }
 
     final safeAngle = AnyUtils.clampDouble(
@@ -895,24 +890,21 @@ class BevelCorner extends AnyCorner {
     final chordMetric = math.sqrt(
       math.max(
         0.0,
-        rx * rx + ry * ry - 2.0 * rx * ry * math.cos(safeAngle),
+        n * n + p * p - 2.0 * n * p * math.cos(safeAngle),
       ),
     );
 
     if (chordMetric <= AnyUtils.epsilon) {
-      return Radius.zero;
+      return const BevelCorner();
     }
 
-    final bevelNormalScale = chordMetric / (rx * ry);
+    final bevelNormalScale = chordMetric / (n * p);
 
     if (fixedRatio) {
-
-      // Weighted inset along bevel normal.
-      // Equal insets => same value. Unequal insets bias by bevel proportions.
       final blendedInset =
-          ((insetX / rx) + (insetY / ry)) / ((1.0 / rx) + (1.0 / ry));
+          ((insetP / p) + (insetN / n)) / ((1.0 / p) + (1.0 / n));
 
-      final linearInset = (insetX / rx) + (insetY / ry);
+      final linearInset = (insetP / p) + (insetN / n);
       final normalShift = bevelNormalScale * blendedInset;
 
       final factor = inner
@@ -921,48 +913,50 @@ class BevelCorner extends AnyCorner {
 
       final safeFactor = math.max(0.0, factor);
 
-      return Radius.elliptical(
-        rx * safeFactor,
-        ry * safeFactor,
+      return copyWith(
+        p: p * safeFactor,
+        n: n * safeFactor,
       );
     }
 
-    final linearInset = (insetX / rx) + (insetY / ry);
+    final linearInset = (insetP / p) + (insetN / n);
 
-    // radius.y controls the bevel endpoint on the previous side
-    final factorY = inner
-        ? (1.0 + bevelNormalScale * insetX - linearInset)
-        : (1.0 - bevelNormalScale * insetX + linearInset);
+    final factorP = inner
+        ? (1.0 + bevelNormalScale * insetP - linearInset)
+        : (1.0 - bevelNormalScale * insetP + linearInset);
 
-    // radius.x controls the bevel endpoint on the next side
-    final factorX = inner
-        ? (1.0 + bevelNormalScale * insetY - linearInset)
-        : (1.0 - bevelNormalScale * insetY + linearInset);
+    final factorN = inner
+        ? (1.0 + bevelNormalScale * insetN - linearInset)
+        : (1.0 - bevelNormalScale * insetN + linearInset);
 
-    return Radius.elliptical(
-      math.max(0.0, rx * factorX),
-      math.max(0.0, ry * factorY),
+    return copyWith(
+      p: math.max(0.0, p * factorP),
+      n: math.max(0.0, n * factorN),
     );
   }
 
   @override
   bool operator ==(Object other) {
     return other is BevelCorner &&
-        other.radius == radius &&
+        other.p == p &&
+        other.n == n &&
         other.converter == converter;
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, radius, converter);
+  int get hashCode => Object.hash(runtimeType, p, n, converter);
 
   BevelCorner copyWith({
-    Radius? radius,
+    double? p,
+    double? n,
     CornerConverter? converter,
-  }) =>
-      BevelCorner(
-        radius: radius ?? this.radius,
-        converter: converter ?? this.converter,
-      );
+  }) {
+    return BevelCorner.elliptical(
+      p: p ?? this.p,
+      n: n ?? this.n,
+      converter: converter ?? this.converter,
+    );
+  }
 }
 
 class AnyPoint {
