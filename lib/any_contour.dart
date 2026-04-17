@@ -217,7 +217,7 @@ abstract class AnyCorner {
     this.n = 0.0,
   });
 
-  bool get isCircular => AnyUtils.nearZero(p - n);
+  bool get isCircular => (p == n) || AnyUtils.nearZero(p - n);
 
   @protected
   bool canBuild(AnyContour contour, int cornerIndex) {
