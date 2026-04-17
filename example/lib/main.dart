@@ -10,11 +10,14 @@ void main() {
 const blueLight = Colors.lightBlueAccent;
 const blue = Colors.blue;
 
-const goldLight = Colors.red;
-const gold = Colors.orange;
+const goldLight = Colors.orange;
+const gold = Colors.deepOrange;
 
-const alpha26 = Colors.black26;
-const alpha45 = Colors.black45;
+const alpha33 = Color(0x662196F3);
+const alpha99 = Color(0x992196F3);
+
+const gradientBG = LinearGradient(colors: [blue, gold]);
+const gradientBGL = LinearGradient(colors: [blueLight, goldLight]);
 
 List<Widget> examples() {
   return const [
@@ -22,18 +25,18 @@ List<Widget> examples() {
     E2(
       title: 'L10:inside T20:center\nR30:outside B40:center' ,
       begin: AnyBoxDecoration(
-        left: AnySide(color: alpha45, width: 10, align: AnySide.alignInside),
-        top: AnySide(color: alpha45, width: 20, align: AnySide.alignCenter),
-        right: AnySide(color: alpha45, width: 30, align: AnySide.alignOutside),
-        bottom: AnySide(color: alpha45, width: 40, align: AnySide.alignCenter),
-        background: AnyBackground(color: alpha26)
+        left: AnySide(color: alpha99, width: 10, align: AnySide.alignInside),
+        top: AnySide(color: alpha99, width: 20, align: AnySide.alignCenter),
+        right: AnySide(color: alpha99, width: 30, align: AnySide.alignOutside),
+        bottom: AnySide(color: alpha99, width: 40, align: AnySide.alignCenter),
+        background: AnyBackground(color: alpha33)
       ),
       end: AnyBoxDecoration(
-          left: AnySide(color: alpha45, width: 40, align: AnySide.alignOutside),
-          top: AnySide(color: alpha45, width: 30, align: AnySide.alignInside),
-          right: AnySide(color: alpha45, width: 20, align: AnySide.alignCenter),
-          bottom: AnySide(color: alpha45, width: 10, align: AnySide.alignOutside),
-          background: AnyBackground(color: alpha26)
+          left: AnySide(color: alpha99, width: 40, align: AnySide.alignOutside),
+          top: AnySide(color: alpha99, width: 30, align: AnySide.alignInside),
+          right: AnySide(color: alpha99, width: 20, align: AnySide.alignCenter),
+          bottom: AnySide(color: alpha99, width: 10, align: AnySide.alignOutside),
+          background: AnyBackground(color: alpha33)
       ),
     ),
     E2(
@@ -70,6 +73,17 @@ List<Widget> examples() {
           corners: RoundedCorner(radius: Radius.circular(10))
       ),
     ),
+    E2(
+      title: 'Gradient' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          corners: BevelCorner(radius: Radius.circular(30))
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignOutside),
+          corners: RoundedCorner(radius: Radius.circular(40))
+      ),
+    ),
     Header('Experimental'),
     E2(
       title: 'Crown',
@@ -93,9 +107,9 @@ List<Widget> examples() {
       title: 'Tab',
       begin: TabDecoration(
           offset: 20,
-          background: AnyBackground(color: alpha45),
+          background: AnyBackground(color: alpha99),
           corners: RoundedCorner(radius: Radius.circular(20)),
-          sides: AnySide(width: 20, color: alpha26, align: AnySide.alignOutside)
+          sides: AnySide(width: 20, color: alpha33, align: AnySide.alignOutside)
       ),
       end: TabDecoration(offset: 30),
     ),
