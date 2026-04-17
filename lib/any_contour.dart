@@ -260,7 +260,16 @@ abstract class AnyCorner {
   AnyCorner scale(double scale);
 
   /// Creates an auto-derived inner/outer corner for the provided adjacent side insets.
-  AnyCorner convert(double insetX, double insetY, bool inner);
+  /// [insetX] = inset on previous side
+  /// [insetY] = inset on next side
+  /// [inner]  = convex/inner turn conversion (same meaning as before)
+  /// [angle]  = local corner angle in radians
+  AnyCorner convert(
+      double insetX,
+      double insetY,
+      bool inner,
+      double angle,
+  );
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
     if (identical(a, b) || a == b) return a;
@@ -440,7 +449,7 @@ class RoundedCorner extends AnyCorner {
   RoundedCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  RoundedCorner convert(double insetX, double insetY, bool inner) {
+  RoundedCorner convert(double insetX, double insetY, bool inner, double angle) {
     if (converter == CornerConverter.equal) return this;
     if (radius.x <= 0.0 || radius.y <= 0.0) return const RoundedCorner();
     return RoundedCorner(radius: inner
@@ -659,7 +668,7 @@ class InverseRoundedCorner extends AnyCorner {
   InverseRoundedCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  InverseRoundedCorner convert(double insetX, double insetY, bool inner) => this;
+  InverseRoundedCorner convert(double insetX, double insetY, bool inner, double angle) => this;
 
   @override
   bool operator ==(Object other) {
@@ -839,20 +848,118 @@ class BevelCorner extends AnyCorner {
   BevelCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  BevelCorner convert(double insetX, double insetY, bool inner) => this;
+  BevelCorner convert(double insetX, double insetY, bool inner, double angle) {
+    if (converter == CornerConverter.equal) return this;
+    if (radius.x <= 0.0 || radius.y <= 0.0) {
+      return const BevelCorner();
+    }
+
+    final convertedRadius = switch (converter) {
+      CornerConverter.dynamicRatio =>
+          _convertedRadius(insetX, insetY, inner, angle, fixedRatio: false),
+
+      CornerConverter.preserveRatio =>
+          _convertedRadius(insetX, insetY, inner, angle, fixedRatio: true),
+
+      CornerConverter.equal => radius,
+    };
+
+    return copyWith(
+      radius: convertedRadius,
+      converter: converter,
+    );
+  }
+
+  Radius _convertedRadius(
+      double insetX,
+      double insetY,
+      bool inner,
+      double angle,
+      {required bool fixedRatio}
+      ) {
+    final rx = radius.x;
+    final ry = radius.y;
+
+    if (rx <= AnyUtils.epsilon || ry <= AnyUtils.epsilon) {
+      return Radius.zero;
+    }
+
+    final safeAngle = AnyUtils.clampDouble(
+      angle.isFinite ? angle : math.pi / 2.0,
+      AnyUtils.epsilon,
+      math.pi - AnyUtils.epsilon,
+    );
+
+    final chordMetric = math.sqrt(
+      math.max(
+        0.0,
+        rx * rx + ry * ry - 2.0 * rx * ry * math.cos(safeAngle),
+      ),
+    );
+
+    if (chordMetric <= AnyUtils.epsilon) {
+      return Radius.zero;
+    }
+
+    final bevelNormalScale = chordMetric / (rx * ry);
+
+    if (fixedRatio) {
+
+      // Weighted inset along bevel normal.
+      // Equal insets => same value. Unequal insets bias by bevel proportions.
+      final blendedInset =
+          ((insetX / rx) + (insetY / ry)) / ((1.0 / rx) + (1.0 / ry));
+
+      final linearInset = (insetX / rx) + (insetY / ry);
+      final normalShift = bevelNormalScale * blendedInset;
+
+      final factor = inner
+          ? (1.0 + normalShift - linearInset)
+          : (1.0 - normalShift + linearInset);
+
+      final safeFactor = math.max(0.0, factor);
+
+      return Radius.elliptical(
+        rx * safeFactor,
+        ry * safeFactor,
+      );
+    }
+
+    final linearInset = (insetX / rx) + (insetY / ry);
+
+    // radius.y controls the bevel endpoint on the previous side
+    final factorY = inner
+        ? (1.0 + bevelNormalScale * insetX - linearInset)
+        : (1.0 - bevelNormalScale * insetX + linearInset);
+
+    // radius.x controls the bevel endpoint on the next side
+    final factorX = inner
+        ? (1.0 + bevelNormalScale * insetY - linearInset)
+        : (1.0 - bevelNormalScale * insetY + linearInset);
+
+    return Radius.elliptical(
+      math.max(0.0, rx * factorX),
+      math.max(0.0, ry * factorY),
+    );
+  }
 
   @override
   bool operator ==(Object other) {
     return other is BevelCorner &&
-        other.radius == radius;
+        other.radius == radius &&
+        other.converter == converter;
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, radius);
+  int get hashCode => Object.hash(runtimeType, radius, converter);
 
-  BevelCorner copyWith({Radius? radius, CornerConverter? innerCorner}) =>
+  BevelCorner copyWith({
+    Radius? radius,
+    CornerConverter? converter,
+  }) =>
       BevelCorner(
         radius: radius ?? this.radius,
+        converter: converter ?? this.converter,
       );
 }
 
@@ -1001,6 +1108,7 @@ class AnyContour {
   late final Float64List cornerMatrix10;
   late final Float64List cornerMatrix11;
 
+  late final Float64List cornerAngle;
   late final Float64List cornerSin;
   late final Int32List cornerSegments;
   late final Int8List cornerTurnSign;
@@ -1120,6 +1228,7 @@ class AnyContour {
     cornerMatrix10 = Float64List(count);
     cornerMatrix11 = Float64List(count);
     cornerSin = Float64List(count);
+    cornerAngle = Float64List(count);
     cornerSegments = Int32List(count);
     cornerTurnSign = Int8List(count);
     cornerParallel = Uint8List(count);
@@ -1223,6 +1332,7 @@ class AnyContour {
       final vy = sideDirectionY[corner];
       final dot = AnyUtils.clampDouble((ux * vx) + (uy * vy), -1.0, 1.0);
       final angle = math.acos(dot);
+      cornerAngle[corner] = angle;
       cornerSegments[corner] = math.max(1, (angle / (math.pi / 2.0)).ceil());
     }
 
@@ -1241,6 +1351,7 @@ class AnyContour {
         sideOutsideOffset[prev],
         sideOutsideOffset[corner],
         cornerTurnSign[corner] > 0,
+        cornerAngle[corner],
       );
     }, growable: false);
 
@@ -1257,7 +1368,8 @@ class AnyContour {
       return outerCorners[corner].convert(
         sideInsideOffset[prev] + sideOutsideOffset[prev],
         sideInsideOffset[corner] + sideOutsideOffset[corner],
-        cornerTurnSign[corner] > 0
+        cornerTurnSign[corner] > 0,
+        cornerAngle[corner],
       );
     }, growable: false);
 
