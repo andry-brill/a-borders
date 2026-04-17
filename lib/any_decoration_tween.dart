@@ -60,7 +60,7 @@ class _TweenDecoration extends AnyDecoration {
   );
 
   @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
     final a = beginDecoration.points(bounds, textDirection);
     final b = endDecoration.points(bounds, textDirection);
     return AnyPoint.lerp(a, b, t)!;

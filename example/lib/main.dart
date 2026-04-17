@@ -332,7 +332,7 @@ class TabDecoration extends AnyDecoration {
   }) : assert(offset > 0.0);
 
   @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
 
     final offset = min(this.offset, bounds.width / 4.0);
     final c = RoundedCorner(radius: offset);
@@ -387,7 +387,7 @@ class CrownDecoration extends AnyDecoration {
   int get hashCode => Object.hash(super.hashCode, type.hashCode);
 
   @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
     final w4 = bounds.width / 4.0;
     final w2 = bounds.width / 2.0;
 

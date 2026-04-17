@@ -54,7 +54,7 @@ class AnyBoxDecoration extends AnyDecoration {
   );
 
   @override
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) => [
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
     point(
       bounds.topLeft,
       outer: topLeft,

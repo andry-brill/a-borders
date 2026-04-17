@@ -205,6 +205,7 @@ enum CornerConverter {
   static const base = CornerConverter.dynamicRatio;
 }
 abstract class AnyCorner {
+
   /// Corner extent along the previous side.
   final double p;
 
@@ -215,6 +216,8 @@ abstract class AnyCorner {
     this.p = 0.0,
     this.n = 0.0,
   });
+
+  bool get isCircular => AnyUtils.nearZero(p - n);
 
   @protected
   bool canBuild(AnyContour contour, int cornerIndex) {
@@ -282,6 +285,8 @@ abstract class AnyCorner {
       bool inner,
       double angle,
       );
+
+  AnyCorner copyWith({double? p, double? n});
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
     if (identical(a, b) || a == b) return a;
@@ -511,6 +516,7 @@ class RoundedCorner extends AnyCorner {
   @override
   int get hashCode => Object.hash(runtimeType, p, n, converter);
 
+  @override
   RoundedCorner copyWith({
     double? p,
     double? n,
@@ -699,6 +705,7 @@ class InverseRoundedCorner extends AnyCorner {
   @override
   int get hashCode => Object.hash(runtimeType, p, n);
 
+  @override
   InverseRoundedCorner copyWith({
     double? p,
     double? n,
@@ -946,6 +953,7 @@ class BevelCorner extends AnyCorner {
   @override
   int get hashCode => Object.hash(runtimeType, p, n, converter);
 
+  @override
   BevelCorner copyWith({
     double? p,
     double? n,
@@ -1316,8 +1324,7 @@ class AnyContour {
         cornerMatrix11[corner] = npx / det;
       }
 
-      final cross = (sideDirectionX[prev] * sideDirectionY[corner]) -
-          (sideDirectionY[prev] * sideDirectionX[corner]);
+      final cross = (sideDirectionX[prev] * sideDirectionY[corner]) - (sideDirectionY[prev] * sideDirectionX[corner]);
       final sinTurn = cross.abs();
       cornerSin[corner] = sinTurn;
       cornerTurnSign[corner] = cross < -AnyUtils.epsilon ? -1 : 1;
@@ -1638,8 +1645,16 @@ class AnyContour {
 /// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
 abstract class AnyDecoration extends Decoration {
 
-  /// Build final contour points in local coordinates for this size.
-  List<AnyPoint> points(Rect bounds, TextDirection? textDirection);
+  /// Build raw contour points in local coordinates for this size.
+  @protected
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection);
+
+  /// Returns normalized points safe for contour building and lerp.
+  @nonVirtual
+  List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
+    final raw = buildPoints(bounds, textDirection);
+    return normalizePoints(raw);
+  }
 
   final AnyBackground? background;
   final AnySide sides;
@@ -1765,6 +1780,232 @@ abstract class AnyDecoration extends Decoration {
     innerCorners,
     Object.hashAll(shadows),
   );
+
+  @protected
+  List<AnyPoint> normalizePoints(List<AnyPoint> points) {
+    if (points.length < 3) {
+      throw ArgumentError('At least 3 points are required.');
+    }
+
+    final count = points.length;
+    final sideLengths = List<double>.filled(count, 0.0, growable: false);
+
+    for (var i = 0; i < count; i++) {
+      final next = (i + 1) % count;
+      final dx = points[next].point.dx - points[i].point.dx;
+      final dy = points[next].point.dy - points[i].point.dy;
+      final length = math.sqrt(dx * dx + dy * dy);
+
+      if (length <= AnyUtils.epsilon) {
+        throw ArgumentError('Side $i has zero length.');
+      }
+
+      sideLengths[i] = length;
+    }
+
+    final outer = List<AnyCorner>.generate(
+      count,
+          (index) => points[index].outer,
+      growable: false,
+    );
+
+    final inner = List<AnyCorner?>.generate(
+      count,
+          (index) => points[index].inner,
+      growable: false,
+    );
+
+    _normalizeCornerBandForAnimation(outer, sideLengths);
+    _normalizeNullableCornerBandForAnimation(inner, sideLengths);
+
+    return List<AnyPoint>.generate(count, (index) {
+      final point = points[index];
+      return AnyPoint(
+        point: point.point,
+        side: point.side,
+        outer: outer[index],
+        inner: inner[index],
+      );
+    }, growable: false);
+  }
+
+  void _normalizeCornerBandForAnimation(
+      List<AnyCorner> corners,
+      List<double> sideLengths,
+      ) {
+    final count = corners.length;
+    final preserveCircular = List<bool>.generate(
+      count,
+          (index) => corners[index].isCircular,
+      growable: false,
+    );
+
+    final maxIterations = math.max(1, count * 8);
+
+    for (var iteration = 0; iteration < maxIterations; iteration++) {
+      var changed = false;
+
+      for (var side = 0; side < count; side++) {
+        final startCorner = side;
+        final endCorner = (side + 1) % count;
+
+        final (newStartN, newEndP) = _normalizeSharedSideValues(
+          fromPreviousCorner: corners[startCorner].n,
+          fromCurrentCorner: corners[endCorner].p,
+          sideLength: sideLengths[side],
+        );
+
+        final updatedStart = _updateCornerNext(
+          corners[startCorner],
+          newStartN,
+          preserveCircular[startCorner],
+        );
+        if (!_sameCornerState(corners[startCorner], updatedStart)) {
+          corners[startCorner] = updatedStart;
+          changed = true;
+        }
+
+        final updatedEnd = _updateCornerPrevious(
+          corners[endCorner],
+          newEndP,
+          preserveCircular[endCorner],
+        );
+        if (!_sameCornerState(corners[endCorner], updatedEnd)) {
+          corners[endCorner] = updatedEnd;
+          changed = true;
+        }
+      }
+
+      if (!changed) break;
+    }
+  }
+
+  void _normalizeNullableCornerBandForAnimation(
+      List<AnyCorner?> corners,
+      List<double> sideLengths,
+      ) {
+    final count = corners.length;
+    final preserveCircular = List<bool>.generate(
+      count,
+          (index) => corners[index]?.isCircular ?? false,
+      growable: false,
+    );
+
+    final maxIterations = math.max(1, count * 8);
+
+    for (var iteration = 0; iteration < maxIterations; iteration++) {
+      var changed = false;
+
+      for (var side = 0; side < count; side++) {
+        final startCorner = side;
+        final endCorner = (side + 1) % count;
+
+        final start = corners[startCorner];
+        final end = corners[endCorner];
+        if (start == null || end == null) continue;
+
+        final (newStartN, newEndP) = _normalizeSharedSideValues(
+          fromPreviousCorner: start.n,
+          fromCurrentCorner: end.p,
+          sideLength: sideLengths[side],
+        );
+
+        final updatedStart = _updateCornerNext(
+          start,
+          newStartN,
+          preserveCircular[startCorner],
+        );
+        if (!_sameCornerState(start, updatedStart)) {
+          corners[startCorner] = updatedStart;
+          changed = true;
+        }
+
+        final updatedEnd = _updateCornerPrevious(
+          end,
+          newEndP,
+          preserveCircular[endCorner],
+        );
+        if (!_sameCornerState(end, updatedEnd)) {
+          corners[endCorner] = updatedEnd;
+          changed = true;
+        }
+      }
+
+      if (!changed) break;
+    }
+  }
+
+  (double, double) _normalizeSharedSideValues({
+    required double fromPreviousCorner,
+    required double fromCurrentCorner,
+    required double sideLength,
+  }) {
+    final length = math.max(0.0, sideLength);
+
+    final a = fromPreviousCorner.isFinite
+        ? math.max(0.0, fromPreviousCorner)
+        : double.infinity;
+
+    final b = fromCurrentCorner.isFinite
+        ? math.max(0.0, fromCurrentCorner)
+        : double.infinity;
+
+    if (!a.isFinite && !b.isFinite) {
+      final half = length / 2.0;
+      return (half, half);
+    }
+
+    if (a.isFinite && !b.isFinite) {
+      return (a, math.max(0.0, length - a));
+    }
+
+    if (!a.isFinite && b.isFinite) {
+      return (math.max(0.0, length - b), b);
+    }
+
+    final total = a + b;
+    if (total > length + AnyUtils.epsilon && total > AnyUtils.epsilon) {
+      final t = a / total;
+      return (length * t, length * (1.0 - t));
+    }
+
+    return (a, b);
+  }
+
+  AnyCorner _updateCornerPrevious(
+      AnyCorner corner,
+      double newP,
+      bool preserveCircular,
+      ) {
+    final value = newP.isFinite ? math.max(0.0, newP) : newP;
+
+    return preserveCircular
+        ? corner.copyWith(p: value, n: value)
+        : corner.copyWith(p: value);
+  }
+
+  AnyCorner _updateCornerNext(
+      AnyCorner corner,
+      double newN,
+      bool preserveCircular,
+      ) {
+    final value = newN.isFinite ? math.max(0.0, newN) : newN;
+
+    return preserveCircular
+        ? corner.copyWith(p: value, n: value)
+        : corner.copyWith(n: value);
+  }
+
+  bool _sameCornerState(AnyCorner a, AnyCorner b) {
+    return a.runtimeType == b.runtimeType &&
+        _sameValue(a.p, b.p) &&
+        _sameValue(a.n, b.n);
+  }
+
+  bool _sameValue(double a, double b) {
+    if (!a.isFinite || !b.isFinite) return a == b;
+    return AnyUtils.nearZero(a - b);
+  }
 }
 
 
