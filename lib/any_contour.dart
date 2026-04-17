@@ -200,40 +200,7 @@ class AnyBackground with MAnyFill {
 enum CornerConverter {
   preserveRatio,
   dynamicRatio,
-  equal;
-
-  Radius convert(Radius source, double insetX, double insetY, bool inner) {
-    if (this == equal) return source;
-    if (source.x <= 0.0 || source.y <= 0.0) return Radius.zero;
-    return inner
-        ? _innerRadius(source, insetX, insetY)
-        : _outerRadius(source, insetX, insetY);
-  }
-
-  Radius _innerRadius(Radius outer, double insetX, double insetY) {
-
-    final kx = AnyUtils.clamp01((outer.x - insetX) / outer.x);
-    final ky = AnyUtils.clamp01((outer.y - insetY) / outer.y);
-    var factor = math.min(kx, ky);
-
-    return switch (this) {
-      preserveRatio => outer * factor,
-      dynamicRatio => Radius.elliptical(outer.x * kx, outer.y * ky),
-      equal => outer,
-    };
-  }
-
-  Radius _outerRadius(Radius inner, double insetX, double insetY) {
-    var factor = math.max(
-          (inner.x + insetX) / inner.x,
-          (inner.y + insetY) / inner.y,
-        );
-    return switch (this) {
-      dynamicRatio => Radius.elliptical(inner.x + insetX, inner.y + insetY),
-      preserveRatio => inner * factor,
-      equal => inner,
-    };
-  }
+  equal
 }
 
 /// Contract for a corner strategy.
@@ -473,8 +440,38 @@ class RoundedCorner extends AnyCorner {
   RoundedCorner scale(double scale) => copyWith(radius: radius * scale);
 
   @override
-  RoundedCorner convert(double insetX, double insetY, bool inner) =>
-      copyWith(radius: converter.convert(radius, insetX, insetY, inner));
+  RoundedCorner convert(double insetX, double insetY, bool inner) {
+    if (converter == CornerConverter.equal) return this;
+    if (radius.x <= 0.0 || radius.y <= 0.0) return const RoundedCorner();
+    return RoundedCorner(radius: inner
+        ? _innerRadius(radius, insetX, insetY)
+        : _outerRadius(radius, insetX, insetY));
+  }
+
+  Radius _innerRadius(Radius outer, double insetX, double insetY) {
+
+    final kx = AnyUtils.clamp01((outer.x - insetX) / outer.x);
+    final ky = AnyUtils.clamp01((outer.y - insetY) / outer.y);
+    var factor = math.min(kx, ky);
+
+    return switch (converter) {
+      CornerConverter.preserveRatio => outer * factor,
+      CornerConverter.dynamicRatio => Radius.elliptical(outer.x * kx, outer.y * ky),
+      CornerConverter.equal => outer,
+    };
+  }
+
+  Radius _outerRadius(Radius inner, double insetX, double insetY) {
+    var factor = math.max(
+      (inner.x + insetX) / inner.x,
+      (inner.y + insetY) / inner.y,
+    );
+    return switch (converter) {
+      CornerConverter.dynamicRatio => Radius.elliptical(inner.x + insetX, inner.y + insetY),
+      CornerConverter.preserveRatio => inner * factor,
+      CornerConverter.equal => inner,
+    };
+  }
 
   @override
   bool operator ==(Object other) {
@@ -693,9 +690,11 @@ class InverseRoundedCorner extends AnyCorner {
 class BevelCorner extends AnyCorner {
 
   final Radius radius;
+  final CornerConverter converter;
 
   const BevelCorner({
     this.radius = Radius.zero,
+    this.converter = CornerConverter.preserveRatio
   });
 
   bool _canBuild(AnyContour contour, int cornerIndex) {
