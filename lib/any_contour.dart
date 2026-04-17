@@ -24,12 +24,12 @@ enum AnyShapeBase {
 }
 
 class AnySide with MAnyFill {
-
   static const double alignInside = -1;
   static const double alignCenter = 0;
   static const double alignOutside = 1;
 
   final double width;
+
   /// Align means align relative to the corresponding side, not the whole shape.
   final double align;
 
@@ -98,7 +98,6 @@ class AnySide with MAnyFill {
     isAntiAlias,
   );
 
-
   static AnySide lerp(AnySide a, AnySide b, double t) {
     return AnySide(
       width: lerpDouble(a.width, b.width, t)!,
@@ -112,9 +111,7 @@ class AnySide with MAnyFill {
   }
 }
 
-
 class AnyBackground with MAnyFill {
-
   final AnyShapeBase shapeBase;
 
   @override
@@ -134,7 +131,7 @@ class AnyBackground with MAnyFill {
     this.image,
     this.blendMode,
     this.isAntiAlias = true,
-    this.shapeBase = AnyShapeBase.zeroBorder
+    this.shapeBase = AnyShapeBase.zeroBorder,
   });
 
   AnyBackground copyWith({
@@ -176,7 +173,6 @@ class AnyBackground with MAnyFill {
     isAntiAlias,
   );
 
-
   static AnyBackground? lerp(
       AnyBackground? a,
       AnyBackground? b,
@@ -189,13 +185,12 @@ class AnyBackground with MAnyFill {
       color: Color.lerp(a.color, b.color, t),
       gradient: Gradient.lerp(a.gradient, b.gradient, t),
       image: AnyUtils.pickLerpNullable(a.image, b.image, t),
-      blendMode:AnyUtils. pickLerpNullable(a.blendMode, b.blendMode, t),
+      blendMode: AnyUtils.pickLerpNullable(a.blendMode, b.blendMode, t),
       isAntiAlias: AnyUtils.pickLerp(a.isAntiAlias, b.isAntiAlias, t),
       shapeBase: AnyUtils.pickLerp(a.shapeBase, b.shapeBase, t),
     );
   }
 }
-
 
 enum CornerConverter {
   preserveRatio,
@@ -204,8 +199,8 @@ enum CornerConverter {
 
   static const base = CornerConverter.dynamicRatio;
 }
-abstract class AnyCorner {
 
+abstract class AnyCorner {
   /// Corner extent along the previous side.
   final double p;
 
@@ -290,6 +285,17 @@ abstract class AnyCorner {
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
     if (identical(a, b) || a == b) return a;
+    if (t <= 0.0) return a;
+    if (t >= 1.0) return b;
+    return _LerpCorner(
+      t: t,
+      from: a,
+      to: b,
+    );
+  }
+
+  static AnyCorner lerpResolved(AnyCorner a, AnyCorner b, double t) {
+    if (identical(a, b) || a == b) return a;
 
     if (t <= 0.0) return a;
     if (t >= 1.0) return b;
@@ -306,6 +312,89 @@ abstract class AnyCorner {
   }
 }
 
+class _LerpCorner extends AnyCorner {
+  final double t;
+  final AnyCorner from;
+  final AnyCorner to;
+
+  const _LerpCorner({
+    required this.t,
+    required this.from,
+    required this.to,
+  })  : assert(from is! _LerpCorner),
+        assert(to is! _LerpCorner),
+        super();
+
+  Never _unsupported() {
+    throw UnsupportedError(
+      '_LerpCorner is a deferred corner and must be materialized in AnyContour._prepare().',
+    );
+  }
+
+  @override
+  AnyCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) => _unsupported();
+
+  @override
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) => _unsupported();
+
+  @override
+  double consumptionForNextSide(AnyContour contour, int cornerIndex) => _unsupported();
+
+  @override
+  AnyCorner scaleForPreviousSide(double factor) => _unsupported();
+
+  @override
+  AnyCorner scaleForNextSide(double factor) => _unsupported();
+
+  @override
+  (double, double) pointAt(
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double angle,
+      ) => _unsupported();
+
+  @override
+  void appendArc(
+      Path path,
+      AnyContour contour,
+      int cornerIndex,
+      double dPrev,
+      double dNext,
+      double fromAngle,
+      double toAngle,
+      ) => _unsupported();
+
+  @override
+  AnyCorner lerpTo(AnyCorner other, double t) => _unsupported();
+
+  @override
+  AnyCorner operator *(double factor) => _unsupported();
+
+  @override
+  AnyCorner convert(
+      double insetP,
+      double insetN,
+      bool inner,
+      double angle,
+      ) => _unsupported();
+
+  @override
+  AnyCorner copyWith({double? p, double? n}) => _unsupported();
+
+  @override
+  bool operator ==(Object other) {
+    return other is _LerpCorner &&
+        other.t == t &&
+        other.from == from &&
+        other.to == to;
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, t, from, to);
+}
+
 class RoundedCorner extends AnyCorner {
   final CornerConverter converter;
 
@@ -320,7 +409,8 @@ class RoundedCorner extends AnyCorner {
     this.converter = CornerConverter.base,
   }) : super(p: p, n: n);
 
-  const RoundedCorner.infinity({this.converter = CornerConverter.base}) : super(p: double.infinity, n: double.infinity);
+  const RoundedCorner.infinity({this.converter = CornerConverter.base})
+      : super(p: double.infinity, n: double.infinity);
 
   @override
   RoundedCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) {
@@ -531,9 +621,8 @@ class RoundedCorner extends AnyCorner {
 }
 
 class InverseRoundedCorner extends AnyCorner {
-
   const InverseRoundedCorner({
-    double radius = 0.0
+    double radius = 0.0,
   }) : super(p: radius, n: radius);
 
   const InverseRoundedCorner.elliptical({
@@ -697,9 +786,7 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   bool operator ==(Object other) {
-    return other is InverseRoundedCorner &&
-        other.p == p &&
-        other.n == n;
+    return other is InverseRoundedCorner && other.p == p && other.n == n;
   }
 
   @override
@@ -718,7 +805,6 @@ class InverseRoundedCorner extends AnyCorner {
 }
 
 class BevelCorner extends AnyCorner {
-
   final CornerConverter converter;
 
   const BevelCorner({
@@ -968,7 +1054,6 @@ class BevelCorner extends AnyCorner {
 }
 
 class AnyPoint {
-
   final AnyCorner outer;
   final AnyCorner? inner;
 
@@ -983,7 +1068,6 @@ class AnyPoint {
   });
 
   static List<AnyPoint>? lerp(List<AnyPoint>? a, List<AnyPoint>? b, double t) {
-
     if (a == null || b == null) return null;
     if (identical(a, b)) return a;
     if (a.length != b.length) return AnyUtils.pickLerp(a, b, t);
@@ -1019,8 +1103,12 @@ class AnyRegions {
 
   AnyRegions withOffset(Offset offset) {
     return AnyRegions(
-      background: background == null ? null : (background!.$1, background!.$2.shift(offset)),
-      regions: regions.map((el) => (el.$1, el.$2.shift(offset))).toList(growable: false),
+      background: background == null
+          ? null
+          : (background!.$1, background!.$2.shift(offset)),
+      regions: regions
+          .map((el) => (el.$1, el.$2.shift(offset)))
+          .toList(growable: false),
     );
   }
 }
@@ -1032,7 +1120,8 @@ class AnyRegions {
 class IDecorationCache {
   static int limit = 1000;
 
-  static final LinkedHashMap<AnyDecoration, AnyContour> _contours = LinkedHashMap<AnyDecoration, AnyContour>();
+  static final LinkedHashMap<AnyDecoration, AnyContour> _contours =
+  LinkedHashMap<AnyDecoration, AnyContour>();
 
   static AnyContour? get(
       AnyDecoration decoration,
@@ -1238,6 +1327,7 @@ class AnyContour {
     cornerParallel = Uint8List(count);
     sideHasWidth = Uint8List(count);
     sidePainted = Uint8List(count);
+
     sides = List<AnySide>.generate(
       count,
           (index) => points[index].side,
@@ -1324,7 +1414,8 @@ class AnyContour {
         cornerMatrix11[corner] = npx / det;
       }
 
-      final cross = (sideDirectionX[prev] * sideDirectionY[corner]) - (sideDirectionY[prev] * sideDirectionX[corner]);
+      final cross = (sideDirectionX[prev] * sideDirectionY[corner]) -
+          (sideDirectionY[prev] * sideDirectionX[corner]);
       final sinTurn = cross.abs();
       cornerSin[corner] = sinTurn;
       cornerTurnSign[corner] = cross < -AnyUtils.epsilon ? -1 : 1;
@@ -1339,13 +1430,9 @@ class AnyContour {
       cornerSegments[corner] = math.max(1, (angle / (math.pi / 2.0)).ceil());
     }
 
-    for (var corner = 0; corner < count; corner++) {
-      final prev = wrap(corner - 1);
-      outerCorners[corner] =
-          outerCorners[corner].resolveFinite(sideLength[prev], sideLength[corner]);
-    }
-
-    _normalizeBand(outerCorners);
+    final outerAvailableLengths = _availableLengthsForBase(AnyShapeBase.outerBorder);
+    outerCorners = _resolveBand(outerCorners, outerAvailableLengths);
+    _normalizeBand(outerCorners, outerAvailableLengths);
 
     zeroCorners = List<AnyCorner>.generate(count, (corner) {
       final prev = wrap(corner - 1);
@@ -1357,15 +1444,15 @@ class AnyContour {
         cornerAngle[corner],
       );
     }, growable: false);
-
-    _normalizeBand(zeroCorners);
+    final zeroAvailableLengths = _availableLengthsForBase(AnyShapeBase.zeroBorder);
+    zeroCorners = _resolveBand(zeroCorners, zeroAvailableLengths);
+    _normalizeBand(zeroCorners, zeroAvailableLengths);
 
     innerCorners = List<AnyCorner>.generate(count, (corner) {
-
       final prev = wrap(corner - 1);
       final explicitInner = explicitInnerCorners[corner];
       if (explicitInner != null) {
-        return explicitInner.resolveFinite(sideLength[prev], sideLength[corner]);
+        return explicitInner;
       }
 
       return outerCorners[corner].convert(
@@ -1375,11 +1462,206 @@ class AnyContour {
         cornerAngle[corner],
       );
     }, growable: false);
-
-    _normalizeBand(innerCorners);
+    final innerAvailableLengths = _availableLengthsForBase(AnyShapeBase.innerBorder);
+    innerCorners = _resolveBand(innerCorners, innerAvailableLengths);
+    _normalizeBand(innerCorners, innerAvailableLengths);
   }
 
-  void _normalizeBand(List<AnyCorner> corners) {
+  List<double> _availableLengthsForBase(AnyShapeBase base) {
+    return List<double>.generate(count, (side) {
+      final startCorner = side;
+      final endCorner = wrap(side + 1);
+
+      final startPrev = offsetForBase(wrap(startCorner - 1), base);
+      final startNext = offsetForBase(startCorner, base);
+      final endPrev = offsetForBase(side, base);
+      final endNext = offsetForBase(endCorner, base);
+
+      final (sx, sy) = sharpCornerPoint(startCorner, startPrev, startNext);
+      final (ex, ey) = sharpCornerPoint(endCorner, endPrev, endNext);
+
+      return math.sqrt(
+        ((ex - sx) * (ex - sx)) + ((ey - sy) * (ey - sy)),
+      );
+    }, growable: false);
+  }
+
+  List<AnyCorner> _resolveBand(
+      List<AnyCorner> corners,
+      List<double> availableSideLengths,
+      ) {
+    var hasLerpCorner = false;
+    for (final corner in corners) {
+      if (corner is _LerpCorner) {
+        hasLerpCorner = true;
+        break;
+      }
+    }
+
+    if (!hasLerpCorner) {
+      return _normalizeConcreteBand(corners, availableSideLengths);
+    }
+
+    final fromCorners = List<AnyCorner>.generate(count, (index) {
+      final corner = corners[index];
+      return corner is _LerpCorner ? corner.from : corner;
+    }, growable: false);
+
+    final toCorners = List<AnyCorner>.generate(count, (index) {
+      final corner = corners[index];
+      return corner is _LerpCorner ? corner.to : corner;
+    }, growable: false);
+
+    final resolvedFrom = _resolveBand(fromCorners, availableSideLengths);
+    final resolvedTo = _resolveBand(toCorners, availableSideLengths);
+
+    return List<AnyCorner>.generate(count, (index) {
+      final source = corners[index];
+      if (source is _LerpCorner) {
+        return AnyCorner.lerpResolved(
+          resolvedFrom[index],
+          resolvedTo[index],
+          source.t,
+        );
+      }
+      return resolvedFrom[index];
+    }, growable: false);
+  }
+
+  List<AnyCorner> _normalizeConcreteBand(
+      List<AnyCorner> corners,
+      List<double> availableSideLengths,
+      ) {
+    bool needsNormalization() {
+      for (var side = 0; side < count; side++) {
+        final start = corners[side];
+        final end = corners[wrap(side + 1)];
+        final available = availableSideLengths[side];
+
+        final a = start.n;
+        final b = end.p;
+
+        if (!a.isFinite || !b.isFinite) return true;
+        if (a < 0.0 || b < 0.0) return true;
+        if (a + b > available + AnyUtils.epsilon) return true;
+      }
+      return false;
+    }
+
+    if (!needsNormalization()) {
+      return corners;
+    }
+
+    (double, double)? ratioBasis(AnyCorner corner) {
+      if (corner.isCircular) {
+        return (1.0, 1.0);
+      }
+
+      final p = corner.p;
+      final n = corner.n;
+      if (p.isFinite && n.isFinite) {
+        final safeP = math.max(0.0, p);
+        final safeN = math.max(0.0, n);
+        if (safeP > AnyUtils.epsilon && safeN > AnyUtils.epsilon) {
+          return (safeP, safeN);
+        }
+      }
+
+      return null;
+    }
+
+    final resolvedP =
+    List<double>.generate(count, (index) => corners[index].p, growable: false);
+    final resolvedN =
+    List<double>.generate(count, (index) => corners[index].n, growable: false);
+
+    for (var side = 0; side < count; side++) {
+      final startCorner = side;
+      final endCorner = wrap(side + 1);
+
+      final (newStartN, newEndP) = _normalizeSharedSideValues(
+        fromPreviousCorner: corners[startCorner].n,
+        fromCurrentCorner: corners[endCorner].p,
+        sideLength: availableSideLengths[side],
+      );
+
+      resolvedN[startCorner] = newStartN;
+      resolvedP[endCorner] = newEndP;
+    }
+
+    return List<AnyCorner>.generate(count, (index) {
+      final original = corners[index];
+
+      final safeP = resolvedP[index].isFinite
+          ? math.max(0.0, resolvedP[index])
+          : resolvedP[index];
+      final safeN = resolvedN[index].isFinite
+          ? math.max(0.0, resolvedN[index])
+          : resolvedN[index];
+
+      final basis = ratioBasis(original);
+      if (basis == null || !safeP.isFinite || !safeN.isFinite) {
+        return original.copyWith(p: safeP, n: safeN);
+      }
+
+      final (basisP, basisN) = basis;
+      if (basisP <= AnyUtils.epsilon || basisN <= AnyUtils.epsilon) {
+        return original.copyWith(p: safeP, n: safeN);
+      }
+
+      final factor = math.min(safeP / basisP, safeN / basisN);
+      if (!factor.isFinite || factor < 0.0) {
+        return original.copyWith(p: safeP, n: safeN);
+      }
+
+      return original.copyWith(
+        p: basisP * factor,
+        n: basisN * factor,
+      );
+    }, growable: false);
+  }
+
+  (double, double) _normalizeSharedSideValues({
+    required double fromPreviousCorner,
+    required double fromCurrentCorner,
+    required double sideLength,
+  }) {
+    final length = math.max(0.0, sideLength);
+
+    final a = fromPreviousCorner.isFinite
+        ? math.max(0.0, fromPreviousCorner)
+        : double.infinity;
+
+    final b = fromCurrentCorner.isFinite
+        ? math.max(0.0, fromCurrentCorner)
+        : double.infinity;
+
+    if (!a.isFinite && !b.isFinite) {
+      final half = length / 2.0;
+      return (half, half);
+    }
+
+    if (a.isFinite && !b.isFinite) {
+      return (a, math.max(0.0, length - a));
+    }
+
+    if (!a.isFinite && b.isFinite) {
+      return (math.max(0.0, length - b), b);
+    }
+
+    final total = a + b;
+    if (total > length + AnyUtils.epsilon && total > AnyUtils.epsilon) {
+      final t = a / total;
+      return (length * t, length * (1.0 - t));
+    }
+
+    return (a, b);
+  }
+
+  void _normalizeBand(
+      List<AnyCorner> corners,
+      List<double> availableSideLengths,
+      ) {
     for (var side = 0; side < count; side++) {
       final startCorner = side;
       final endCorner = wrap(side + 1);
@@ -1390,19 +1672,18 @@ class AnyContour {
       corners[endCorner].consumptionForPreviousSide(this, endCorner);
       final total = startConsumption + endConsumption;
 
-      if (total <= sideLength[side] + AnyUtils.epsilon ||
+      if (total <= availableSideLengths[side] + AnyUtils.epsilon ||
           total <= AnyUtils.epsilon) {
         continue;
       }
 
-      final scale = sideLength[side] / total;
+      final scale = availableSideLengths[side] / total;
       corners[startCorner] = corners[startCorner].scaleForNextSide(scale);
       corners[endCorner] = corners[endCorner].scaleForPreviousSide(scale);
     }
   }
 
   Path _buildContourPath(AnyShapeBase base) {
-
     final path = Path();
     final corners = _cornersForBase(base);
 
@@ -1470,10 +1751,14 @@ class AnyContour {
     final prevHasWidth = sideHasWidth[prevSide] != 0;
     final nextHasWidth = sideHasWidth[nextSide] != 0;
 
-    final startOuterFrom = prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
-    final endOuterTo = nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
-    final endInnerFrom = nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
-    final startInnerTo = prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
+    final startOuterFrom =
+    prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
+    final endOuterTo =
+    nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
+    final endInnerFrom =
+    nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
+    final startInnerTo =
+    prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
 
     final startOuterPrev = -sideOutsideOffset[prevSide];
     final startOuterNext = -sideOutsideOffset[sideIndex];
@@ -1641,19 +1926,15 @@ class AnyContour {
   }
 }
 
-
 /// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
 abstract class AnyDecoration extends Decoration {
-
   /// Build raw contour points in local coordinates for this size.
   @protected
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection);
 
-  /// Returns normalized points safe for contour building and lerp.
   @nonVirtual
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection) {
-    final raw = buildPoints(bounds, textDirection);
-    return normalizePoints(raw);
+    return buildPoints(bounds, textDirection);
   }
 
   final AnyBackground? background;
@@ -1780,245 +2061,21 @@ abstract class AnyDecoration extends Decoration {
     innerCorners,
     Object.hashAll(shadows),
   );
-
-  @protected
-  List<AnyPoint> normalizePoints(List<AnyPoint> points) {
-    if (points.length < 3) {
-      throw ArgumentError('At least 3 points are required.');
-    }
-
-    final count = points.length;
-    final sideLengths = List<double>.filled(count, 0.0, growable: false);
-
-    for (var i = 0; i < count; i++) {
-      final next = (i + 1) % count;
-      final dx = points[next].point.dx - points[i].point.dx;
-      final dy = points[next].point.dy - points[i].point.dy;
-      final length = math.sqrt(dx * dx + dy * dy);
-
-      if (length <= AnyUtils.epsilon) {
-        throw ArgumentError('Side $i has zero length.');
-      }
-
-      sideLengths[i] = length;
-    }
-
-    final outer = List<AnyCorner>.generate(
-      count,
-          (index) => points[index].outer,
-      growable: false,
-    );
-
-    final inner = List<AnyCorner?>.generate(
-      count,
-          (index) => points[index].inner,
-      growable: false,
-    );
-
-    _normalizeCornerBandForAnimation(outer, sideLengths);
-    _normalizeNullableCornerBandForAnimation(inner, sideLengths);
-
-    return List<AnyPoint>.generate(count, (index) {
-      final point = points[index];
-      return AnyPoint(
-        point: point.point,
-        side: point.side,
-        outer: outer[index],
-        inner: inner[index],
-      );
-    }, growable: false);
-  }
-
-  void _normalizeCornerBandForAnimation(
-      List<AnyCorner> corners,
-      List<double> sideLengths,
-      ) {
-    final count = corners.length;
-    final preserveCircular = List<bool>.generate(
-      count,
-          (index) => corners[index].isCircular,
-      growable: false,
-    );
-
-    final maxIterations = math.max(1, count * 8);
-
-    for (var iteration = 0; iteration < maxIterations; iteration++) {
-      var changed = false;
-
-      for (var side = 0; side < count; side++) {
-        final startCorner = side;
-        final endCorner = (side + 1) % count;
-
-        final (newStartN, newEndP) = _normalizeSharedSideValues(
-          fromPreviousCorner: corners[startCorner].n,
-          fromCurrentCorner: corners[endCorner].p,
-          sideLength: sideLengths[side],
-        );
-
-        final updatedStart = _updateCornerNext(
-          corners[startCorner],
-          newStartN,
-          preserveCircular[startCorner],
-        );
-        if (!_sameCornerState(corners[startCorner], updatedStart)) {
-          corners[startCorner] = updatedStart;
-          changed = true;
-        }
-
-        final updatedEnd = _updateCornerPrevious(
-          corners[endCorner],
-          newEndP,
-          preserveCircular[endCorner],
-        );
-        if (!_sameCornerState(corners[endCorner], updatedEnd)) {
-          corners[endCorner] = updatedEnd;
-          changed = true;
-        }
-      }
-
-      if (!changed) break;
-    }
-  }
-
-  void _normalizeNullableCornerBandForAnimation(
-      List<AnyCorner?> corners,
-      List<double> sideLengths,
-      ) {
-    final count = corners.length;
-    final preserveCircular = List<bool>.generate(
-      count,
-          (index) => corners[index]?.isCircular ?? false,
-      growable: false,
-    );
-
-    final maxIterations = math.max(1, count * 8);
-
-    for (var iteration = 0; iteration < maxIterations; iteration++) {
-      var changed = false;
-
-      for (var side = 0; side < count; side++) {
-        final startCorner = side;
-        final endCorner = (side + 1) % count;
-
-        final start = corners[startCorner];
-        final end = corners[endCorner];
-        if (start == null || end == null) continue;
-
-        final (newStartN, newEndP) = _normalizeSharedSideValues(
-          fromPreviousCorner: start.n,
-          fromCurrentCorner: end.p,
-          sideLength: sideLengths[side],
-        );
-
-        final updatedStart = _updateCornerNext(
-          start,
-          newStartN,
-          preserveCircular[startCorner],
-        );
-        if (!_sameCornerState(start, updatedStart)) {
-          corners[startCorner] = updatedStart;
-          changed = true;
-        }
-
-        final updatedEnd = _updateCornerPrevious(
-          end,
-          newEndP,
-          preserveCircular[endCorner],
-        );
-        if (!_sameCornerState(end, updatedEnd)) {
-          corners[endCorner] = updatedEnd;
-          changed = true;
-        }
-      }
-
-      if (!changed) break;
-    }
-  }
-
-  (double, double) _normalizeSharedSideValues({
-    required double fromPreviousCorner,
-    required double fromCurrentCorner,
-    required double sideLength,
-  }) {
-    final length = math.max(0.0, sideLength);
-
-    final a = fromPreviousCorner.isFinite
-        ? math.max(0.0, fromPreviousCorner)
-        : double.infinity;
-
-    final b = fromCurrentCorner.isFinite
-        ? math.max(0.0, fromCurrentCorner)
-        : double.infinity;
-
-    if (!a.isFinite && !b.isFinite) {
-      final half = length / 2.0;
-      return (half, half);
-    }
-
-    if (a.isFinite && !b.isFinite) {
-      return (a, math.max(0.0, length - a));
-    }
-
-    if (!a.isFinite && b.isFinite) {
-      return (math.max(0.0, length - b), b);
-    }
-
-    final total = a + b;
-    if (total > length + AnyUtils.epsilon && total > AnyUtils.epsilon) {
-      final t = a / total;
-      return (length * t, length * (1.0 - t));
-    }
-
-    return (a, b);
-  }
-
-  AnyCorner _updateCornerPrevious(
-      AnyCorner corner,
-      double newP,
-      bool preserveCircular,
-      ) {
-    final value = newP.isFinite ? math.max(0.0, newP) : newP;
-
-    return preserveCircular
-        ? corner.copyWith(p: value, n: value)
-        : corner.copyWith(p: value);
-  }
-
-  AnyCorner _updateCornerNext(
-      AnyCorner corner,
-      double newN,
-      bool preserveCircular,
-      ) {
-    final value = newN.isFinite ? math.max(0.0, newN) : newN;
-
-    return preserveCircular
-        ? corner.copyWith(p: value, n: value)
-        : corner.copyWith(n: value);
-  }
-
-  bool _sameCornerState(AnyCorner a, AnyCorner b) {
-    return a.runtimeType == b.runtimeType &&
-        _sameValue(a.p, b.p) &&
-        _sameValue(a.n, b.n);
-  }
-
-  bool _sameValue(double a, double b) {
-    if (!a.isFinite || !b.isFinite) return a == b;
-    return AnyUtils.nearZero(a - b);
-  }
 }
 
-
 class _AnyDecorationPainter extends BoxPainter {
-
   _AnyDecorationPainter(this.decoration, super.onChanged);
 
   final AnyDecoration decoration;
-  final Map<DecorationImage, DecorationImagePainter> _imagePainters = <DecorationImage, DecorationImagePainter>{};
+  final Map<DecorationImage, DecorationImagePainter> _imagePainters =
+  <DecorationImage, DecorationImagePainter>{};
 
   DecorationImagePainter? painterOf(AnyFill fill) {
     if (fill.image == null) return null;
-    return _imagePainters.putIfAbsent(fill.image!, () => fill.image!.createPainter(onChanged!));
+    return _imagePainters.putIfAbsent(
+      fill.image!,
+          () => fill.image!.createPainter(onChanged!),
+    );
   }
 
   @override
@@ -2079,8 +2136,7 @@ class _AnyDecorationPainter extends BoxPainter {
       Path path,
       ImageConfiguration configuration,
       ) {
-
-    final imagePainter = this.painterOf(fill);
+    final imagePainter = painterOf(fill);
     if (imagePainter != null) {
       imagePainter.paint(canvas, path.getBounds(), path, configuration);
     }
@@ -2090,5 +2146,4 @@ class _AnyDecorationPainter extends BoxPainter {
       canvas.drawPath(path, paint);
     }
   }
-
 }

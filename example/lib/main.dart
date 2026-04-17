@@ -157,6 +157,63 @@ List<Widget> examples() {
       ),
     ),
     ]),
+    Header('Shadows'),
+    E2(
+      title: 'Outer' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+          background: AnyBackground(color: Colors.white),
+          corners: RoundedCorner(radius: 40),
+          shadows: [
+            AnyShadow(
+                color: alpha33,
+                spreadRadius: Offset(10, 10),
+                blurRadius: 10
+            )
+          ]
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+          background: AnyBackground(color: Colors.white),
+          corners: RoundedCorner(radius: 40),
+          shadows: [
+            AnyShadow(
+                color: goldLight,
+                spreadRadius: Offset(15, 15),
+                blurRadius: 20
+            )
+          ]
+      ),
+    ),
+    E2(
+      title: 'Inner' ,
+      begin: AnyBoxDecoration(
+          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+          background: AnyBackground(color: Colors.white),
+          corners: RoundedCorner(radius: 40),
+          shadows: [
+            AnyShadow(
+                style: BlurStyle.inner,
+                color: alpha33,
+                spreadRadius: Offset(5, 5),
+                blurRadius: 10
+            )
+          ]
+      ),
+      end: AnyBoxDecoration(
+          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+          background: AnyBackground(color: Colors.white),
+          corners: RoundedCorner(radius: 40),
+          shadows: [
+            AnyShadow(
+                style: BlurStyle.inner,
+                color: goldLight,
+                spreadRadius: Offset(15, 15),
+                blurRadius: 20
+            )
+          ]
+      ),
+    ),
     Header('Custom (experimental)'),
     E2(
       title: 'Crown',
