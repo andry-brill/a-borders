@@ -7,84 +7,98 @@ void main() {
   runApp(const MyApp());
 }
 
-const blueLight = Colors.lightBlueAccent;
-const blue = Colors.blue;
-
-const goldLight = Colors.orange;
-const gold = Colors.deepOrange;
-
-const alpha33 = Color(0x662196F3);
-const alpha99 = Color(0x992196F3);
-
-const gradientBG = LinearGradient(colors: [blue, gold]);
-const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignment.topCenter, end: Alignment.bottomCenter);
-
-const marbleBlue = const DecorationImage(
-  image: AssetImage('images/marble-blue.jpg'),
-  fit: BoxFit.cover,
-  repeat: ImageRepeat.repeat,
-);
-
-const marbleGreen = const DecorationImage(
-  image: AssetImage('images/marble-green.jpg'),
-  fit: BoxFit.cover,
-  repeat: ImageRepeat.repeat,
-);
-
-const confetti = const DecorationImage(
-  image: AssetImage('images/confetti.png'),
-  fit: BoxFit.cover,
-  repeat: ImageRepeat.repeat,
-);
 
 List<Widget> examples() {
   return [
     Header('AnyBoxDecoration'),
     E2(
-      title: 'L10:inside T20:center\nR30:outside B40:center' ,
+      title: 'Any align/width\nLTRB(in:center:out:center)' ,
       begin: AnyBoxDecoration(
-        left: AnySide(color: alpha99, width: 10, align: AnySide.alignInside),
-        top: AnySide(color: alpha99, width: 20, align: AnySide.alignCenter),
-        right: AnySide(color: alpha99, width: 30, align: AnySide.alignOutside),
-        bottom: AnySide(color: alpha99, width: 40, align: AnySide.alignCenter),
-        background: AnyBackground(color: alpha33)
+        left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
+        top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+        right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+        bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 10),
+        innerCorners: RoundedCorner(radius: 10),
+        background: AnyBackground(color: greenL)
       ),
       end: AnyBoxDecoration(
-          left: AnySide(color: alpha99, width: 40, align: AnySide.alignOutside),
-          top: AnySide(color: alpha99, width: 30, align: AnySide.alignInside),
-          right: AnySide(color: alpha99, width: 20, align: AnySide.alignCenter),
-          bottom: AnySide(color: alpha99, width: 10, align: AnySide.alignOutside),
-          background: AnyBackground(color: alpha33)
+          left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
+          top: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+          right: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+          bottom: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+          corners: RoundedCorner(radius: 10),
+          innerCorners: RoundedCorner(radius: 10),
+          background: AnyBackground(color: greenL)
+      ),
+    ),
+    E2(
+      title: 'No horizontal' ,
+      begin: AnyBoxDecoration(
+        vertical: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+        horizontal: AnySide(color: greenL, align: AnySide.alignInside),
+        corners: RoundedCorner(radius: 30),
+        innerCorners: RoundedCorner(radius: 30),
+        ),
+      end: AnyBoxDecoration(
+        vertical: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+        horizontal: AnySide(color: greenL, align: AnySide.alignInside),
+        corners: RoundedCorner(radius: 20),
+        innerCorners: RoundedCorner(radius: 20),
+      ),
+    ),
+    E2(
+      title: 'Any corner' ,
+      begin: AnyBoxDecoration(
+        vertical: AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
+        horizontal: AnySide(color: greenL, width: 20, align: AnySide.alignInside),
+
+        topLeft: RoundedCorner(radius: 2),
+        innerTopLeft: BevelCorner(radius: 30),
+
+        topRight: InverseRoundedCorner(radius: 20),
+        innerTopRight: BevelCorner(radius: 10),
+
+        bottomRight: BevelCorner(radius: 20),
+        innerBottomRight: RoundedCorner(radius: 40),
+
+        bottomLeft: InverseRoundedCorner(radius: 20),
+        innerBottomLeft: RoundedCorner(radius: 2),
+      ),
+      end: AnyBoxDecoration(
+        vertical: AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
+        horizontal: AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
+
+        topLeft: RoundedCorner(radius: 2),
+        innerTopLeft: BevelCorner(radius: 30),
+
+        topRight: InverseRoundedCorner(radius: 20),
+        innerTopRight: BevelCorner(radius: 30),
+
+        bottomRight: BevelCorner(radius: 20),
+        innerBottomRight: RoundedCorner(radius: 40),
+
+        bottomLeft: InverseRoundedCorner(radius: 20),
+        innerBottomLeft: RoundedCorner(radius: 40),
       ),
     ),
     E2(
       title: 'Back+T+B' ,
       begin: AnyBoxDecoration(
-          left: AnySide(color: blue, width: 30, align: AnySide.alignInside),
-          top: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
-          right: AnySide(color: blue, width: 30, align: AnySide.alignInside),
-          bottom: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
-          background: AnyBackground(color: blueLight)
+          left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+          top: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
+          right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+          bottom: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
+          background: AnyBackground(color: greenL),
+          corners: RoundedCorner(radius: 20)
       ),
       end: AnyBoxDecoration(
-          left: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
-          top: AnySide(color: blueLight, align: AnySide.alignInside),
-          right: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
-          bottom: AnySide(color: blueLight, align: AnySide.alignInside),
-          background: AnyBackground(color: blueLight)
-      ),
-    ),
-    E2(
-      title: 'No background\nRounded' ,
-      begin: AnyBoxDecoration(
-          vertical: AnySide(color: blue, width: 30, align: AnySide.alignInside),
-          horizontal: AnySide(color: blueLight, width: 20, align: AnySide.alignOutside),
-          corners: RoundedCorner(radius: 40)
-      ),
-      end: AnyBoxDecoration(
-          vertical: AnySide(color: blue, width: 30, align: AnySide.alignOutside),
-          horizontal: AnySide(color: blueLight, align: AnySide.alignInside),
-          corners: RoundedCorner(radius: 10)
+          left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+          top: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+          right: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+          bottom: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+          background: AnyBackground(color: greenL),
+          corners: RoundedCorner(radius: 20)
       ),
     ),
     E2(
@@ -330,6 +344,151 @@ List<E2> buildShadows({
   ];
 }
 
+
+class TabDecoration extends AnyDecoration {
+
+  final double offset;
+
+  const TabDecoration({
+    super.background,
+    super.sides,
+    super.corners,
+    super.innerCorners,
+    required this.offset
+  }) : assert(offset > 0.0);
+
+  @override
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
+
+    final offset = min(this.offset, bounds.width / 4.0);
+    final c = RoundedCorner(radius: offset);
+    final xL = bounds.left + offset;
+    final xR = bounds.right - offset;
+
+    return [
+      point(bounds.bottomLeft),
+      point(Offset(xL, bounds.bottom), outer: c, inner: c),
+      point(Offset(xL, bounds.top)),
+      point(Offset(xR, bounds.top)),
+      point(Offset(xR, bounds.bottom), outer: c, inner: c),
+      point(bounds.bottomRight),
+    ];
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TabDecoration && other.offset == offset && super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, offset);
+
+}
+
+enum CrownType {
+  flat(0, 0.5, blueLight, blue),
+  spike(-0.5, 0.25, goldLight, blueD);
+
+  final double mainDy, subDy;
+  final Color light, dark;
+
+  const CrownType(this.mainDy, this.subDy, this.light, this.dark);
+}
+
+class CrownDecoration extends AnyDecoration {
+  final CrownType type;
+
+  const CrownDecoration({
+    super.background,
+    super.corners,
+    required this.type,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is CrownDecoration && other.type == type && super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, type.hashCode);
+
+  @override
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
+    final w4 = bounds.width / 4.0;
+    final w2 = bounds.width / 2.0;
+
+    final outer = AnySide(
+      width: 20,
+      align: AnySide.alignOutside,
+      color: type.light,
+    );
+    final inner = AnySide(
+      width: 20,
+      align: AnySide.alignInside,
+      color: type.dark,
+    );
+
+    final subLx = bounds.left + w4;
+    final subRx = bounds.right - w4;
+
+    return [
+      point(bounds.topLeft, side: inner),
+      point(
+        Offset(subLx, bounds.top + bounds.height * type.subDy),
+        side: outer,
+      ),
+      point(
+        Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy),
+        side: outer,
+      ),
+      point(
+        Offset(subRx, bounds.top + bounds.height * type.subDy),
+        side: inner,
+      ),
+      point(bounds.topRight, side: outer),
+      point(bounds.bottomRight, side: outer),
+      point(Offset(subRx, bounds.bottom), side: inner),
+      point(Offset(subLx, bounds.bottom), side: outer),
+      point(bounds.bottomLeft, side: outer),
+    ];
+  }
+}
+
+const blueLight = Colors.lightBlueAccent;
+
+const greenL = Color(0xFF85AEA8);
+const green = Color(0xFF6B8F83);
+const greenD = Color(0xFF2E685F);
+const blueL = Color(0xFFC1F1FD);
+const blue = Color(0xFF5EC0DE);
+const blueD = Color(0xFF57B7CF);
+
+const goldLight = Colors.orange;
+
+const alpha33 = Color(0x66DFC499);
+const alpha99 = Color(0x99DFC499);
+
+const gradientBG = LinearGradient(colors: [blue, blueD]);
+const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignment.topCenter, end: Alignment.bottomCenter);
+
+const marbleBlue = const DecorationImage(
+  image: AssetImage('images/marble-blue.jpg'),
+  fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
+);
+
+const marbleGreen = const DecorationImage(
+  image: AssetImage('images/marble-green.jpg'),
+  fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
+);
+
+const confetti = const DecorationImage(
+  image: AssetImage('images/confetti.png'),
+  fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
+);
+
 const double w = 200, h = 100;
 const constraints = BoxConstraints.tightFor(width: w, height: h);
 const double spacing = 100;
@@ -344,10 +503,13 @@ const headerStyle = TextStyle(color: Colors.black54, fontSize: 24);
 class Header extends StatelessWidget {
 
   final String title;
-  const Header(this.title);
+  final String? subtitle;
+  const Header(this.title, {this.subtitle});
 
   @override
-  Widget build(BuildContext context) => Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4), child: Text(title, style: headerStyle));
+  Widget build(BuildContext context) =>
+      Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4), child: Text(title, style: headerStyle));
+
 }
 
 
@@ -445,13 +607,14 @@ class _ExamplePageState extends State<_ExamplePage> {
       onTap: _ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Center(
+          child: Padding(padding: EdgeInsetsGeometry.only(bottom: spacing * 2),
+            child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: spacing / 2.0,
+              spacing: spacing * 0.75,
               children: children,
-            ),
+            )),
           ),
         ),
       ),
@@ -459,115 +622,6 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 }
 
-
-class TabDecoration extends AnyDecoration {
-
-  final double offset;
-
-  const TabDecoration({
-    super.background,
-    super.sides,
-    super.corners,
-    super.innerCorners,
-    required this.offset
-  }) : assert(offset > 0.0);
-
-  @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-
-    final offset = min(this.offset, bounds.width / 4.0);
-    final c = RoundedCorner(radius: offset);
-    final xL = bounds.left + offset;
-    final xR = bounds.right - offset;
-
-    return [
-      point(bounds.bottomLeft),
-      point(Offset(xL, bounds.bottom), outer: c, inner: c),
-      point(Offset(xL, bounds.top)),
-      point(Offset(xR, bounds.top)),
-      point(Offset(xR, bounds.bottom), outer: c, inner: c),
-      point(bounds.bottomRight),
-    ];
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is TabDecoration && other.offset == offset && super == other;
-  }
-
-  @override
-  int get hashCode => Object.hash(super.hashCode, offset);
-
-}
-
-enum CrownType {
-  flat(0, 0.5, blueLight, blue),
-  spike(-0.5, 0.25, goldLight, gold);
-
-  final double mainDy, subDy;
-  final Color light, dark;
-
-  const CrownType(this.mainDy, this.subDy, this.light, this.dark);
-}
-
-class CrownDecoration extends AnyDecoration {
-  final CrownType type;
-
-  const CrownDecoration({
-    super.background,
-    super.corners,
-    required this.type,
-  });
-
-  @override
-  bool operator ==(Object other) {
-    return other is CrownDecoration && other.type == type && super == other;
-  }
-
-  @override
-  int get hashCode => Object.hash(super.hashCode, type.hashCode);
-
-  @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-    final w4 = bounds.width / 4.0;
-    final w2 = bounds.width / 2.0;
-
-    final outer = AnySide(
-      width: 20,
-      align: AnySide.alignOutside,
-      color: type.light,
-    );
-    final inner = AnySide(
-      width: 20,
-      align: AnySide.alignInside,
-      color: type.dark,
-    );
-
-    final subLx = bounds.left + w4;
-    final subRx = bounds.right - w4;
-
-    return [
-      point(bounds.topLeft, side: inner),
-      point(
-        Offset(subLx, bounds.top + bounds.height * type.subDy),
-        side: outer,
-      ),
-      point(
-        Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy),
-        side: outer,
-      ),
-      point(
-        Offset(subRx, bounds.top + bounds.height * type.subDy),
-        side: inner,
-      ),
-      point(bounds.topRight, side: outer),
-      point(bounds.bottomRight, side: outer),
-      point(Offset(subRx, bounds.bottom), side: inner),
-      point(Offset(subLx, bounds.bottom), side: outer),
-      point(bounds.bottomLeft, side: outer),
-    ];
-  }
-}
 
 class E1 extends StatelessWidget {
   final bool border;
