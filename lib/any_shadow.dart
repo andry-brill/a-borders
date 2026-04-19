@@ -270,11 +270,22 @@ class AnyShadow with MAnyFill {
         break;
 
       case BlurStyle.solid:
+
+        void paintSolidOuterImage() {
+          _paintImagePath(
+            canvas: canvas,
+            imagePainter: imagePainter,
+            bounds: geometry.solidImageBounds,
+            path: geometry.outerSourcePath,
+            configuration: configuration,
+          );
+        }
+
         void paintSolidFillImage() {
           _paintImagePath(
             canvas: canvas,
             imagePainter: imagePainter,
-            bounds: geometry.solidFillBounds,
+            bounds: geometry.solidImageBounds,
             path: geometry.solidFillPath,
             configuration: configuration,
           );
@@ -286,7 +297,7 @@ class AnyShadow with MAnyFill {
           canvas: canvas,
           layerBounds: geometry.outerLayerBounds,
           blurLayerPaint: blurPaint,
-          paintShadowSource: paintOuterImage,
+          paintShadowSource: paintSolidOuterImage,
           paintCutout: () {
             canvas.drawPath(geometry.solidCutoutPath, _createOpaqueMaskPaint());
           },
@@ -509,6 +520,9 @@ class _LazyShadowGeometry {
   offsetClip ? shiftedBasePath : clipBasePath;
   late final Rect solidFillBounds =
   offsetClip ? shiftedBaseBounds : clipBaseBounds;
+
+  // Shared image rect for seamless repeating between blurred and sharp parts.
+  late final Rect solidImageBounds = outerSourceBounds.expandToInclude(solidFillBounds);
 
   Path _shiftIfNeeded(Path source) {
     return offset == Offset.zero ? source : source.shift(offset);

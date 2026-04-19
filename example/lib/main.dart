@@ -22,16 +22,19 @@ const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignm
 const marbleBlue = const DecorationImage(
   image: AssetImage('images/marble-blue.jpg'),
   fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
 );
 
 const marbleGreen = const DecorationImage(
   image: AssetImage('images/marble-green.jpg'),
   fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
 );
 
 const confetti = const DecorationImage(
   image: AssetImage('images/confetti.png'),
   fit: BoxFit.cover,
+  repeat: ImageRepeat.repeat,
 );
 
 List<Widget> examples() {
@@ -159,7 +162,7 @@ List<Widget> examples() {
     ]),
     Header('Shadows'),
     ...buildShadows(blurRadius: 10, colors: [blueLight], images: []),
-    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(50, 50)),
+    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40)),
     Header('Custom (experimental)'),
     E2(
       title: 'Crown',
