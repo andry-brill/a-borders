@@ -24,6 +24,13 @@ class AnyShadow with MAnyFill {
   final Offset offset;
   final BlurStyle style;
 
+  /// Controls whether the clip/cutout path used by [BlurStyle.inner],
+  /// [BlurStyle.outer], and [BlurStyle.solid] follows [offset].
+  ///
+  /// - false: clip/cutout stays at the original place
+  /// - true:  clip/cutout moves together with the shadow
+  final bool offsetClip;
+
   const AnyShadow({
     this.color,
     this.gradient,
@@ -34,6 +41,7 @@ class AnyShadow with MAnyFill {
     this.spreadRadius = Offset.zero,
     this.style = BlurStyle.normal,
     this.isAntiAlias = true,
+    this.offsetClip = false,
   });
 
   double get blurSigma => Shadow.convertRadiusToSigma(blurRadius);
@@ -51,7 +59,8 @@ class AnyShadow with MAnyFill {
         other.offset == offset &&
         other.spreadRadius == spreadRadius &&
         other.style == style &&
-        other.isAntiAlias == isAntiAlias;
+        other.isAntiAlias == isAntiAlias &&
+        other.offsetClip == offsetClip;
   }
 
   @override
@@ -65,6 +74,7 @@ class AnyShadow with MAnyFill {
     spreadRadius,
     style,
     isAntiAlias,
+    offsetClip,
   );
 
   void paint(
@@ -78,6 +88,7 @@ class AnyShadow with MAnyFill {
       blurRadius: blurRadius,
       spreadRadius: spreadRadius,
       offset: offset,
+      offsetClip: offsetClip,
     );
 
     final imagePainter = painterOf(this);
@@ -402,6 +413,7 @@ class AnyShadow with MAnyFill {
       spreadRadius: Offset.lerp(a.spreadRadius, b.spreadRadius, t)!,
       style: AnyUtils.pickLerp(a.style, b.style, t),
       isAntiAlias: AnyUtils.pickLerp(a.isAntiAlias, b.isAntiAlias, t),
+      offsetClip: AnyUtils.pickLerp(a.offsetClip, b.offsetClip, t),
     );
   }
 
@@ -425,44 +437,49 @@ class _LazyShadowGeometry {
   final double blurRadius;
   final Offset spreadRadius;
   final Offset offset;
+  final bool offsetClip;
 
   _LazyShadowGeometry({
     required this.path,
     required this.blurRadius,
     required this.spreadRadius,
     required this.offset,
+    required this.offsetClip,
   });
 
   late final Rect baseBounds = path.getBounds();
 
-  // Original contour with offset only.
   late final Path shiftedBasePath = _shiftIfNeeded(path);
   late final Rect shiftedBaseBounds = shiftedBasePath.getBounds();
 
-  // Shadow shell for normal/outer/solid: spread + offset.
+  // Shadow shell for normal / outer / solid: spread + offset.
   late final Path outerSpreadPath = _buildScaledPath(spreadRadius);
   late final Path outerSourcePath = _shiftIfNeeded(outerSpreadPath);
   late final Rect outerSourceBounds = outerSourcePath.getBounds();
 
-  // Outer cutout stays the original contour without offset.
-  late final Path outerCutoutPath = path;
-  late final Rect outerCutoutBounds = path.getBounds();
+  // Shared clip/cutout base for inner / outer / solid.
+  late final Path clipBasePath = offsetClip ? shiftedBasePath : path;
+  late final Rect clipBaseBounds =
+  offsetClip ? shiftedBaseBounds : baseBounds;
+
+  late final Path outerCutoutPath = clipBasePath;
+  late final Rect outerCutoutBounds = clipBaseBounds;
 
   late final Rect outerLayerBounds = baseBounds
       .expandToInclude(outerSourceBounds)
       .expandToInclude(shiftedBaseBounds)
       .inflate(blurRadius > 0.0 ? blurRadius * 2.0 + 1.0 : 1.0);
 
-  // Inner: clip to original contour, but move the shadow hole with offset
-  // in the same direction as other variants.
-  late final Path innerClipPath = path;
+  late final Path innerClipPath = clipBasePath;
 
-  // Positive spread for inner means "grow inward shadow", so shrink the hole.
+  // Positive spread for inner means "more shadow inward",
+  // so the inner hole becomes smaller.
   late final Path innerSpreadPath = _buildScaledPath(Offset(
     -spreadRadius.dx,
     -spreadRadius.dy,
   ));
 
+  // The shadow itself is always offset. Only clip/cutout depends on offsetClip.
   late final Path innerHolePath = _shiftIfNeeded(innerSpreadPath);
 
   late final Rect innerLayerBounds = innerClipPath
@@ -485,10 +502,13 @@ class _LazyShadowGeometry {
 
   // Solid:
   // - blurred shell = spread + offset
-  // - solid fill/core = original contour + offset
-  late final Path solidFillPath = shiftedBasePath;
-  late final Path solidCutoutPath = shiftedBasePath;
-  late final Rect solidFillBounds = shiftedBaseBounds;
+  // - cutout follows offsetClip
+  // - fill must fully cover the hole
+  late final Path solidCutoutPath = clipBasePath;
+  late final Path solidFillPath =
+  offsetClip ? shiftedBasePath : clipBasePath;
+  late final Rect solidFillBounds =
+  offsetClip ? shiftedBaseBounds : clipBaseBounds;
 
   Path _shiftIfNeeded(Path source) {
     return offset == Offset.zero ? source : source.shift(offset);
