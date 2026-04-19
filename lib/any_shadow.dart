@@ -117,7 +117,7 @@ class AnyShadow with MAnyFill {
 
       case BlurStyle.inner:
         final paint = _createConfiguredBasePaint(
-          geometry.innerClipPath,
+          geometry.innerHolePath,
           configuration,
           blurStyle: BlurStyle.normal,
         );
@@ -157,7 +157,7 @@ class AnyShadow with MAnyFill {
 
       case BlurStyle.solid:
         final fillPaint = _createConfiguredBasePaint(
-          geometry.outerCutoutPath,
+          geometry.solidFillPath,
           configuration,
         );
         final blurPaint = _createConfiguredBasePaint(
@@ -176,12 +176,11 @@ class AnyShadow with MAnyFill {
             canvas.drawPath(geometry.outerSourcePath, blurPaint);
           },
           paintCutout: () {
-            canvas.drawPath(geometry.outerCutoutPath, _createOpaqueMaskPaint());
+            canvas.drawPath(geometry.solidCutoutPath, _createOpaqueMaskPaint());
           },
         );
 
-        // Fill only the hole, not the expanded shadow shape.
-        canvas.drawPath(geometry.outerCutoutPath, fillPaint);
+        canvas.drawPath(geometry.solidFillPath, fillPaint);
         canvas.restore();
         break;
     }
@@ -260,12 +259,12 @@ class AnyShadow with MAnyFill {
         break;
 
       case BlurStyle.solid:
-        void paintCutoutImage() {
+        void paintSolidFillImage() {
           _paintImagePath(
             canvas: canvas,
             imagePainter: imagePainter,
-            bounds: geometry.outerCutoutBounds,
-            path: geometry.outerCutoutPath,
+            bounds: geometry.solidFillBounds,
+            path: geometry.solidFillPath,
             configuration: configuration,
           );
         }
@@ -278,12 +277,11 @@ class AnyShadow with MAnyFill {
           blurLayerPaint: blurPaint,
           paintShadowSource: paintOuterImage,
           paintCutout: () {
-            canvas.drawPath(geometry.outerCutoutPath, _createOpaqueMaskPaint());
+            canvas.drawPath(geometry.solidCutoutPath, _createOpaqueMaskPaint());
           },
         );
 
-        // Paint only the hole.
-        paintCutoutImage();
+        paintSolidFillImage();
         canvas.restore();
         break;
     }
@@ -437,33 +435,35 @@ class _LazyShadowGeometry {
 
   late final Rect baseBounds = path.getBounds();
 
+  // Original contour with offset only.
+  late final Path shiftedBasePath = _shiftIfNeeded(path);
+  late final Rect shiftedBaseBounds = shiftedBasePath.getBounds();
+
+  // Shadow shell for normal/outer/solid: spread + offset.
   late final Path outerSpreadPath = _buildScaledPath(spreadRadius);
-
-  late final Path outerSourcePath =
-  offset == Offset.zero ? outerSpreadPath : outerSpreadPath.shift(offset);
-
+  late final Path outerSourcePath = _shiftIfNeeded(outerSpreadPath);
   late final Rect outerSourceBounds = outerSourcePath.getBounds();
 
+  // Outer cutout stays the original contour without offset.
   late final Path outerCutoutPath = path;
   late final Rect outerCutoutBounds = path.getBounds();
 
   late final Rect outerLayerBounds = baseBounds
       .expandToInclude(outerSourceBounds)
+      .expandToInclude(shiftedBaseBounds)
       .inflate(blurRadius > 0.0 ? blurRadius * 2.0 + 1.0 : 1.0);
 
+  // Inner: clip to original contour, but move the shadow hole with offset
+  // in the same direction as other variants.
   late final Path innerClipPath = path;
 
-  // Positive spread for inner shadow usually means "more shadow inward",
-  // which corresponds to a smaller hole.
+  // Positive spread for inner means "grow inward shadow", so shrink the hole.
   late final Path innerSpreadPath = _buildScaledPath(Offset(
     -spreadRadius.dx,
     -spreadRadius.dy,
   ));
 
-  // Keep this sign so the visible inset shadow moves in the same visual
-  // direction as a regular shadow offset.
-  late final Path innerHolePath =
-  offset == Offset.zero ? innerSpreadPath : innerSpreadPath.shift(-offset);
+  late final Path innerHolePath = _shiftIfNeeded(innerSpreadPath);
 
   late final Rect innerLayerBounds = innerClipPath
       .getBounds()
@@ -482,6 +482,17 @@ class _LazyShadowGeometry {
     ..fillType = PathFillType.evenOdd
     ..addRect(innerLayerBounds)
     ..addPath(innerHolePath, Offset.zero);
+
+  // Solid:
+  // - blurred shell = spread + offset
+  // - solid fill/core = original contour + offset
+  late final Path solidFillPath = shiftedBasePath;
+  late final Path solidCutoutPath = shiftedBasePath;
+  late final Rect solidFillBounds = shiftedBaseBounds;
+
+  Path _shiftIfNeeded(Path source) {
+    return offset == Offset.zero ? source : source.shift(offset);
+  }
 
   Path _buildScaledPath(Offset delta) {
     if (delta == Offset.zero) {
