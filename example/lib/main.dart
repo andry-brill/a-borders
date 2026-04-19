@@ -19,10 +19,6 @@ const alpha99 = Color(0x992196F3);
 const gradientBG = LinearGradient(colors: [blue, gold]);
 const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignment.topCenter, end: Alignment.bottomCenter);
 
-const blurRadius = 10.0;
-const spreadRadius = Offset(20, 20);
-const shadowOffset = Offset(15, 15);
-
 const marbleBlue = const DecorationImage(
   image: AssetImage('images/marble-blue.jpg'),
   fit: BoxFit.cover,
@@ -39,7 +35,7 @@ const confetti = const DecorationImage(
 );
 
 List<Widget> examples() {
-  return const [
+  return [
     Header('AnyBoxDecoration'),
     E2(
       title: 'L10:inside T20:center\nR30:outside B40:center' ,
@@ -162,116 +158,8 @@ List<Widget> examples() {
     ),
     ]),
     Header('Shadows'),
-    E2(
-      title: 'Normal' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                color: alpha33,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius
-            )
-          ]
-      ),
-      end: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                color: goldLight,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius * 2,
-                offset: shadowOffset
-            )
-          ]
-      ),
-    ),
-    E2(
-      title: 'Inner' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.inner,
-                color: alpha33,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius
-            )
-          ]
-      ),
-      end: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.inner,
-                color: goldLight,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius * 2,
-                offset: shadowOffset
-            )
-          ]
-      ),
-    ),
-    E2(
-      title: 'Outer' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.outer,
-                color: alpha33,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius
-            )
-          ]
-      ),
-      end: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.outer,
-                color: goldLight,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius * 2,
-                offset: shadowOffset
-            )
-          ]
-      ),
-    ),
-    E2(
-      title: 'Solid' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.solid,
-                color: alpha33,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius
-            )
-          ]
-      ),
-      end: AnyBoxDecoration(
-          sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 40),
-          shadows: [
-            AnyShadow(
-                style: BlurStyle.solid,
-                color: goldLight,
-                spreadRadius: spreadRadius,
-                blurRadius: blurRadius * 2,
-                offset: shadowOffset
-            )
-          ]
-      ),
-    ),
+    ...buildShadows(blurRadius: 10, colors: [blueLight], images: []),
+    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(50, 50)),
     Header('Custom (experimental)'),
     E2(
       title: 'Crown',
@@ -300,6 +188,141 @@ List<Widget> examples() {
           sides: AnySide(width: 20, color: alpha33, align: AnySide.alignOutside)
       ),
       end: TabDecoration(offset: 30),
+    ),
+  ];
+}
+
+List<E2> buildShadows({
+  required List<Color> colors,
+  required List<DecorationImage> images,
+  double blurRadius = 3.0,
+  Offset spreadRadius = const Offset(20, 20),
+  Offset shadowOffset = const Offset(15, 15)
+}) {
+  final beginColor = colors.firstOrNull;
+  final endColor = colors.lastOrNull;
+
+  final beginImage = images.firstOrNull;
+  final endImage = images.lastOrNull;
+
+  return [
+    E2(
+      title: 'Normal',
+      begin: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            color: beginColor,
+            image: beginImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius,
+          )
+        ],
+      ),
+      end: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            color: endColor,
+            image: endImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius * 2,
+            offset: shadowOffset,
+          )
+        ],
+      ),
+    ),
+    E2(
+      title: 'Inner',
+      begin: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.inner,
+            color: beginColor,
+            image: beginImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius,
+          )
+        ],
+      ),
+      end: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.inner,
+            color: endColor,
+            image: endImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius * 2,
+            offset: shadowOffset,
+          )
+        ],
+      ),
+    ),
+    E2(
+      title: 'Outer',
+      begin: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.outer,
+            color: beginColor,
+            image: beginImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius,
+          )
+        ],
+      ),
+      end: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.outer,
+            color: endColor,
+            image: endImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius * 2,
+            offset: shadowOffset,
+          )
+        ],
+      ),
+    ),
+    E2(
+      title: 'Solid',
+      begin: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.solid,
+            color: beginColor,
+            image: beginImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius,
+          )
+        ],
+      ),
+      end: AnyBoxDecoration(
+        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
+        corners: RoundedCorner(radius: 40),
+        shadows: [
+          AnyShadow(
+            style: BlurStyle.solid,
+            color: endColor,
+            image: endImage,
+            spreadRadius: spreadRadius,
+            blurRadius: blurRadius * 2,
+            offset: shadowOffset,
+          )
+        ],
+      ),
     ),
   ];
 }
