@@ -479,12 +479,6 @@ const marbleGreen = const DecorationImage(
   repeat: ImageRepeat.repeat,
 );
 
-const confetti = const DecorationImage(
-  image: AssetImage('images/confetti.png'),
-  fit: BoxFit.cover,
-  repeat: ImageRepeat.repeat,
-);
-
 const double w = 200, h = 100;
 const constraints = BoxConstraints.tightFor(width: w, height: h);
 const double spacing = 100;
