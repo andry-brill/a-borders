@@ -1,7 +1,22 @@
 name: any_borders
-description: Universal border box decoration with non-uniform border, custom corners and merged background-border painting
-version: 0.0.1
-publish_to: none
+description: Borders of any shape, fill, align, and shadows
+
+topics:
+  - border
+  - decoration
+  - shadow
+  - shape
+  - gradient
+
+homepage: https://github.com/andry-brill/a-borders
+repository: https://github.com/andry-brill/a-borders
+issue_tracker: https://github.com/andry-brill/a-borders/issues
+
+screenshots:
+  - description: 'any-borders examples'
+    path: example/web/screenshot.png
+
+version: 1.0.0
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

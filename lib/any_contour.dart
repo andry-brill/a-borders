@@ -1,4 +1,3 @@
-
 import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -11,7 +10,6 @@ import 'any_fill.dart';
 import 'any_shadow.dart';
 import 'any_utils.dart';
 
-
 enum AnyShapeBase {
   /// Shape of the element based on corner points only, ignoring side widths.
   zeroBorder,
@@ -23,24 +21,43 @@ enum AnyShapeBase {
   innerBorder,
 }
 
+/// Fill and geometry for one contour side.
+///
+/// Sides are assigned to [AnyPoint] entries and are painted between that point
+/// and the next point in the contour.
 class AnySide with MAnyFill {
+  /// Places the full side width inside the source contour.
   static const double alignInside = -1;
+
+  /// Centers the side width on the source contour.
   static const double alignCenter = 0;
+
+  /// Places the full side width outside the source contour.
   static const double alignOutside = 1;
 
+  /// Stroke width for this side.
   final double width;
 
   /// Align means align relative to the corresponding side, not the whole shape.
   final double align;
 
+  /// Solid color used as the side base fill.
   @override
   final Color? color;
+
+  /// Gradient used as the side base fill.
   @override
   final Gradient? gradient;
+
+  /// Image painted into the side path.
   @override
   final DecorationImage? image;
+
+  /// Blend mode applied to the side base fill.
   @override
   final BlendMode? blendMode;
+
+  /// Whether side paths should be anti-aliased.
   @override
   final bool isAntiAlias;
 
@@ -89,14 +106,14 @@ class AnySide with MAnyFill {
 
   @override
   int get hashCode => Object.hash(
-    width,
-    align,
-    color,
-    gradient,
-    image,
-    blendMode,
-    isAntiAlias,
-  );
+        width,
+        align,
+        color,
+        gradient,
+        image,
+        blendMode,
+        isAntiAlias,
+      );
 
   static AnySide lerp(AnySide a, AnySide b, double t) {
     return AnySide(
@@ -111,17 +128,28 @@ class AnySide with MAnyFill {
   }
 }
 
+/// Fill painted behind the side regions of an [AnyDecoration].
 class AnyBackground with MAnyFill {
+  /// Contour band used to build the background path.
   final AnyShapeBase shapeBase;
 
+  /// Solid color used as the background base fill.
   @override
   final Color? color;
+
+  /// Gradient used as the background base fill.
   @override
   final Gradient? gradient;
+
+  /// Image painted into the background path.
   @override
   final DecorationImage? image;
+
+  /// Blend mode applied to the background base fill.
   @override
   final BlendMode? blendMode;
+
+  /// Whether the background path should be anti-aliased.
   @override
   final bool isAntiAlias;
 
@@ -165,19 +193,19 @@ class AnyBackground with MAnyFill {
 
   @override
   int get hashCode => Object.hash(
-    shapeBase,
-    color,
-    gradient,
-    image,
-    blendMode,
-    isAntiAlias,
-  );
+        shapeBase,
+        color,
+        gradient,
+        image,
+        blendMode,
+        isAntiAlias,
+      );
 
   static AnyBackground? lerp(
-      AnyBackground? a,
-      AnyBackground? b,
-      double t,
-      ) {
+    AnyBackground? a,
+    AnyBackground? b,
+    double t,
+  ) {
     if (a == null && b == null) return null;
     if (a == null || b == null) return AnyUtils.pickLerpNullable(a, b, t);
 
@@ -248,22 +276,22 @@ abstract class AnyCorner {
   AnyCorner scaleForNextSide(double factor);
 
   (double, double) pointAt(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      );
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  );
 
   void appendArc(
-      Path path,
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double fromAngle,
-      double toAngle,
-      );
+    Path path,
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double fromAngle,
+    double toAngle,
+  );
 
   AnyCorner lerpTo(AnyCorner other, double t);
 
@@ -275,11 +303,11 @@ abstract class AnyCorner {
   /// [inner]  = convex/inner turn conversion
   /// [angle]  = local corner angle in radians
   AnyCorner convert(
-      double insetP,
-      double insetN,
-      bool inner,
-      double angle,
-      );
+    double insetP,
+    double insetN,
+    bool inner,
+    double angle,
+  );
 
   AnyCorner copyWith({double? p, double? n});
 
@@ -332,13 +360,16 @@ class _LerpCorner extends AnyCorner {
   }
 
   @override
-  AnyCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) => _unsupported();
+  AnyCorner resolveFinite(double maxPreviousExtent, double maxNextExtent) =>
+      _unsupported();
 
   @override
-  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) => _unsupported();
+  double consumptionForPreviousSide(AnyContour contour, int cornerIndex) =>
+      _unsupported();
 
   @override
-  double consumptionForNextSide(AnyContour contour, int cornerIndex) => _unsupported();
+  double consumptionForNextSide(AnyContour contour, int cornerIndex) =>
+      _unsupported();
 
   @override
   AnyCorner scaleForPreviousSide(double factor) => _unsupported();
@@ -348,23 +379,25 @@ class _LerpCorner extends AnyCorner {
 
   @override
   (double, double) pointAt(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) => _unsupported();
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) =>
+      _unsupported();
 
   @override
   void appendArc(
-      Path path,
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double fromAngle,
-      double toAngle,
-      ) => _unsupported();
+    Path path,
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double fromAngle,
+    double toAngle,
+  ) =>
+      _unsupported();
 
   @override
   AnyCorner lerpTo(AnyCorner other, double t) => _unsupported();
@@ -374,11 +407,12 @@ class _LerpCorner extends AnyCorner {
 
   @override
   AnyCorner convert(
-      double insetP,
-      double insetN,
-      bool inner,
-      double angle,
-      ) => _unsupported();
+    double insetP,
+    double insetN,
+    bool inner,
+    double angle,
+  ) =>
+      _unsupported();
 
   @override
   AnyCorner copyWith({double? p, double? n}) => _unsupported();
@@ -446,12 +480,12 @@ class RoundedCorner extends AnyCorner {
 
   @override
   (double, double) pointAt(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) {
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) {
     if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
@@ -468,14 +502,14 @@ class RoundedCorner extends AnyCorner {
 
   @override
   void appendArc(
-      Path path,
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double fromAngle,
-      double toAngle,
-      ) {
+    Path path,
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double fromAngle,
+    double toAngle,
+  ) {
     final delta = toAngle - fromAngle;
     if (AnyUtils.nearZero(delta)) return;
 
@@ -517,11 +551,11 @@ class RoundedCorner extends AnyCorner {
       final p3y = centerY + localP * sin1;
 
       final (c1x, c1y) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
       final (c2x, c2y) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
       final (ex, ey) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
 
       path.cubicTo(c1x, c1y, c2x, c2y, ex, ey);
     }
@@ -549,13 +583,12 @@ class RoundedCorner extends AnyCorner {
   }
 
   @override
-  RoundedCorner convert(double insetP, double insetN, bool inner, double angle) {
+  RoundedCorner convert(
+      double insetP, double insetN, bool inner, double angle) {
     if (converter == CornerConverter.equal) return this;
     if (p <= 0.0 || n <= 0.0) return const RoundedCorner();
 
-    return inner
-        ? _innerCorner(insetP, insetN)
-        : _outerCorner(insetP, insetN);
+    return inner ? _innerCorner(insetP, insetN) : _outerCorner(insetP, insetN);
   }
 
   RoundedCorner _innerCorner(double insetP, double insetN) {
@@ -565,13 +598,13 @@ class RoundedCorner extends AnyCorner {
 
     return switch (converter) {
       CornerConverter.preserveRatio => copyWith(
-        p: p * factor,
-        n: n * factor,
-      ),
+          p: p * factor,
+          n: n * factor,
+        ),
       CornerConverter.dynamicRatio => copyWith(
-        p: p * kp,
-        n: n * kn,
-      ),
+          p: p * kp,
+          n: n * kn,
+        ),
       CornerConverter.equal => this,
     };
   }
@@ -584,13 +617,13 @@ class RoundedCorner extends AnyCorner {
 
     return switch (converter) {
       CornerConverter.dynamicRatio => copyWith(
-        p: p + insetP,
-        n: n + insetN,
-      ),
+          p: p + insetP,
+          n: n + insetN,
+        ),
       CornerConverter.preserveRatio => copyWith(
-        p: p * factor,
-        n: n * factor,
-      ),
+          p: p * factor,
+          n: n * factor,
+        ),
       CornerConverter.equal => this,
     };
   }
@@ -634,9 +667,9 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   InverseRoundedCorner resolveFinite(
-      double maxPreviousExtent,
-      double maxNextExtent,
-      ) {
+    double maxPreviousExtent,
+    double maxNextExtent,
+  ) {
     return copyWith(
       p: resolvedPrevious(maxPreviousExtent),
       n: resolvedNext(maxNextExtent),
@@ -669,12 +702,12 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   (double, double) pointAt(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) {
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) {
     if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
@@ -692,14 +725,14 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   void appendArc(
-      Path path,
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double fromAngle,
-      double toAngle,
-      ) {
+    Path path,
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double fromAngle,
+    double toAngle,
+  ) {
     final delta = toAngle - fromAngle;
     if (AnyUtils.nearZero(delta)) return;
 
@@ -744,11 +777,11 @@ class InverseRoundedCorner extends AnyCorner {
       final p3y = centerY + localP * sin1;
 
       final (c1x, c1y) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p1x, p1y);
       final (c2x, c2y) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p2x, p2y);
       final (ex, ey) =
-      contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
+          contour.worldPointFromDistanceSpace(cornerIndex, p3x, p3y);
 
       path.cubicTo(c1x, c1y, c2x, c2y, ex, ey);
     }
@@ -776,11 +809,11 @@ class InverseRoundedCorner extends AnyCorner {
 
   @override
   InverseRoundedCorner convert(
-      double insetP,
-      double insetN,
-      bool inner,
-      double angle,
-      ) {
+    double insetP,
+    double insetN,
+    bool inner,
+    double angle,
+  ) {
     return this;
   }
 
@@ -825,11 +858,11 @@ class BevelCorner extends AnyCorner {
   }
 
   (double, double) _startPoint(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      ) {
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+  ) {
     final sign = turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
@@ -839,11 +872,11 @@ class BevelCorner extends AnyCorner {
   }
 
   (double, double) _endPoint(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      ) {
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+  ) {
     final sign = turnSign(contour, cornerIndex);
     return contour.worldPointFromDistanceSpace(
       cornerIndex,
@@ -886,12 +919,12 @@ class BevelCorner extends AnyCorner {
 
   @override
   (double, double) pointAt(
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) {
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) {
     if (!canBuild(contour, cornerIndex)) {
       return contour.sharpCornerPoint(cornerIndex, dPrev, dNext);
     }
@@ -901,21 +934,21 @@ class BevelCorner extends AnyCorner {
     final (ex, ey) = _endPoint(contour, cornerIndex, dPrev, dNext);
 
     return (
-    lerpDouble(sx, ex, t)!,
-    lerpDouble(sy, ey, t)!,
+      lerpDouble(sx, ex, t)!,
+      lerpDouble(sy, ey, t)!,
     );
   }
 
   @override
   void appendArc(
-      Path path,
-      AnyContour contour,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double fromAngle,
-      double toAngle,
-      ) {
+    Path path,
+    AnyContour contour,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double fromAngle,
+    double toAngle,
+  ) {
     if (AnyUtils.nearZero(toAngle - fromAngle)) return;
 
     if (!canBuild(contour, cornerIndex)) {
@@ -956,20 +989,20 @@ class BevelCorner extends AnyCorner {
 
     return switch (converter) {
       CornerConverter.dynamicRatio =>
-          _convertedCorner(insetP, insetN, inner, angle, fixedRatio: false),
+        _convertedCorner(insetP, insetN, inner, angle, fixedRatio: false),
       CornerConverter.preserveRatio =>
-          _convertedCorner(insetP, insetN, inner, angle, fixedRatio: true),
+        _convertedCorner(insetP, insetN, inner, angle, fixedRatio: true),
       CornerConverter.equal => this,
     };
   }
 
   BevelCorner _convertedCorner(
-      double insetP,
-      double insetN,
-      bool inner,
-      double angle, {
-        required bool fixedRatio,
-      }) {
+    double insetP,
+    double insetN,
+    bool inner,
+    double angle, {
+    required bool fixedRatio,
+  }) {
     if (p <= AnyUtils.epsilon || n <= AnyUtils.epsilon) {
       return const BevelCorner();
     }
@@ -1053,13 +1086,28 @@ class BevelCorner extends AnyCorner {
   }
 }
 
+/// One source point in an [AnyDecoration] contour.
+///
+/// The point defines a vertex of the contour. Its [outer] and optional [inner]
+/// corners describe how the contour bends at this point, while [side] describes
+/// the border segment painted from this point to the next point.
 class AnyPoint {
+  /// Corner used for the outer contour band at this point.
   final AnyCorner outer;
+
+  /// Optional corner used for the inner contour band at this point.
+  ///
+  /// When null, the decoration or contour derives an inner corner from [outer]
+  /// and the adjacent side widths.
   final AnyCorner? inner;
 
+  /// Vertex position in local decoration coordinates.
   final Offset point;
+
+  /// Side painted from this point to the next contour point.
   final AnySide side;
 
+  /// Creates a contour point with explicit geometry and side data.
   const AnyPoint({
     required this.outer,
     this.inner,
@@ -1067,6 +1115,10 @@ class AnyPoint {
     required this.side,
   });
 
+  /// Linearly interpolates two point lists for [AnyDecorationTween].
+  ///
+  /// If the lists have different lengths, one list is picked based on [t]
+  /// because point-by-point interpolation is not possible.
   static List<AnyPoint>? lerp(List<AnyPoint>? a, List<AnyPoint>? b, double t) {
     if (a == null || b == null) return null;
     if (identical(a, b)) return a;
@@ -1121,13 +1173,13 @@ class IDecorationCache {
   static int limit = 1000;
 
   static final LinkedHashMap<AnyDecoration, AnyContour> _contours =
-  LinkedHashMap<AnyDecoration, AnyContour>();
+      LinkedHashMap<AnyDecoration, AnyContour>();
 
   static AnyContour? get(
-      AnyDecoration decoration,
-      Size size,
-      TextDirection? textDirection,
-      ) {
+    AnyDecoration decoration,
+    Size size,
+    TextDirection? textDirection,
+  ) {
     final contour = _contours[decoration];
     if (contour == null) return null;
     if (!contour.canReuseFor(size, textDirection)) return null;
@@ -1276,7 +1328,8 @@ class AnyContour {
     };
   }
 
-  (double, double) sharpCornerPoint(int cornerIndex, double dPrev, double dNext) {
+  (double, double) sharpCornerPoint(
+      int cornerIndex, double dPrev, double dNext) {
     if (!isCornerParallel(cornerIndex)) {
       return worldPointFromDistanceSpace(cornerIndex, dPrev, dNext);
     }
@@ -1290,17 +1343,17 @@ class AnyContour {
   }
 
   (double, double) worldPointFromDistanceSpace(
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      ) {
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+  ) {
     return (
-    pointX[cornerIndex] +
-        (cornerMatrix00[cornerIndex] * dPrev) +
-        (cornerMatrix01[cornerIndex] * dNext),
-    pointY[cornerIndex] +
-        (cornerMatrix10[cornerIndex] * dPrev) +
-        (cornerMatrix11[cornerIndex] * dNext),
+      pointX[cornerIndex] +
+          (cornerMatrix00[cornerIndex] * dPrev) +
+          (cornerMatrix01[cornerIndex] * dNext),
+      pointY[cornerIndex] +
+          (cornerMatrix10[cornerIndex] * dPrev) +
+          (cornerMatrix11[cornerIndex] * dNext),
     );
   }
 
@@ -1330,17 +1383,17 @@ class AnyContour {
 
     sides = List<AnySide>.generate(
       count,
-          (index) => points[index].side,
+      (index) => points[index].side,
       growable: false,
     );
     outerCorners = List<AnyCorner>.generate(
       count,
-          (index) => points[index].outer,
+      (index) => points[index].outer,
       growable: false,
     );
     final explicitInnerCorners = List<AnyCorner?>.generate(
       count,
-          (index) => points[index].inner,
+      (index) => points[index].inner,
       growable: false,
     );
 
@@ -1430,7 +1483,8 @@ class AnyContour {
       cornerSegments[corner] = math.max(1, (angle / (math.pi / 2.0)).ceil());
     }
 
-    final outerAvailableLengths = _availableLengthsForBase(AnyShapeBase.outerBorder);
+    final outerAvailableLengths =
+        _availableLengthsForBase(AnyShapeBase.outerBorder);
     outerCorners = _resolveBand(outerCorners, outerAvailableLengths);
     _normalizeBand(outerCorners, outerAvailableLengths);
 
@@ -1444,7 +1498,8 @@ class AnyContour {
         cornerAngle[corner],
       );
     }, growable: false);
-    final zeroAvailableLengths = _availableLengthsForBase(AnyShapeBase.zeroBorder);
+    final zeroAvailableLengths =
+        _availableLengthsForBase(AnyShapeBase.zeroBorder);
     zeroCorners = _resolveBand(zeroCorners, zeroAvailableLengths);
     _normalizeBand(zeroCorners, zeroAvailableLengths);
 
@@ -1462,7 +1517,8 @@ class AnyContour {
         cornerAngle[corner],
       );
     }, growable: false);
-    final innerAvailableLengths = _availableLengthsForBase(AnyShapeBase.innerBorder);
+    final innerAvailableLengths =
+        _availableLengthsForBase(AnyShapeBase.innerBorder);
     innerCorners = _resolveBand(innerCorners, innerAvailableLengths);
     _normalizeBand(innerCorners, innerAvailableLengths);
   }
@@ -1487,9 +1543,9 @@ class AnyContour {
   }
 
   List<AnyCorner> _resolveBand(
-      List<AnyCorner> corners,
-      List<double> availableSideLengths,
-      ) {
+    List<AnyCorner> corners,
+    List<double> availableSideLengths,
+  ) {
     var hasLerpCorner = false;
     for (final corner in corners) {
       if (corner is _LerpCorner) {
@@ -1529,9 +1585,9 @@ class AnyContour {
   }
 
   List<AnyCorner> _normalizeConcreteBand(
-      List<AnyCorner> corners,
-      List<double> availableSideLengths,
-      ) {
+    List<AnyCorner> corners,
+    List<double> availableSideLengths,
+  ) {
     bool needsNormalization() {
       for (var side = 0; side < count; side++) {
         final start = corners[side];
@@ -1570,10 +1626,10 @@ class AnyContour {
       return null;
     }
 
-    final resolvedP =
-    List<double>.generate(count, (index) => corners[index].p, growable: false);
-    final resolvedN =
-    List<double>.generate(count, (index) => corners[index].n, growable: false);
+    final resolvedP = List<double>.generate(count, (index) => corners[index].p,
+        growable: false);
+    final resolvedN = List<double>.generate(count, (index) => corners[index].n,
+        growable: false);
 
     for (var side = 0; side < count; side++) {
       final startCorner = side;
@@ -1659,17 +1715,17 @@ class AnyContour {
   }
 
   void _normalizeBand(
-      List<AnyCorner> corners,
-      List<double> availableSideLengths,
-      ) {
+    List<AnyCorner> corners,
+    List<double> availableSideLengths,
+  ) {
     for (var side = 0; side < count; side++) {
       final startCorner = side;
       final endCorner = wrap(side + 1);
 
       final startConsumption =
-      corners[startCorner].consumptionForNextSide(this, startCorner);
+          corners[startCorner].consumptionForNextSide(this, startCorner);
       final endConsumption =
-      corners[endCorner].consumptionForPreviousSide(this, endCorner);
+          corners[endCorner].consumptionForPreviousSide(this, endCorner);
       final total = startConsumption + endConsumption;
 
       if (total <= availableSideLengths[side] + AnyUtils.epsilon ||
@@ -1752,13 +1808,13 @@ class AnyContour {
     final nextHasWidth = sideHasWidth[nextSide] != 0;
 
     final startOuterFrom =
-    prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
+        prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
     final endOuterTo =
-    nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
+        nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
     final endInnerFrom =
-    nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
+        nextHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.endAnglePi1d5;
     final startInnerTo =
-    prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
+        prevHasWidth ? AnyUtils.midAngle1d25 : AnyUtils.startAnglePi1d;
 
     final startOuterPrev = -sideOutsideOffset[prevSide];
     final startOuterNext = -sideOutsideOffset[sideIndex];
@@ -1850,25 +1906,25 @@ class AnyContour {
   }
 
   void _moveToCornerPoint(
-      Path path,
-      AnyCorner corner,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) {
+    Path path,
+    AnyCorner corner,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) {
     final (x, y) = corner.pointAt(this, cornerIndex, dPrev, dNext, angle);
     path.moveTo(x, y);
   }
 
   void _lineToCornerPoint(
-      Path path,
-      AnyCorner corner,
-      int cornerIndex,
-      double dPrev,
-      double dNext,
-      double angle,
-      ) {
+    Path path,
+    AnyCorner corner,
+    int cornerIndex,
+    double dPrev,
+    double dNext,
+    double angle,
+  ) {
     final (x, y) = corner.pointAt(this, cornerIndex, dPrev, dNext, angle);
     path.lineTo(x, y);
   }
@@ -1877,7 +1933,7 @@ class AnyContour {
     final backgroundFill = background;
     final backgroundSource = backgroundPath;
     final backgroundTarget =
-    backgroundSource == null ? null : Path.from(backgroundSource);
+        backgroundSource == null ? null : Path.from(backgroundSource);
 
     final regionFills = <AnyFill>[];
     final regionPaths = <Path>[];
@@ -1918,15 +1974,20 @@ class AnyContour {
     }
 
     return AnyRegions(
-      background: backgroundTarget != null && backgroundFill != null ? (backgroundFill, backgroundTarget) : null,
+      background: backgroundTarget != null && backgroundFill != null
+          ? (backgroundFill, backgroundTarget)
+          : null,
       regions: regions,
     );
   }
 }
 
-/// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
+/// Base class for decorations built from arbitrary contour points.
+///
+/// Subclasses define their geometry by overriding [buildPoints]. They must also
+/// override [operator ==] and [hashCode] when they add fields, because contour
+/// caching is keyed by decoration equality.
 abstract class AnyDecoration extends Decoration {
-
   /// Build raw contour points in local coordinates for this size.
   @protected
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection);
@@ -1936,15 +1997,31 @@ abstract class AnyDecoration extends Decoration {
     return buildPoints(bounds, textDirection);
   }
 
+  /// Fill painted behind side regions.
   final AnyBackground? background;
+
+  /// Default side used by [point] when no point-specific side is provided.
   final AnySide sides;
+
+  /// Default outer corner used by [point] when no point-specific corner is provided.
   final AnyCorner corners;
+
+  /// Default inner corner used by [point] when no point-specific corner is provided.
   final AnyCorner? innerCorners;
 
+  /// Shadows painted from [shadowBase].
   final List<AnyShadow> shadows;
+
+  /// Contour band returned by [getClipPath].
   final AnyShapeBase clipBase;
+
+  /// Contour band used as the source path for shadows.
   final AnyShapeBase shadowBase;
+
+  /// Whether built contours should be cached by decoration, size, and text direction.
   final bool enableCache;
+
+  /// Optional width / height ratio used to fit the contour inside the paint size.
   final double? ratio;
 
   const AnyDecoration({
@@ -1960,12 +2037,13 @@ abstract class AnyDecoration extends Decoration {
   })  : sides = sides ?? const AnySide(),
         corners = corners ?? const RoundedCorner();
 
+  /// Builds an [AnyPoint] using decoration defaults for missing values.
   AnyPoint point(
-      Offset point, {
-        AnyCorner? outer,
-        AnyCorner? inner,
-        AnySide? side,
-      }) {
+    Offset point, {
+    AnyCorner? outer,
+    AnyCorner? inner,
+    AnySide? side,
+  }) {
     return AnyPoint(
       point: point,
       outer: outer ?? corners,
@@ -2050,16 +2128,16 @@ abstract class AnyDecoration extends Decoration {
 
   @override
   int get hashCode => Object.hash(
-    clipBase,
-    shadowBase,
-    enableCache,
-    background,
-    ratio,
-    sides,
-    corners,
-    innerCorners,
-    Object.hashAll(shadows),
-  );
+        clipBase,
+        shadowBase,
+        enableCache,
+        background,
+        ratio,
+        sides,
+        corners,
+        innerCorners,
+        Object.hashAll(shadows),
+      );
 }
 
 class _AnyDecorationPainter extends BoxPainter {
@@ -2067,13 +2145,13 @@ class _AnyDecorationPainter extends BoxPainter {
 
   final AnyDecoration decoration;
   final Map<DecorationImage, DecorationImagePainter> _imagePainters =
-  <DecorationImage, DecorationImagePainter>{};
+      <DecorationImage, DecorationImagePainter>{};
 
   DecorationImagePainter? painterOf(AnyFill fill) {
     if (fill.image == null) return null;
     return _imagePainters.putIfAbsent(
       fill.image!,
-          () => fill.image!.createPainter(onChanged!),
+      () => fill.image!.createPainter(onChanged!),
     );
   }
 
@@ -2130,11 +2208,11 @@ class _AnyDecorationPainter extends BoxPainter {
   }
 
   void _paintRegion(
-      Canvas canvas,
-      AnyFill fill,
-      Path path,
-      ImageConfiguration configuration,
-      ) {
+    Canvas canvas,
+    AnyFill fill,
+    Path path,
+    ImageConfiguration configuration,
+  ) {
     final imagePainter = painterOf(fill);
     if (imagePainter != null) {
       imagePainter.paint(canvas, path.getBounds(), path, configuration);

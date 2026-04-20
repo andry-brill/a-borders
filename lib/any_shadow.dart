@@ -99,7 +99,6 @@ class AnyShadow with MAnyFill {
         configuration: configuration,
         imagePainter: imagePainter,
       );
-      return;
     }
 
     _paintBaseShadow(
@@ -107,6 +106,7 @@ class AnyShadow with MAnyFill {
       geometry: geometry,
       configuration: configuration,
     );
+
   }
 
   void _paintBaseShadow({

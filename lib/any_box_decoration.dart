@@ -1,26 +1,52 @@
-
 import 'dart:ui';
 
 import 'package:any_borders/any_contour.dart';
 
+/// Rectangular [AnyDecoration] with independent side and corner overrides.
 class AnyBoxDecoration extends AnyDecoration {
+  /// Default corner used by boxes when no corner is supplied.
   static const AnyCorner cornersBase = RoundedCorner();
 
+  /// Side used for the left edge.
   final AnySide? left;
+
+  /// Side used for the top edge.
   final AnySide? top;
+
+  /// Side used for the right edge.
   final AnySide? right;
+
+  /// Side used for the bottom edge.
   final AnySide? bottom;
+
+  /// Fallback side used by the top and bottom edges.
   final AnySide? horizontal;
+
+  /// Fallback side used by the left and right edges.
   final AnySide? vertical;
 
+  /// Outer corner used at the top-left point.
   final AnyCorner? topLeft;
+
+  /// Outer corner used at the top-right point.
   final AnyCorner? topRight;
+
+  /// Outer corner used at the bottom-right point.
   final AnyCorner? bottomRight;
+
+  /// Outer corner used at the bottom-left point.
   final AnyCorner? bottomLeft;
 
+  /// Inner corner used at the top-left point.
   final AnyCorner? innerTopLeft;
+
+  /// Inner corner used at the top-right point.
   final AnyCorner? innerTopRight;
+
+  /// Inner corner used at the bottom-right point.
   final AnyCorner? innerBottomRight;
+
+  /// Inner corner used at the bottom-left point.
   final AnyCorner? innerBottomLeft;
 
   const AnyBoxDecoration({
@@ -49,37 +75,37 @@ class AnyBoxDecoration extends AnyDecoration {
     this.innerBottomRight,
     this.innerBottomLeft,
   }) : super(
-    corners: circle ? const RoundedCorner.infinity() : corners,
-    ratio: circle ? 1.0 : ratio,
-  );
+          corners: circle ? const RoundedCorner.infinity() : corners,
+          ratio: circle ? 1.0 : ratio,
+        );
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
-    point(
-      bounds.topLeft,
-      outer: topLeft,
-      inner: innerTopLeft,
-      side: top ?? horizontal,
-    ),
-    point(
-      bounds.topRight,
-      outer: topRight,
-      inner: innerTopRight,
-      side: right ?? vertical,
-    ),
-    point(
-      bounds.bottomRight,
-      outer: bottomRight,
-      inner: innerBottomRight,
-      side: bottom ?? horizontal,
-    ),
-    point(
-      bounds.bottomLeft,
-      outer: bottomLeft,
-      inner: innerBottomLeft,
-      side: left ?? vertical,
-    ),
-  ];
+        point(
+          bounds.topLeft,
+          outer: topLeft,
+          inner: innerTopLeft,
+          side: top ?? horizontal,
+        ),
+        point(
+          bounds.topRight,
+          outer: topRight,
+          inner: innerTopRight,
+          side: right ?? vertical,
+        ),
+        point(
+          bounds.bottomRight,
+          outer: bottomRight,
+          inner: innerBottomRight,
+          side: bottom ?? horizontal,
+        ),
+        point(
+          bounds.bottomLeft,
+          outer: bottomLeft,
+          inner: innerBottomLeft,
+          side: left ?? vertical,
+        ),
+      ];
 
   @override
   bool operator ==(Object other) {
@@ -105,20 +131,20 @@ class AnyBoxDecoration extends AnyDecoration {
 
   @override
   int get hashCode => Object.hash(
-    super.hashCode,
-    left,
-    top,
-    right,
-    bottom,
-    horizontal,
-    vertical,
-    topLeft,
-    topRight,
-    bottomRight,
-    bottomLeft,
-    innerTopLeft,
-    innerTopRight,
-    innerBottomRight,
-    innerBottomLeft,
-  );
+        super.hashCode,
+        left,
+        top,
+        right,
+        bottom,
+        horizontal,
+        vertical,
+        topLeft,
+        topRight,
+        bottomRight,
+        bottomLeft,
+        innerTopLeft,
+        innerTopRight,
+        innerBottomRight,
+        innerBottomLeft,
+      );
 }

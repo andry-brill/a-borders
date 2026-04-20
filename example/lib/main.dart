@@ -1,13 +1,11 @@
-
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
 
 List<Widget> examples() {
-
   const box = [
     H('AnyBoxDecoration'),
     E(
-      title: 'Any align/width\nLTRB(in:center:out:center)' ,
+      title: 'Any align/width\nLTRB(in:center:out:center)',
       begin: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
           top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
@@ -15,148 +13,156 @@ List<Widget> examples() {
           bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
           corners: RoundedCorner(radius: 10),
           innerCorners: RoundedCorner(radius: 10),
-          background: AnyBackground(color: greenL)
-      ),
+          background: AnyBackground(color: greenL)),
       end: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
           top: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
           right: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-          bottom: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+          bottom:
+              AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
           corners: RoundedCorner(radius: 10),
           innerCorners: RoundedCorner(radius: 10),
-          background: AnyBackground(color: greenL)
-      ),
+          background: AnyBackground(color: greenL)),
     ),
     E(
-      title: 'No horizontal' ,
+      title: 'No horizontal',
       begin: AnyBoxDecoration(
-        vertical: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+        vertical:
+            AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
         horizontal: AnySide(color: greenL, align: AnySide.alignInside),
         corners: RoundedCorner(radius: 30),
         innerCorners: RoundedCorner(radius: 30),
       ),
       end: AnyBoxDecoration(
-        vertical: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+        vertical:
+            AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
         horizontal: AnySide(color: greenL, align: AnySide.alignInside),
         corners: RoundedCorner(radius: 20),
         innerCorners: RoundedCorner(radius: 20),
       ),
     ),
     E(
-      title: 'Any corner' ,
+      title: 'Any corner',
       begin: AnyBoxDecoration(
-        vertical: AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
-        horizontal: AnySide(color: greenL, width: 20, align: AnySide.alignInside),
-
+        vertical:
+            AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
+        horizontal:
+            AnySide(color: greenL, width: 20, align: AnySide.alignInside),
         topLeft: RoundedCorner(radius: 2),
         innerTopLeft: BevelCorner(radius: 30),
-
         topRight: InverseRoundedCorner(radius: 20),
         innerTopRight: BevelCorner(radius: 10),
-
         bottomRight: BevelCorner(radius: 20),
         innerBottomRight: RoundedCorner(radius: 40),
-
         bottomLeft: InverseRoundedCorner(radius: 20),
         innerBottomLeft: RoundedCorner(radius: 2),
       ),
       end: AnyBoxDecoration(
-        vertical: AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
-        horizontal: AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
-
+        vertical:
+            AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
+        horizontal:
+            AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
         topLeft: RoundedCorner(radius: 2),
         innerTopLeft: BevelCorner(radius: 30),
-
         topRight: InverseRoundedCorner(radius: 20),
         innerTopRight: BevelCorner(radius: 30),
-
         bottomRight: BevelCorner(radius: 20),
         innerBottomRight: RoundedCorner(radius: 40),
-
         bottomLeft: InverseRoundedCorner(radius: 20),
         innerBottomLeft: RoundedCorner(radius: 40),
       ),
     ),
     E(
-      title: 'Back+T+B' ,
+      title: 'Back+T+B',
       begin: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
           top: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
           right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-          bottom: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
+          bottom:
+              AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(color: greenL),
-          corners: RoundedCorner(radius: 50)
-      ),
+          corners: RoundedCorner(radius: 50)),
       end: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
           top: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
           right: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
           bottom: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
           background: AnyBackground(color: greenL),
-          corners: RoundedCorner(radius: 20)
-      ),
+          corners: RoundedCorner(radius: 20)),
     ),
     E(
-      title: 'Gradient' ,
+      title: 'Gradient',
       begin: AnyBoxDecoration(
-          sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          sides: AnySide(
+              gradient: gradientBG, width: 20, align: AnySide.alignCenter),
           background: AnyBackground(gradient: gradientBGL),
-          corners: RoundedCorner(radius: 30)
-      ),
+          corners: RoundedCorner(radius: 30)),
       end: AnyBoxDecoration(
-          sides: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          sides: AnySide(
+              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
           background: AnyBackground(gradient: gradientBG),
-          corners: BevelCorner(radius: 40)
-      ),
+          corners: BevelCorner(radius: 40)),
     ),
     E(
-      title: 'Gradient HV' ,
+      title: 'Gradient HV',
       begin: AnyBoxDecoration(
-          horizontal: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          vertical: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
-          corners: BevelCorner(radius: 30)
-      ),
+          horizontal: AnySide(
+              gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          vertical: AnySide(
+              gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
+          corners: BevelCorner(radius: 30)),
       end: AnyBoxDecoration(
-          left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-          right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-          top: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-          bottom: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 20)
-      ),
+          left: AnySide(
+              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          right: AnySide(
+              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          top: AnySide(
+              gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+          bottom: AnySide(
+              gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+          corners: RoundedCorner(radius: 20)),
     ),
     E(
-      title: 'Images' ,
+      title: 'Images',
       begin: AnyBoxDecoration(
-          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+          sides: AnySide(
+              image: marbleBlue, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(image: marbleGreen),
-          circle: true
-      ),
+          circle: true),
       end: AnyBoxDecoration(
-          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+          sides: AnySide(
+              image: marbleBlue, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(image: marbleGreen),
-          corners: BevelCorner(radius: double.infinity)
-      ),
+          corners: BevelCorner(radius: double.infinity)),
     ),
     Stack(children: [
-      SizedBox(width: w, height: h, child:
-      DecoratedBox(decoration: BoxDecoration(
-          border: Border.symmetric(
-              horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside),
-              vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)
-          ),
-          borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))
-      ),
-      )),
+      SizedBox(
+          width: w,
+          height: h,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+                border: Border.symmetric(
+                    horizontal: BorderSide(
+                        width: 20,
+                        color: alpha33,
+                        strokeAlign: AnySide.alignOutside),
+                    vertical: BorderSide(
+                        width: 20,
+                        color: alpha33,
+                        strokeAlign: AnySide.alignOutside)),
+                borderRadius: BorderRadiusGeometry.only(
+                    topLeft: Radius.elliptical(80, 40))),
+          )),
       E(
-        title: 'BoxDecoration elliptical\nDiff when Outer' ,
+        title: 'BoxDecoration elliptical\nDiff when Outer',
         begin: AnyBoxDecoration(
-            sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
-            topLeft: RoundedCorner.elliptical(n: 80, p: 40)
-        ),
+            sides:
+                AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
+            topLeft: RoundedCorner.elliptical(n: 80, p: 40)),
         end: AnyBoxDecoration(
-            sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
-            topLeft: RoundedCorner.elliptical(n: 80, p: 40)
-        ),
+            sides:
+                AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
+            topLeft: RoundedCorner.elliptical(n: 80, p: 40)),
       ),
     ]),
   ];
@@ -164,7 +170,12 @@ List<Widget> examples() {
   final shadows = [
     H('Shadows'),
     ...buildShadows(blurRadius: 10, colors: [greenL], images: []),
-    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40), corners: BevelCorner(radius: 30)),
+    ...buildShadows(
+        blurRadius: 10,
+        colors: [],
+        images: [marbleBlue],
+        spreadRadius: Offset(40, 40),
+        corners: BevelCorner(radius: 30)),
   ];
 
   const custom = [
@@ -195,21 +206,16 @@ List<Widget> examples() {
     ),
   ];
 
-  return [
-    ...box,
-    ...shadows,
-    ...custom
-  ];
+  return [...box, ...shadows, ...custom];
 }
 
-List<E> buildShadows({
-  required List<Color> colors,
-  required List<DecorationImage> images,
-  double blurRadius = 3.0,
-  Offset spreadRadius = const Offset(20, 20),
-  Offset shadowOffset = const Offset(15, 15),
-  AnyCorner corners = const RoundedCorner(radius: 40)
-}) {
+List<E> buildShadows(
+    {required List<Color> colors,
+    required List<DecorationImage> images,
+    double blurRadius = 3.0,
+    Offset spreadRadius = const Offset(20, 20),
+    Offset shadowOffset = const Offset(15, 15),
+    AnyCorner corners = const RoundedCorner(radius: 40)}) {
   final beginColor = colors.firstOrNull;
   final endColor = colors.lastOrNull;
 
@@ -338,25 +344,22 @@ List<E> buildShadows({
   ];
 }
 
-
 class TabDecoration extends AnyDecoration {
-
   final double offset;
 
   final AnyCorner top;
   final AnyCorner? topInner;
 
-  const TabDecoration({
-    super.background,
-    super.sides,
-    required this.top,
-    this.topInner,
-    required this.offset
-  }) : assert(offset > 0.0);
+  const TabDecoration(
+      {super.background,
+      super.sides,
+      required this.top,
+      this.topInner,
+      required this.offset})
+      : assert(offset > 0.0);
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-
     final c = top.copyWith(p: offset, n: offset);
     final xL = bounds.left + offset;
     final xR = bounds.right - offset;
@@ -373,12 +376,15 @@ class TabDecoration extends AnyDecoration {
 
   @override
   bool operator ==(Object other) {
-    return other is TabDecoration && other.offset == offset && super == other;
+    return other is TabDecoration &&
+        other.offset == offset &&
+        other.top == top &&
+        other.topInner == topInner &&
+        super == other;
   }
 
   @override
-  int get hashCode => Object.hash(super.hashCode, offset);
-
+  int get hashCode => Object.hash(super.hashCode, offset, top, topInner);
 }
 
 enum CrownType {
@@ -392,7 +398,6 @@ enum CrownType {
 }
 
 class CrownDecoration extends AnyDecoration {
-
   final CrownType type;
 
   const CrownDecoration({
@@ -451,8 +456,6 @@ class CrownDecoration extends AnyDecoration {
   }
 }
 
-
-
 const greenL = Color(0xFF85AEA8);
 const greenD = Color(0xFF2E685F);
 const blueL = Color(0xFFC1F1FD);
@@ -462,7 +465,10 @@ const alpha33 = Color(0xAA57B7CF);
 const alpha99 = Color(0x882E685F);
 
 const gradientBG = LinearGradient(colors: [greenL, greenD]);
-const gradientBGL = LinearGradient(colors: [blueL, blueD], begin: Alignment.topCenter, end: Alignment.bottomCenter);
+const gradientBGL = LinearGradient(
+    colors: [blueL, blueD],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter);
 
 const marbleBlue = const DecorationImage(
   image: AssetImage('images/marble-blue.jpg'),
@@ -485,19 +491,18 @@ const duration = Duration(milliseconds: 1000);
 const curve = Curves.easeInOut;
 
 const titleStyle = TextStyle(color: alpha99);
-const headerStyle = TextStyle(color: alpha99, fontSize: 24, fontWeight: FontWeight.w600);
+const headerStyle =
+    TextStyle(color: alpha99, fontSize: 24, fontWeight: FontWeight.w600);
 
 class H extends StatelessWidget {
-
   final String title;
   const H(this.title);
 
   @override
-  Widget build(BuildContext context) =>
-      Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4, bottom: spacing / 2), child: Text(title, style: headerStyle));
-
+  Widget build(BuildContext context) => Padding(
+      padding: EdgeInsetsGeometry.only(top: spacing / 4, bottom: spacing / 2),
+      child: Text(title, style: headerStyle));
 }
-
 
 void main() {
   runApp(const MyApp());
@@ -538,21 +543,21 @@ class _ExamplePage extends StatefulWidget {
 }
 
 class _ExamplePageState extends State<_ExamplePage> {
-
   static late final List<Widget> _examples = examples();
 
   Widget row(List<Widget> children) {
-    return Padding(padding: EdgeInsets.only(bottom: spacing * 0.75), child: Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: spacing,
-      children: children,
-    ));
+    return Padding(
+        padding: EdgeInsets.only(bottom: spacing * 0.75),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: spacing,
+          children: children,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
-
     final ex = _examples;
 
     List<Widget> children = [];
@@ -582,9 +587,10 @@ class _ExamplePageState extends State<_ExamplePage> {
       onTap: _ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Padding(padding: EdgeInsetsGeometry.only(bottom: spacing, top: spacing),
+          child: Padding(
+            padding: EdgeInsetsGeometry.only(bottom: spacing, top: spacing),
             child: Center(
-            child: Column(
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -665,7 +671,6 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
