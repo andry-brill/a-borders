@@ -59,6 +59,26 @@ class _TweenDecoration extends AnyDecoration {
     enableCache: false,
   );
 
+  double _effectiveRatio(Size size, double? ratio) {
+    if (ratio != null && ratio > 0.0) {
+      return ratio;
+    }
+
+    if (size.height <= 0.0) {
+      return 1.0;
+    }
+
+    return size.width / size.height;
+  }
+
+  @override
+  Rect fitRatio(Size size, double? ratio) {
+    final beginRatio = _effectiveRatio(size, beginDecoration.ratio);
+    final endRatio = _effectiveRatio(size, endDecoration.ratio);
+    final lRatio = lerpDouble(beginRatio, endRatio, t)!;
+    return super.fitRatio(size, lRatio);
+  }
+
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
     final a = beginDecoration.points(bounds, textDirection);

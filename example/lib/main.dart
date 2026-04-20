@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
@@ -9,18 +8,47 @@ void main() {
 
 
 List<Widget> examples() {
-  return [
+
+  const custom = [
+    Header('Custom'),
+    E2(
+      title: 'Tab',
+      begin: TabDecoration(
+        offset: 30,
+        background: AnyBackground(color: greenL),
+        top: RoundedCorner(radius: 30),
+      ),
+      end: TabDecoration(
+        offset: 20,
+        background: AnyBackground(color: greenL),
+        top: BevelCorner(radius: 20),
+      ),
+    ),
+    E2(
+      title: 'Crown',
+      begin: CrownDecoration(
+        type: CrownType.flat,
+        corners: BevelCorner(radius: 20),
+      ),
+      end: CrownDecoration(
+        type: CrownType.spike,
+        corners: RoundedCorner(radius: 20),
+      ),
+    ),
+  ];
+
+  const box = [
     Header('AnyBoxDecoration'),
     E2(
       title: 'Any align/width\nLTRB(in:center:out:center)' ,
       begin: AnyBoxDecoration(
-        left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
-        top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-        right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
-        bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 10),
-        innerCorners: RoundedCorner(radius: 10),
-        background: AnyBackground(color: greenL)
+          left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
+          top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+          right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+          bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
+          corners: RoundedCorner(radius: 10),
+          innerCorners: RoundedCorner(radius: 10),
+          background: AnyBackground(color: greenL)
       ),
       end: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
@@ -39,7 +67,7 @@ List<Widget> examples() {
         horizontal: AnySide(color: greenL, align: AnySide.alignInside),
         corners: RoundedCorner(radius: 30),
         innerCorners: RoundedCorner(radius: 30),
-        ),
+      ),
       end: AnyBoxDecoration(
         vertical: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
         horizontal: AnySide(color: greenL, align: AnySide.alignInside),
@@ -105,36 +133,36 @@ List<Widget> examples() {
       title: 'Gradient' ,
       begin: AnyBoxDecoration(
           sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          corners: BevelCorner(radius: 30)
+          background: AnyBackground(gradient: gradientBGL),
+          corners: RoundedCorner(radius: 30)
       ),
       end: AnyBoxDecoration(
-          sides: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignOutside),
-          corners: RoundedCorner(radius: 40)
+          sides: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          background: AnyBackground(gradient: gradientBG),
+          corners: BevelCorner(radius: 40)
       ),
     ),
     E2(
       title: 'Gradient HV' ,
       begin: AnyBoxDecoration(
-          left: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
-          right: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
-          top: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          bottom: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          horizontal: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+          vertical: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
           corners: BevelCorner(radius: 30)
       ),
       end: AnyBoxDecoration(
-          left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
-          right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignInside),
-          top: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
-          bottom: AnySide(gradient: gradientBG, width: 40, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 50)
+          left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+          top: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+          bottom: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+          corners: RoundedCorner(radius: 20)
       ),
     ),
     E2(
       title: 'Images' ,
       begin: AnyBoxDecoration(
-          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
+          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(image: marbleGreen),
-          corners: BevelCorner(radius: 30)
+          circle: true
       ),
       end: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
@@ -142,70 +170,40 @@ List<Widget> examples() {
           corners: BevelCorner(radius: double.infinity)
       ),
     ),
-    E2(
-      title: 'Images' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignInside),
-          background: AnyBackground(image: marbleGreen),
-          corners: RoundedCorner(radius:30)
-      ),
-      end: AnyBoxDecoration(
-          sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
-          background: AnyBackground(image: marbleGreen),
-          corners: RoundedCorner(radius: double.infinity)
-      ),
-    ),
     Stack(children: [
       SizedBox(width: w, height: h, child:
       DecoratedBox(decoration: BoxDecoration(
-        border: Border.symmetric(horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside), vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)),
-        borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))
+          border: Border.symmetric(
+              horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside),
+              vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)
+          ),
+          borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))
       ),
-    )),
-    E2(
-      title: 'BoxDecoration elliptical\nDiff when Outer' ,
-      begin: AnyBoxDecoration(
-          sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
-          topLeft: RoundedCorner.elliptical(n: 80, p: 40)
+      )),
+      E2(
+        title: 'BoxDecoration elliptical\nDiff when Outer' ,
+        begin: AnyBoxDecoration(
+            sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
+            topLeft: RoundedCorner.elliptical(n: 80, p: 40)
+        ),
+        end: AnyBoxDecoration(
+            sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
+            topLeft: RoundedCorner.elliptical(n: 80, p: 40)
+        ),
       ),
-      end: AnyBoxDecoration(
-          sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
-          topLeft: RoundedCorner.elliptical(n: 80, p: 40)
-      ),
-    ),
     ]),
+  ];
+
+  final shadows = [
     Header('Shadows'),
-    ...buildShadows(blurRadius: 10, colors: [blueLight], images: []),
-    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40)),
-    Header('Custom (experimental)'),
-    E2(
-      title: 'Crown',
-      begin: CrownDecoration(
-          type: CrownType.flat,
-          corners: BevelCorner(radius: 0),
-      ),
-      end: CrownDecoration(
-        type: CrownType.spike,
-        corners: RoundedCorner(radius: 20),
-      ),
-    ),
-    E2(
-      title: 'CrownInv',
-      begin: CrownDecoration(type: CrownType.spike, corners: InverseRoundedCorner(radius: 10),),
-      end: CrownDecoration(
-        type: CrownType.flat,
-      ),
-    ),
-    E2(
-      title: 'Tab',
-      begin: TabDecoration(
-          offset: 20,
-          background: AnyBackground(color: alpha99),
-          corners: RoundedCorner(radius: 20),
-          sides: AnySide(width: 20, color: alpha33, align: AnySide.alignOutside)
-      ),
-      end: TabDecoration(offset: 30),
-    ),
+    ...buildShadows(blurRadius: 10, colors: [greenL], images: []),
+    ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40), corners: BevelCorner(radius: 30)),
+  ];
+
+  return [
+    ...box,
+    ...shadows,
+    ...custom
   ];
 }
 
@@ -214,7 +212,8 @@ List<E2> buildShadows({
   required List<DecorationImage> images,
   double blurRadius = 3.0,
   Offset spreadRadius = const Offset(20, 20),
-  Offset shadowOffset = const Offset(15, 15)
+  Offset shadowOffset = const Offset(15, 15),
+  AnyCorner corners = const RoundedCorner(radius: 40)
 }) {
   final beginColor = colors.firstOrNull;
   final endColor = colors.lastOrNull;
@@ -226,8 +225,8 @@ List<E2> buildShadows({
     E2(
       title: 'Normal',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             color: beginColor,
@@ -238,8 +237,8 @@ List<E2> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             color: endColor,
@@ -254,8 +253,8 @@ List<E2> buildShadows({
     E2(
       title: 'Inner',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -267,8 +266,8 @@ List<E2> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -284,8 +283,8 @@ List<E2> buildShadows({
     E2(
       title: 'Outer',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,
@@ -297,8 +296,8 @@ List<E2> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,
@@ -314,8 +313,8 @@ List<E2> buildShadows({
     E2(
       title: 'Solid',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 5, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.solid,
@@ -327,8 +326,8 @@ List<E2> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: blue, width: 10, align: AnySide.alignCenter),
-        corners: RoundedCorner(radius: 40),
+        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        corners: corners,
         shadows: [
           AnyShadow(
             style: BlurStyle.solid,
@@ -349,27 +348,29 @@ class TabDecoration extends AnyDecoration {
 
   final double offset;
 
+  final AnyCorner? top;
+  final AnyCorner? topInner;
+
   const TabDecoration({
     super.background,
     super.sides,
-    super.corners,
-    super.innerCorners,
+    this.top,
+    this.topInner,
     required this.offset
   }) : assert(offset > 0.0);
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
 
-    final offset = min(this.offset, bounds.width / 4.0);
-    final c = RoundedCorner(radius: offset);
+    final c = top is BevelCorner ? BevelCorner(radius: offset) : RoundedCorner(radius: offset);
     final xL = bounds.left + offset;
     final xR = bounds.right - offset;
 
     return [
       point(bounds.bottomLeft),
       point(Offset(xL, bounds.bottom), outer: c, inner: c),
-      point(Offset(xL, bounds.top)),
-      point(Offset(xR, bounds.top)),
+      point(Offset(xL, bounds.top), outer: top, inner: topInner),
+      point(Offset(xR, bounds.top), outer: top, inner: topInner),
       point(Offset(xR, bounds.bottom), outer: c, inner: c),
       point(bounds.bottomRight),
     ];
@@ -386,8 +387,8 @@ class TabDecoration extends AnyDecoration {
 }
 
 enum CrownType {
-  flat(0, 0.5, blueLight, blue),
-  spike(-0.5, 0.25, goldLight, blueD);
+  flat(0, 0.5, greenL, greenD),
+  spike(-0.5, 0.25, blueL, blueD);
 
   final double mainDy, subDy;
   final Color light, dark;
@@ -396,6 +397,7 @@ enum CrownType {
 }
 
 class CrownDecoration extends AnyDecoration {
+
   final CrownType type;
 
   const CrownDecoration({
@@ -454,22 +456,16 @@ class CrownDecoration extends AnyDecoration {
   }
 }
 
-const blueLight = Colors.lightBlueAccent;
-
 const greenL = Color(0xFF85AEA8);
-const green = Color(0xFF6B8F83);
 const greenD = Color(0xFF2E685F);
 const blueL = Color(0xFFC1F1FD);
-const blue = Color(0xFF5EC0DE);
 const blueD = Color(0xFF57B7CF);
 
-const goldLight = Colors.orange;
+const alpha33 = Color(0xAA57B7CF);
+const alpha99 = Color(0x882E685F);
 
-const alpha33 = Color(0x66DFC499);
-const alpha99 = Color(0x99DFC499);
-
-const gradientBG = LinearGradient(colors: [blue, blueD]);
-const gradientBGL = LinearGradient(colors: [blueLight, goldLight], begin: Alignment.topCenter, end: Alignment.bottomCenter);
+const gradientBG = LinearGradient(colors: [greenL, greenD]);
+const gradientBGL = LinearGradient(colors: [blueL, blueD], begin: Alignment.topCenter, end: Alignment.bottomCenter);
 
 const marbleBlue = const DecorationImage(
   image: AssetImage('images/marble-blue.jpg'),
@@ -494,7 +490,7 @@ const constraints = BoxConstraints.tightFor(width: w, height: h);
 const double spacing = 100;
 const rowLimit = 4;
 
-const duration = Duration(milliseconds: 500);
+const duration = Duration(milliseconds: 1000);
 const curve = Curves.easeInOut;
 
 const titleStyle = TextStyle(color: Colors.black45);
@@ -503,12 +499,11 @@ const headerStyle = TextStyle(color: Colors.black54, fontSize: 24);
 class Header extends StatelessWidget {
 
   final String title;
-  final String? subtitle;
-  const Header(this.title, {this.subtitle});
+  const Header(this.title);
 
   @override
   Widget build(BuildContext context) =>
-      Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4), child: Text(title, style: headerStyle));
+      Padding(padding: EdgeInsetsGeometry.only(top: spacing / 4, bottom: spacing / 2), child: Text(title, style: headerStyle));
 
 }
 
@@ -522,7 +517,7 @@ class MyApp extends StatelessWidget {
       title: 'Any Border Examples',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: blueD),
         useMaterial3: true,
       ),
       home: const _ExamplePage(),
@@ -567,12 +562,12 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 
   Widget row(List<Widget> children) {
-    return Row(
+    return Padding(padding: EdgeInsets.only(bottom: spacing * 0.75), child: Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: spacing,
       children: children,
-    );
+    ));
   }
 
   @override
@@ -607,12 +602,11 @@ class _ExamplePageState extends State<_ExamplePage> {
       onTap: _ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Padding(padding: EdgeInsetsGeometry.only(bottom: spacing * 2),
+          child: Padding(padding: EdgeInsetsGeometry.only(bottom: spacing, top: spacing),
             child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: spacing * 0.75,
               children: children,
             )),
           ),
