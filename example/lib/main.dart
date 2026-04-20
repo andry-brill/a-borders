@@ -2,40 +2,7 @@
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-
 List<Widget> examples() {
-
-  const custom = [
-    H('Custom'),
-    E(
-      title: 'Tab',
-      begin: TabDecoration(
-        offset: 30,
-        background: AnyBackground(color: greenL),
-        top: RoundedCorner(radius: 30),
-      ),
-      end: TabDecoration(
-        offset: 20,
-        background: AnyBackground(color: greenL),
-        top: BevelCorner(radius: 20),
-      ),
-    ),
-    E(
-      title: 'Crown',
-      begin: CrownDecoration(
-        type: CrownType.flat,
-        corners: BevelCorner(radius: 20),
-      ),
-      end: CrownDecoration(
-        type: CrownType.spike,
-        corners: RoundedCorner(radius: 20),
-      ),
-    ),
-  ];
 
   const box = [
     H('AnyBoxDecoration'),
@@ -118,7 +85,7 @@ List<Widget> examples() {
           right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
           bottom: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
           background: AnyBackground(color: greenL),
-          corners: RoundedCorner(radius: 20)
+          corners: RoundedCorner(radius: 50)
       ),
       end: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
@@ -200,6 +167,34 @@ List<Widget> examples() {
     ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40), corners: BevelCorner(radius: 30)),
   ];
 
+  const custom = [
+    H('Custom'),
+    E(
+      title: 'Tab',
+      begin: TabDecoration(
+        offset: 30,
+        background: AnyBackground(color: greenL),
+        top: RoundedCorner(radius: 30),
+      ),
+      end: TabDecoration(
+        offset: 20,
+        background: AnyBackground(color: greenL),
+        top: BevelCorner(radius: 20),
+      ),
+    ),
+    E(
+      title: 'Crown',
+      begin: CrownDecoration(
+        type: CrownType.flat,
+        corners: BevelCorner(radius: 20),
+      ),
+      end: CrownDecoration(
+        type: CrownType.spike,
+        corners: RoundedCorner(radius: 20),
+      ),
+    ),
+  ];
+
   return [
     ...box,
     ...shadows,
@@ -237,7 +232,7 @@ List<E> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
         corners: corners,
         shadows: [
           AnyShadow(
@@ -266,7 +261,7 @@ List<E> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
         corners: corners,
         shadows: [
           AnyShadow(
@@ -296,7 +291,7 @@ List<E> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
         corners: corners,
         shadows: [
           AnyShadow(
@@ -326,7 +321,7 @@ List<E> buildShadows({
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 10, align: AnySide.alignCenter),
+        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
         corners: corners,
         shadows: [
           AnyShadow(
@@ -348,13 +343,13 @@ class TabDecoration extends AnyDecoration {
 
   final double offset;
 
-  final AnyCorner? top;
+  final AnyCorner top;
   final AnyCorner? topInner;
 
   const TabDecoration({
     super.background,
     super.sides,
-    this.top,
+    required this.top,
     this.topInner,
     required this.offset
   }) : assert(offset > 0.0);
@@ -362,7 +357,7 @@ class TabDecoration extends AnyDecoration {
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
 
-    final c = top is BevelCorner ? BevelCorner(radius: offset) : RoundedCorner(radius: offset);
+    final c = top.copyWith(p: offset, n: offset);
     final xL = bounds.left + offset;
     final xR = bounds.right - offset;
 
@@ -456,6 +451,8 @@ class CrownDecoration extends AnyDecoration {
   }
 }
 
+
+
 const greenL = Color(0xFF85AEA8);
 const greenD = Color(0xFF2E685F);
 const blueL = Color(0xFFC1F1FD);
@@ -501,6 +498,10 @@ class H extends StatelessWidget {
 
 }
 
+
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

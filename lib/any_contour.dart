@@ -103,7 +103,7 @@ class AnySide with MAnyFill {
       width: lerpDouble(a.width, b.width, t)!,
       align: lerpDouble(a.align, b.align, t)!,
       color: Color.lerp(a.color, b.color, t),
-      gradient: AnyUtils.pickLerpNullable(a.gradient, b.gradient, t),
+      gradient: Gradient.lerp(a.gradient, b.gradient, t),
       image: AnyUtils.pickLerpNullable(a.image, b.image, t),
       blendMode: AnyUtils.pickLerpNullable(a.blendMode, b.blendMode, t),
       isAntiAlias: AnyUtils.pickLerp(a.isAntiAlias, b.isAntiAlias, t),
@@ -1918,9 +1918,7 @@ class AnyContour {
     }
 
     return AnyRegions(
-      background: backgroundTarget != null && backgroundFill != null
-          ? (backgroundFill, backgroundTarget)
-          : null,
+      background: backgroundTarget != null && backgroundFill != null ? (backgroundFill, backgroundTarget) : null,
       regions: regions,
     );
   }
@@ -1928,6 +1926,7 @@ class AnyContour {
 
 /// NB! Operator == and hashCode() for children must be overridden! Or caching will break rendering.
 abstract class AnyDecoration extends Decoration {
+
   /// Build raw contour points in local coordinates for this size.
   @protected
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection);
