@@ -43,6 +43,9 @@ All corners derive from `AnyCorner`. The constructor `radius` form creates an
 even corner, while the `elliptical` constructors allow different extents along
 the previous and next sides.
 
+> Warning: contour corners with angles of `0`, `180`, or `360` degrees are
+> currently unstable. Their behavior may change in future versions.
+
 ### RoundedCorner
 
 `RoundedCorner` creates a rounded arc between neighboring sides.
@@ -71,8 +74,6 @@ const InverseRoundedCorner(radius: 18)
 const InverseRoundedCorner.elliptical(p: 32, n: 18)
 ```
 
-> Warning: contour corners with angles of `0`, `180`, or `360` degrees are
-> currently unstable. Their behavior may change in future versions.
 
 ## AnyFill
 
@@ -238,4 +239,7 @@ class TabDecoration extends AnyDecoration {
 
 Custom `AnyDecoration` subclasses should override `operator ==` and `hashCode`
 for every field they add. Contour caching depends on decoration equality.
+
+> Warning: contour corners with angles of `0`, `180`, or `360` degrees are
+> currently unstable. Their behavior may change in future versions.
 
