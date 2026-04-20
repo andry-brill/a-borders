@@ -10,8 +10,8 @@ void main() {
 List<Widget> examples() {
 
   const custom = [
-    Header('Custom'),
-    E2(
+    H('Custom'),
+    E(
       title: 'Tab',
       begin: TabDecoration(
         offset: 30,
@@ -24,7 +24,7 @@ List<Widget> examples() {
         top: BevelCorner(radius: 20),
       ),
     ),
-    E2(
+    E(
       title: 'Crown',
       begin: CrownDecoration(
         type: CrownType.flat,
@@ -38,8 +38,8 @@ List<Widget> examples() {
   ];
 
   const box = [
-    Header('AnyBoxDecoration'),
-    E2(
+    H('AnyBoxDecoration'),
+    E(
       title: 'Any align/width\nLTRB(in:center:out:center)' ,
       begin: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
@@ -60,7 +60,7 @@ List<Widget> examples() {
           background: AnyBackground(color: greenL)
       ),
     ),
-    E2(
+    E(
       title: 'No horizontal' ,
       begin: AnyBoxDecoration(
         vertical: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
@@ -75,7 +75,7 @@ List<Widget> examples() {
         innerCorners: RoundedCorner(radius: 20),
       ),
     ),
-    E2(
+    E(
       title: 'Any corner' ,
       begin: AnyBoxDecoration(
         vertical: AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
@@ -110,7 +110,7 @@ List<Widget> examples() {
         innerBottomLeft: RoundedCorner(radius: 40),
       ),
     ),
-    E2(
+    E(
       title: 'Back+T+B' ,
       begin: AnyBoxDecoration(
           left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
@@ -129,7 +129,7 @@ List<Widget> examples() {
           corners: RoundedCorner(radius: 20)
       ),
     ),
-    E2(
+    E(
       title: 'Gradient' ,
       begin: AnyBoxDecoration(
           sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
@@ -142,7 +142,7 @@ List<Widget> examples() {
           corners: BevelCorner(radius: 40)
       ),
     ),
-    E2(
+    E(
       title: 'Gradient HV' ,
       begin: AnyBoxDecoration(
           horizontal: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
@@ -157,7 +157,7 @@ List<Widget> examples() {
           corners: RoundedCorner(radius: 20)
       ),
     ),
-    E2(
+    E(
       title: 'Images' ,
       begin: AnyBoxDecoration(
           sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
@@ -180,7 +180,7 @@ List<Widget> examples() {
           borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))
       ),
       )),
-      E2(
+      E(
         title: 'BoxDecoration elliptical\nDiff when Outer' ,
         begin: AnyBoxDecoration(
             sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
@@ -195,7 +195,7 @@ List<Widget> examples() {
   ];
 
   final shadows = [
-    Header('Shadows'),
+    H('Shadows'),
     ...buildShadows(blurRadius: 10, colors: [greenL], images: []),
     ...buildShadows(blurRadius: 10, colors: [], images: [marbleBlue], spreadRadius: Offset(40, 40), corners: BevelCorner(radius: 30)),
   ];
@@ -207,7 +207,7 @@ List<Widget> examples() {
   ];
 }
 
-List<E2> buildShadows({
+List<E> buildShadows({
   required List<Color> colors,
   required List<DecorationImage> images,
   double blurRadius = 3.0,
@@ -222,7 +222,7 @@ List<E2> buildShadows({
   final endImage = images.lastOrNull;
 
   return [
-    E2(
+    E(
       title: 'Normal',
       begin: AnyBoxDecoration(
         sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
@@ -250,7 +250,7 @@ List<E2> buildShadows({
         ],
       ),
     ),
-    E2(
+    E(
       title: 'Inner',
       begin: AnyBoxDecoration(
         sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
@@ -280,7 +280,7 @@ List<E2> buildShadows({
         ],
       ),
     ),
-    E2(
+    E(
       title: 'Outer',
       begin: AnyBoxDecoration(
         sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
@@ -310,7 +310,7 @@ List<E2> buildShadows({
         ],
       ),
     ),
-    E2(
+    E(
       title: 'Solid',
       begin: AnyBoxDecoration(
         sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
@@ -487,13 +487,13 @@ const rowLimit = 4;
 const duration = Duration(milliseconds: 1000);
 const curve = Curves.easeInOut;
 
-const titleStyle = TextStyle(color: Colors.black45);
-const headerStyle = TextStyle(color: Colors.black54, fontSize: 24);
+const titleStyle = TextStyle(color: alpha99);
+const headerStyle = TextStyle(color: alpha99, fontSize: 24, fontWeight: FontWeight.w600);
 
-class Header extends StatelessWidget {
+class H extends StatelessWidget {
 
   final String title;
-  const Header(this.title);
+  const H(this.title);
 
   @override
   Widget build(BuildContext context) =>
@@ -537,23 +537,8 @@ class _ExamplePage extends StatefulWidget {
 }
 
 class _ExamplePageState extends State<_ExamplePage> {
-  List<Widget> cache = [];
 
-  List<Widget> buildExamples() {
-
-    if (cache.isNotEmpty) return cache;
-
-    // if (cache.isEmpty) {
-    //   final decorations = generator.build();
-    //   for (int i = 0; i < decorations.length; i++) {
-    //     final el = decorations[i];
-    //     cache.add(E1(title: '#$i ${el.$1}', decoration: el.$2));
-    //   }
-    //   return cache;
-    // }
-
-    return cache = examples();
-  }
+  static late final List<Widget> _examples = examples();
 
   Widget row(List<Widget> children) {
     return Padding(padding: EdgeInsets.only(bottom: spacing * 0.75), child: Row(
@@ -567,7 +552,7 @@ class _ExamplePageState extends State<_ExamplePage> {
   @override
   Widget build(BuildContext context) {
 
-    final ex = buildExamples();
+    final ex = _examples;
 
     List<Widget> children = [];
     List<Widget> row = [];
@@ -580,7 +565,7 @@ class _ExamplePageState extends State<_ExamplePage> {
     }
 
     for (var e in ex) {
-      if (e is Header) {
+      if (e is H) {
         flush();
         children.add(e);
       } else {
@@ -610,53 +595,12 @@ class _ExamplePageState extends State<_ExamplePage> {
   }
 }
 
-
-class E1 extends StatelessWidget {
-  final bool border;
-  final String title;
-  final AnyDecoration decoration;
-
-  const E1({
-    super.key,
-    required this.title,
-    required this.decoration,
-    this.border = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Widget result = Container(
-      constraints: constraints,
-      decoration: decoration,
-      child: Center(child: Text(title, style: titleStyle)),
-    );
-
-    if (border) {
-      result = Stack(
-        children: [
-          result,
-          Positioned(
-            child: Container(
-              constraints: constraints,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black12),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return result;
-  }
-}
-
-class E2 extends StatefulWidget {
+class E extends StatefulWidget {
   final String title;
   final AnyDecoration begin;
   final AnyDecoration end;
 
-  const E2({
+  const E({
     super.key,
     required this.title,
     required this.begin,
@@ -664,10 +608,10 @@ class E2 extends StatefulWidget {
   });
 
   @override
-  State<E2> createState() => _E2State();
+  State<E> createState() => _EState();
 }
 
-class _E2State extends State<E2> with SingleTickerProviderStateMixin {
+class _EState extends State<E> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;
   late AnyDecorationTween _tween;
@@ -690,7 +634,7 @@ class _E2State extends State<E2> with SingleTickerProviderStateMixin {
   }
 
   @override
-  void didUpdateWidget(covariant E2 oldWidget) {
+  void didUpdateWidget(covariant E oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.begin != widget.begin || oldWidget.end != widget.end) {
