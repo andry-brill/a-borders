@@ -1,5 +1,5 @@
 name: any_borders
-description: Borders of any shape, fill, align, and shadows
+description: A unified way to create shapes with non-uniform borders and fills, along with customizable alignment, corners, and shadows.
 
 topics:
   - border
@@ -16,7 +16,7 @@ screenshots:
   - description: 'any-borders examples'
     path: example/web/screenshot.png
 
-version: 1.0.0
+version: 1.0.1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

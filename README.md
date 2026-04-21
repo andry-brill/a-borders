@@ -1,15 +1,17 @@
 ## any_borders
 
-> Borders of **any** shape, fill, align, and shadows.
+> A unified way to create shapes with non-uniform borders and fills, along with customizable alignment, corners, and shadows.
 
 ![App Screenshot](https://raw.githubusercontent.com/andry-brill/a-borders/main/example/web/screenshot.png)
 
-`any_borders` is a Flutter decoration package to build a decoration from contour
+`any_borders` is a Flutter package to build a decoration from contour
 points, side definitions, corner strategies, fills, backgrounds, and shadows.
 The same fill model is shared by sides, backgrounds, and shadows, so borders can
 use solid colors, gradients, images, or combinations of them.
 
-The central idea is:
+> You might also like my other package: [any_sparklines](https://pub.dev/packages/any_sparklines) 
+
+## Central idea
 
 - `AnyDecoration` defines a contour by returning a list of `AnyPoint`s.
 - Each `AnyPoint` carries an outer corner, an optional inner corner, and the
