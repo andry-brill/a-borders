@@ -16,7 +16,7 @@ screenshots:
   - description: 'any-borders examples'
     path: example/web/screenshot.png
 
-version: 1.1.1
+version: 1.1.2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

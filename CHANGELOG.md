@@ -1,4 +1,8 @@
 
+## 1.1.2
+
+* Added `offsetOutward` to `AnyTabDecoration` to choose between outward and inward tab offsets.
+
 ## 1.1.1
 
 * Added `AnyTabDecoration` extras decoration.

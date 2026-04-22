@@ -264,11 +264,14 @@ import 'package:any_borders/extras/any_tab_decoration.dart';
 ### AnyTabDecoration
 
 - `AnyTabDecoration` creates a tab-like contour configured through `AnyBoxBorder`. 
-- The tab insets are derived from the bottom corner extents instead of a separate
-offset.
+- The tab offsets are derived from the bottom corner extents instead of a
+separate offset.
+- `offsetOutward` defaults to `true`, so the lower tab expands outside the
+provided bounds. Set it to `false` to keep the tab inset inside the bounds.
 
 ```dart
 const AnyTabDecoration(
+  offsetOutward: true,
   border: AnyBoxBorder(
     corners: RoundedCorner(radius: 20),
   ),
