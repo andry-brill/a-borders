@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
@@ -6,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
+import 'any_decoration_cache.dart';
 import 'any_fill.dart';
 import 'any_shadow.dart';
 import 'any_utils.dart';
@@ -1165,41 +1165,7 @@ class AnyRegions {
   }
 }
 
-typedef DecorationCacheKey = (AnyDecoration, Size, TextDirection?);
-
-/// Small shared cache for contours.
-class IDecorationCache {
-
-  static int limit = 1000;
-
-  static final LinkedHashMap<DecorationCacheKey, AnyContour> _contours =
-      LinkedHashMap<DecorationCacheKey, AnyContour>();
-
-  static AnyContour? get(DecorationCacheKey key) {
-    final contour = _contours[key];
-    if (contour == null) return null;
-
-    _contours.remove(key);
-    _contours[key] = contour;
-    return contour;
-  }
-
-  static void put(DecorationCacheKey key, AnyContour contour) {
-    _contours.remove(key);
-    _contours[key] = contour;
-
-    while (_contours.length > limit) {
-      _contours.remove(_contours.keys.first);
-    }
-  }
-
-  static void clear() {
-    _contours.clear();
-  }
-}
-
 class AnyContour {
-
   // Decoration options
   final AnyShapeBase shadowBase;
   final AnyShapeBase clipBase;
@@ -2091,11 +2057,10 @@ abstract class AnyDecoration extends Decoration {
   }
 
   AnyContour buildContour(Size size, TextDirection? textDirection) {
-
-    late final DecorationCacheKey key;
+    late final AnyDecorationCacheKey key;
     if (enableCache) {
       key = (this, size, textDirection);
-      final cached = IDecorationCache.get(key);
+      final cached = AnyDecorationCache.get(key);
       if (cached != null) {
         return cached;
       }
@@ -2112,7 +2077,7 @@ abstract class AnyDecoration extends Decoration {
     );
 
     if (enableCache) {
-      IDecorationCache.put(key, contour);
+      AnyDecorationCache.put(key, contour);
     }
     return contour;
   }

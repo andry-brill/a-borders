@@ -1,5 +1,7 @@
 ## any_borders
 
+[![Tests](https://github.com/andry-brill/a-borders/actions/workflows/test.yml/badge.svg)](https://github.com/andry-brill/a-borders/actions/workflows/test.yml)
+
 > A unified way to create shapes with non-uniform borders and fills, along with customizable alignment, corners, and shadows.
 
 ![App Screenshot](https://raw.githubusercontent.com/andry-brill/a-borders/main/example/web/screenshot.png)
