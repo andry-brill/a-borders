@@ -1107,12 +1107,19 @@ class AnyPoint {
   /// Side painted from this point to the next contour point.
   final AnySide side;
 
+  /// Whether this point should be ignored when building the contour geometry.
+  ///
+  /// This lets decorations keep a stable point list for interpolation while
+  /// avoiding zero-length sides when a point collapses onto a neighbor.
+  final bool skip;
+
   /// Creates a contour point with explicit geometry and side data.
   const AnyPoint({
     required this.outer,
     this.inner,
     required this.point,
     required this.side,
+    this.skip = false,
   });
 
   /// Linearly interpolates two point lists for [AnyDecorationTween].
@@ -1139,6 +1146,7 @@ class AnyPoint {
         outer: AnyCorner.lerp(pa.outer, pb.outer, t),
         inner: lerpInner(pa.inner, pb.inner),
         side: AnySide.lerp(pa.side, pb.side, t),
+        skip: AnyUtils.pickLerp(pa.skip, pb.skip, t),
       );
     }, growable: false);
   }
@@ -1179,10 +1187,11 @@ class AnyContour {
     required this.shadowBase,
     required List<AnyPoint> points,
   }) {
-    if (points.length < 3) {
+    final contourPoints = _withoutSkippedPoints(points);
+    if (contourPoints.length < 3) {
       throw ArgumentError('At least 3 points are required to build a contour.');
     }
-    _prepare(points);
+    _prepare(contourPoints);
   }
 
   int count = 0;
@@ -1278,6 +1287,20 @@ class AnyContour {
       AnyShapeBase.outerBorder => -sideOutsideOffset[sideIndex],
       AnyShapeBase.innerBorder => sideInsideOffset[sideIndex],
     };
+  }
+
+  List<AnyPoint> _withoutSkippedPoints(List<AnyPoint> points) {
+    var hasSkipped = false;
+    for (final point in points) {
+      if (point.skip) {
+        hasSkipped = true;
+        break;
+      }
+    }
+
+    if (!hasSkipped) return points;
+
+    return points.where((point) => !point.skip).toList(growable: false);
   }
 
   (double, double) sharpCornerPoint(
@@ -2026,12 +2049,14 @@ abstract class AnyDecoration extends Decoration {
     AnyCorner? outer,
     AnyCorner? inner,
     AnySide? side,
+    bool skip = false,
   }) {
     return AnyPoint(
       point: point,
       outer: outer ?? border.corners,
       inner: inner ?? border.innerCorners,
       side: side ?? border.sides,
+      skip: skip,
     );
   }
 

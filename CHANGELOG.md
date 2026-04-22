@@ -1,4 +1,10 @@
 
+## 1.1.1
+
+* Added `AnyTabDecoration` extras decoration.
+* Added skipped contour points so decorations can keep stable point lists while avoiding collapsed zero-length sides.
+* Updated README with extras import guidance and a simpler custom decoration example.
+
 ## 1.1.0
 
 * Migrated `AnyDecoration` to use a single `AnyBorder`.

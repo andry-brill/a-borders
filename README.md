@@ -215,55 +215,66 @@ when borders move inward or outward:
 ## Custom Decorations
 
 Create a custom decoration by extending `AnyDecoration` and returning contour
-points from `buildPoints`. The example app includes this `TabDecoration`:
+points from `buildPoints`. This diamond uses the centers of each side:
 
 ```dart
-class TabDecoration extends AnyDecoration {
-  final double offset;
-
-  final AnyCorner top;
-  final AnyCorner? topInner;
-
-  const TabDecoration({
+class DiamondDecoration extends AnyDecoration {
+  const DiamondDecoration({
     super.background,
     super.border,
-    required this.top,
-    this.topInner,
-    required this.offset,
-  }) : assert(offset > 0.0);
+  });
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-    final c = top.copyWith(p: offset, n: offset);
-    final xL = bounds.left + offset;
-    final xR = bounds.right - offset;
-
     return [
-      point(bounds.bottomLeft),
-      point(Offset(xL, bounds.bottom), outer: c, inner: c),
-      point(Offset(xL, bounds.top), outer: top, inner: topInner),
-      point(Offset(xR, bounds.top), outer: top, inner: topInner),
-      point(Offset(xR, bounds.bottom), outer: c, inner: c),
-      point(bounds.bottomRight),
+      point(bounds.topCenter),
+      point(bounds.centerRight),
+      point(bounds.bottomCenter),
+      point(bounds.centerLeft),
     ];
   }
 
   @override
   bool operator ==(Object other) {
-    return other is TabDecoration &&
-        other.offset == offset &&
-        other.top == top &&
-        other.topInner == topInner &&
-        super == other;
+    return other is DiamondDecoration && super == other;
   }
 
   @override
-  int get hashCode => Object.hash(super.hashCode, offset, top, topInner);
+  int get hashCode => Object.hash(super.hashCode, DiamondDecoration);
 }
 ```
 
 Custom `AnyDecoration` subclasses should override `operator ==` and `hashCode`
 for every field they add. Contour caching depends on decoration equality.
+
+## Extras
+
+Extras are ready-made decorations that may be useful, but are not exported by
+`package:any_borders/any_borders.dart`. Import them manually through the extras
+barrel or by importing a specific file:
+
+```dart
+import 'package:any_borders/any_extras.dart';
+```
+
+```dart
+import 'package:any_borders/extras/any_tab_decoration.dart';
+```
+
+### AnyTabDecoration
+
+- `AnyTabDecoration` creates a tab-like contour configured through `AnyBoxBorder`. 
+- The tab insets are derived from the bottom corner extents instead of a separate
+offset.
+
+```dart
+const AnyTabDecoration(
+  border: AnyBoxBorder(
+    corners: RoundedCorner(radius: 20),
+  ),
+  background: AnyBackground(color: Color(0xFF85AEA8)),
+)
+```
 
 > Warning: contour corners with angles of `0`, `180`, or `360` degrees are
 > currently unstable. Their behavior may change in future versions.

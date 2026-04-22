@@ -1,4 +1,6 @@
 import 'package:any_borders/any_borders.dart';
+import 'package:any_borders/extras/any_tab_decoration.dart';
+
 import 'package:flutter/material.dart';
 
 List<Widget> examples() {
@@ -174,15 +176,13 @@ List<Widget> examples() {
     H('Custom'),
     E(
       title: 'Tab',
-      begin: TabDecoration(
-        offset: 30,
+      begin: AnyTabDecoration(
         background: AnyBackground(color: greenL),
-        top: RoundedCorner(radius: 30),
+        border: AnyBoxBorder(corners: RoundedCorner(radius: 30)),
       ),
-      end: TabDecoration(
-        offset: 20,
-        background: AnyBackground(color: greenL),
-        top: BevelCorner(radius: 20),
+      end: AnyTabDecoration(
+        background: AnyBackground(color: greenD),
+        border: AnyBoxBorder(corners: BevelCorner(radius: 20)),
       ),
     ),
     E(
@@ -344,48 +344,6 @@ List<E> buildShadows(
   ];
 }
 
-class TabDecoration extends AnyDecoration {
-  final double offset;
-
-  final AnyCorner top;
-  final AnyCorner? topInner;
-
-  const TabDecoration(
-      {super.background,
-      super.border,
-      required this.top,
-      this.topInner,
-      required this.offset})
-      : assert(offset > 0.0);
-
-  @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-    final c = top.copyWith(p: offset, n: offset);
-    final xL = bounds.left + offset;
-    final xR = bounds.right - offset;
-
-    return [
-      point(bounds.bottomLeft),
-      point(Offset(xL, bounds.bottom), outer: c, inner: c),
-      point(Offset(xL, bounds.top), outer: top, inner: topInner),
-      point(Offset(xR, bounds.top), outer: top, inner: topInner),
-      point(Offset(xR, bounds.bottom), outer: c, inner: c),
-      point(bounds.bottomRight),
-    ];
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is TabDecoration &&
-        other.offset == offset &&
-        other.top == top &&
-        other.topInner == topInner &&
-        super == other;
-  }
-
-  @override
-  int get hashCode => Object.hash(super.hashCode, offset, top, topInner);
-}
 
 enum CrownType {
   flat(0, 0.5, greenL, greenD),
