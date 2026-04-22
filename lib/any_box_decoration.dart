@@ -2,11 +2,15 @@ import 'dart:ui';
 
 import 'package:any_borders/any_contour.dart';
 
-/// Rectangular [AnyDecoration] with independent side and corner overrides.
-class AnyBoxDecoration extends AnyDecoration {
-  /// Default corner used by boxes when no corner is supplied.
-  static const AnyCorner cornersBase = RoundedCorner();
+enum AnyBoxShape {
+  rectangle,
+  square,
+  circle,
+  pill,
+}
 
+/// Rectangular border with independent side and corner overrides.
+class AnyBoxBorder extends AnyBorder {
   /// Side used for the left edge.
   final AnySide? left;
 
@@ -49,14 +53,9 @@ class AnyBoxDecoration extends AnyDecoration {
   /// Inner corner used at the bottom-left point.
   final AnyCorner? innerBottomLeft;
 
-  const AnyBoxDecoration({
+  const AnyBoxBorder({
     double? ratio,
-    bool circle = false,
-    super.shadows,
-    super.clipBase,
-    super.shadowBase,
-    super.background,
-    super.enableCache,
+    AnyBoxShape shape = AnyBoxShape.rectangle,
     AnyCorner? corners,
     super.innerCorners,
     super.sides,
@@ -75,43 +74,19 @@ class AnyBoxDecoration extends AnyDecoration {
     this.innerBottomRight,
     this.innerBottomLeft,
   }) : super(
-          corners: circle ? const RoundedCorner.infinity() : corners,
-          ratio: circle ? 1.0 : ratio,
+          corners: shape == AnyBoxShape.circle || shape == AnyBoxShape.pill
+              ? const RoundedCorner.infinity()
+              : corners,
+          ratio: shape == AnyBoxShape.circle || shape == AnyBoxShape.square
+              ? 1.0
+              : ratio,
         );
-
-  @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
-        point(
-          bounds.topLeft,
-          outer: topLeft,
-          inner: innerTopLeft,
-          side: top ?? horizontal,
-        ),
-        point(
-          bounds.topRight,
-          outer: topRight,
-          inner: innerTopRight,
-          side: right ?? vertical,
-        ),
-        point(
-          bounds.bottomRight,
-          outer: bottomRight,
-          inner: innerBottomRight,
-          side: bottom ?? horizontal,
-        ),
-        point(
-          bounds.bottomLeft,
-          outer: bottomLeft,
-          inner: innerBottomLeft,
-          side: left ?? vertical,
-        ),
-      ];
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is AnyBoxDecoration &&
+    return other is AnyBoxBorder &&
         other.left == left &&
         other.top == top &&
         other.right == right &&
@@ -147,4 +122,58 @@ class AnyBoxDecoration extends AnyDecoration {
         innerBottomRight,
         innerBottomLeft,
       );
+}
+
+/// Rectangular [AnyDecoration] with independent side and corner overrides.
+class AnyBoxDecoration extends AnyDecoration {
+  const AnyBoxDecoration({
+    AnyBoxBorder border = const AnyBoxBorder(),
+    super.shadows,
+    super.clipBase,
+    super.shadowBase,
+    super.background,
+    super.enableCache,
+  }) : super(border: border);
+
+  @override
+  AnyBoxBorder get border => super.border as AnyBoxBorder;
+
+  @override
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
+        point(
+          bounds.topLeft,
+          outer: border.topLeft,
+          inner: border.innerTopLeft,
+          side: border.top ?? border.horizontal,
+        ),
+        point(
+          bounds.topRight,
+          outer: border.topRight,
+          inner: border.innerTopRight,
+          side: border.right ?? border.vertical,
+        ),
+        point(
+          bounds.bottomRight,
+          outer: border.bottomRight,
+          inner: border.innerBottomRight,
+          side: border.bottom ?? border.horizontal,
+        ),
+        point(
+          bounds.bottomLeft,
+          outer: border.bottomLeft,
+          inner: border.innerBottomLeft,
+          side: border.left ?? border.vertical,
+        ),
+      ];
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is AnyBoxDecoration && super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, AnyBoxDecoration);
+
 }

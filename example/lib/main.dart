@@ -7,133 +7,132 @@ List<Widget> examples() {
     E(
       title: 'Any align/width\nLTRB(in:center:out:center)',
       begin: AnyBoxDecoration(
-          left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
-          top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-          right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
-          bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 10),
-          innerCorners: RoundedCorner(radius: 10),
+          border: AnyBoxBorder(
+              left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
+              top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+              right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+              bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
+              corners: RoundedCorner(radius: 10),
+              innerCorners: RoundedCorner(radius: 10)),
           background: AnyBackground(color: greenL)),
       end: AnyBoxDecoration(
-          left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
-          top: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-          right: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-          bottom:
-              AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
-          corners: RoundedCorner(radius: 10),
-          innerCorners: RoundedCorner(radius: 10),
+          border: AnyBoxBorder(
+              left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
+              top: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              right: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+              bottom: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+              corners: RoundedCorner(radius: 10),
+              innerCorners: RoundedCorner(radius: 10)),
           background: AnyBackground(color: greenL)),
     ),
     E(
       title: 'No horizontal',
       begin: AnyBoxDecoration(
-        vertical:
-            AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
-        horizontal: AnySide(color: greenL, align: AnySide.alignInside),
-        corners: RoundedCorner(radius: 30),
-        innerCorners: RoundedCorner(radius: 30),
+        border: AnyBoxBorder(
+            vertical: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+            horizontal: AnySide(color: greenL, align: AnySide.alignInside),
+            corners: RoundedCorner(radius: 30),
+            innerCorners: RoundedCorner(radius: 30)),
       ),
       end: AnyBoxDecoration(
-        vertical:
-            AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
-        horizontal: AnySide(color: greenL, align: AnySide.alignInside),
-        corners: RoundedCorner(radius: 20),
-        innerCorners: RoundedCorner(radius: 20),
+        border: AnyBoxBorder(
+            vertical: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+            horizontal: AnySide(color: greenL, align: AnySide.alignInside),
+            corners: RoundedCorner(radius: 20),
+            innerCorners: RoundedCorner(radius: 20)),
       ),
     ),
     E(
       title: 'Any corner',
       begin: AnyBoxDecoration(
-        vertical:
-            AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
-        horizontal:
-            AnySide(color: greenL, width: 20, align: AnySide.alignInside),
-        topLeft: RoundedCorner(radius: 2),
-        innerTopLeft: BevelCorner(radius: 30),
-        topRight: InverseRoundedCorner(radius: 20),
-        innerTopRight: BevelCorner(radius: 10),
-        bottomRight: BevelCorner(radius: 20),
-        innerBottomRight: RoundedCorner(radius: 40),
-        bottomLeft: InverseRoundedCorner(radius: 20),
-        innerBottomLeft: RoundedCorner(radius: 2),
+        border: AnyBoxBorder(
+            vertical: AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
+            horizontal: AnySide(color: greenL, width: 20, align: AnySide.alignInside),
+            topLeft: RoundedCorner(radius: 2),
+            innerTopLeft: BevelCorner(radius: 30),
+            topRight: InverseRoundedCorner(radius: 20),
+            innerTopRight: BevelCorner(radius: 10),
+            bottomRight: BevelCorner(radius: 20),
+            innerBottomRight: RoundedCorner(radius: 40),
+            bottomLeft: InverseRoundedCorner(radius: 20),
+            innerBottomLeft: RoundedCorner(radius: 2)),
       ),
       end: AnyBoxDecoration(
-        vertical:
-            AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
-        horizontal:
-            AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
-        topLeft: RoundedCorner(radius: 2),
-        innerTopLeft: BevelCorner(radius: 30),
-        topRight: InverseRoundedCorner(radius: 20),
-        innerTopRight: BevelCorner(radius: 30),
-        bottomRight: BevelCorner(radius: 20),
-        innerBottomRight: RoundedCorner(radius: 40),
-        bottomLeft: InverseRoundedCorner(radius: 20),
-        innerBottomLeft: RoundedCorner(radius: 40),
+        border: AnyBoxBorder(
+            vertical: AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
+            horizontal: AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
+            topLeft: RoundedCorner(radius: 2),
+            innerTopLeft: BevelCorner(radius: 30),
+            topRight: InverseRoundedCorner(radius: 20),
+            innerTopRight: BevelCorner(radius: 30),
+            bottomRight: BevelCorner(radius: 20),
+            innerBottomRight: RoundedCorner(radius: 40),
+            bottomLeft: InverseRoundedCorner(radius: 20),
+            innerBottomLeft: RoundedCorner(radius: 40)),
       ),
     ),
     E(
       title: 'Back+T+B',
       begin: AnyBoxDecoration(
-          left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-          top: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
-          right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-          bottom:
-              AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
-          background: AnyBackground(color: greenL),
-          corners: RoundedCorner(radius: 50)),
+          border: AnyBoxBorder(
+              left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              top: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
+              right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              bottom: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
+              corners: RoundedCorner(radius: 50)),
+          background: AnyBackground(color: greenL)),
       end: AnyBoxDecoration(
-          left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
-          top: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
-          right: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
-          bottom: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
-          background: AnyBackground(color: greenL),
-          corners: RoundedCorner(radius: 20)),
+          border: AnyBoxBorder(
+              left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+              top: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+              right: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+              bottom: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+              corners: RoundedCorner(radius: 20)),
+          background: AnyBackground(color: greenL)),
     ),
     E(
       title: 'Gradient',
       begin: AnyBoxDecoration(
-          sides: AnySide(
-              gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          background: AnyBackground(gradient: gradientBGL),
-          corners: RoundedCorner(radius: 30)),
+        border: AnyBoxBorder(
+            sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+            corners: RoundedCorner(radius: 30)),
+        background: AnyBackground(gradient: gradientBGL),
+      ),
       end: AnyBoxDecoration(
-          sides: AnySide(
-              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-          background: AnyBackground(gradient: gradientBG),
-          corners: BevelCorner(radius: 40)),
+        border: AnyBoxBorder(
+            sides: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+            corners: BevelCorner(radius: 40)),
+        background: AnyBackground(gradient: gradientBG),
+      ),
     ),
     E(
       title: 'Gradient HV',
       begin: AnyBoxDecoration(
-          horizontal: AnySide(
-              gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-          vertical: AnySide(
-              gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
-          corners: BevelCorner(radius: 30)),
+          border: AnyBoxBorder(
+              horizontal: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+              vertical: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
+              corners: BevelCorner(radius: 30))),
       end: AnyBoxDecoration(
-          left: AnySide(
-              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-          right: AnySide(
-              gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-          top: AnySide(
-              gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-          bottom: AnySide(
-              gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-          corners: RoundedCorner(radius: 20)),
+          border: AnyBoxBorder(
+              left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+              right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+              top: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+              bottom: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+              corners: RoundedCorner(radius: 20))),
     ),
     E(
       title: 'Images',
       begin: AnyBoxDecoration(
-          sides: AnySide(
-              image: marbleBlue, width: 20, align: AnySide.alignOutside),
-          background: AnyBackground(image: marbleGreen),
-          circle: true),
+        border: AnyBoxBorder(
+            sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+            shape: AnyBoxShape.circle),
+        background: AnyBackground(image: marbleGreen),
+      ),
       end: AnyBoxDecoration(
-          sides: AnySide(
-              image: marbleBlue, width: 20, align: AnySide.alignOutside),
-          background: AnyBackground(image: marbleGreen),
-          corners: BevelCorner(radius: double.infinity)),
+          border: AnyBoxBorder(
+              sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+              corners: BevelCorner(radius: double.infinity)),
+          background: AnyBackground(image: marbleGreen)),
     ),
     Stack(children: [
       SizedBox(
@@ -142,27 +141,20 @@ List<Widget> examples() {
           child: DecoratedBox(
             decoration: BoxDecoration(
                 border: Border.symmetric(
-                    horizontal: BorderSide(
-                        width: 20,
-                        color: alpha33,
-                        strokeAlign: AnySide.alignOutside),
-                    vertical: BorderSide(
-                        width: 20,
-                        color: alpha33,
-                        strokeAlign: AnySide.alignOutside)),
-                borderRadius: BorderRadiusGeometry.only(
-                    topLeft: Radius.elliptical(80, 40))),
+                    horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside),
+                    vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)),
+                borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))),
           )),
       E(
         title: 'BoxDecoration elliptical\nDiff when Outer',
         begin: AnyBoxDecoration(
-            sides:
-                AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
-            topLeft: RoundedCorner.elliptical(n: 80, p: 40)),
+            border: AnyBoxBorder(
+                sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
+                topLeft: RoundedCorner.elliptical(n: 80, p: 40))),
         end: AnyBoxDecoration(
-            sides:
-                AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
-            topLeft: RoundedCorner.elliptical(n: 80, p: 40)),
+            border: AnyBoxBorder(
+                sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
+                topLeft: RoundedCorner.elliptical(n: 80, p: 40))),
       ),
     ]),
   ];
@@ -197,11 +189,11 @@ List<Widget> examples() {
       title: 'Crown',
       begin: CrownDecoration(
         type: CrownType.flat,
-        corners: BevelCorner(radius: 20),
+        border: AnyBorder(corners: BevelCorner(radius: 20)),
       ),
       end: CrownDecoration(
         type: CrownType.spike,
-        corners: RoundedCorner(radius: 20),
+        border: AnyBorder(corners: RoundedCorner(radius: 20)),
       ),
     ),
   ];
@@ -226,8 +218,9 @@ List<E> buildShadows(
     E(
       title: 'Normal',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             color: beginColor,
@@ -238,8 +231,9 @@ List<E> buildShadows(
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             color: endColor,
@@ -254,8 +248,9 @@ List<E> buildShadows(
     E(
       title: 'Inner',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -267,8 +262,9 @@ List<E> buildShadows(
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -284,8 +280,9 @@ List<E> buildShadows(
     E(
       title: 'Outer',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,
@@ -297,8 +294,9 @@ List<E> buildShadows(
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,
@@ -314,8 +312,9 @@ List<E> buildShadows(
     E(
       title: 'Solid',
       begin: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.solid,
@@ -327,8 +326,9 @@ List<E> buildShadows(
         ],
       ),
       end: AnyBoxDecoration(
-        sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-        corners: corners,
+        border: AnyBoxBorder(
+            sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
+            corners: corners),
         shadows: [
           AnyShadow(
             style: BlurStyle.solid,
@@ -352,7 +352,7 @@ class TabDecoration extends AnyDecoration {
 
   const TabDecoration(
       {super.background,
-      super.sides,
+      super.border,
       required this.top,
       this.topInner,
       required this.offset})
@@ -402,7 +402,7 @@ class CrownDecoration extends AnyDecoration {
 
   const CrownDecoration({
     super.background,
-    super.corners,
+    super.border,
     required this.type,
   });
 

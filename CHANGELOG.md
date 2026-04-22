@@ -1,4 +1,11 @@
 
+## 1.1.0
+
+* Migrated `AnyDecoration` to use a single `AnyBorder`.
+* Migrated `AnyBoxDecoration` to configure sides, corners, ratio, and shape
+  through `AnyBoxBorder`.
+* Updated examples and documentation for the new border API.
+
 ## 1.0.1
 
 * Updated README.md

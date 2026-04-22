@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:flutter/animation.dart';
@@ -36,28 +35,28 @@ class _TweenDecoration extends AnyDecoration {
     required this.endDecoration,
     required this.t,
   }) : super(
-    background: AnyBackground.lerp(
-      beginDecoration.background,
-      endDecoration.background,
-      t,
-    ),
-    shadows: AnyShadow.lerpList(
-      beginDecoration.shadows,
-      endDecoration.shadows,
-      t,
-    ),
-    clipBase: AnyUtils.pickLerp(
-      beginDecoration.clipBase,
-      endDecoration.clipBase,
-      t,
-    ),
-    shadowBase: AnyUtils.pickLerp(
-      beginDecoration.shadowBase,
-      endDecoration.shadowBase,
-      t,
-    ),
-    enableCache: false,
-  );
+          background: AnyBackground.lerp(
+            beginDecoration.background,
+            endDecoration.background,
+            t,
+          ),
+          shadows: AnyShadow.lerpList(
+            beginDecoration.shadows,
+            endDecoration.shadows,
+            t,
+          ),
+          clipBase: AnyUtils.pickLerp(
+            beginDecoration.clipBase,
+            endDecoration.clipBase,
+            t,
+          ),
+          shadowBase: AnyUtils.pickLerp(
+            beginDecoration.shadowBase,
+            endDecoration.shadowBase,
+            t,
+          ),
+          enableCache: false,
+        );
 
   double _effectiveRatio(Size size, double? ratio) {
     if (ratio != null && ratio > 0.0) {
@@ -73,8 +72,8 @@ class _TweenDecoration extends AnyDecoration {
 
   @override
   Rect fitRatio(Size size, double? ratio) {
-    final beginRatio = _effectiveRatio(size, beginDecoration.ratio);
-    final endRatio = _effectiveRatio(size, endDecoration.ratio);
+    final beginRatio = _effectiveRatio(size, beginDecoration.border.ratio);
+    final endRatio = _effectiveRatio(size, endDecoration.border.ratio);
     final lRatio = lerpDouble(beginRatio, endRatio, t)!;
     return super.fitRatio(size, lRatio);
   }
@@ -99,9 +98,9 @@ class _TweenDecoration extends AnyDecoration {
 
   @override
   int get hashCode => Object.hash(
-    super.hashCode,
-    beginDecoration,
-    endDecoration,
-    t,
-  );
+        super.hashCode,
+        beginDecoration,
+        endDecoration,
+        t,
+      );
 }

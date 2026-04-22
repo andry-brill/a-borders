@@ -14,12 +14,9 @@ use solid colors, gradients, images, or combinations of them.
 ## Central idea
 
 - `AnyDecoration` defines a contour by returning a list of `AnyPoint`s.
-- Each `AnyPoint` carries an outer corner, an optional inner corner, and the
-  `AnySide` painted until the next point.
-- `AnyBoxDecoration` is the ready-to-use rectangular implementation for common
-  UI work.
-- `AnyFill` is the shared color / gradient / image contract used by sides,
-  backgrounds, and shadows.
+- `AnyPoint` carries an outer corner, an optional inner corner, and the `AnySide` painted until the next point.
+- `AnyBorder` used by `point(...)`  for side, outer-corner, inner-corner, and ratio defaults.
+- `AnyFill` is the shared color / gradient / image contract used by sides, backgrounds, and shadows.
 
 ## Quick Start
 
@@ -28,13 +25,15 @@ Container(
   width: 180,
   height: 96,
   decoration: const AnyBoxDecoration(
-    sides: AnySide(
-      color: Color(0xFF2E685F),
-      width: 12,
-      align: AnySide.alignCenter,
+    border: AnyBoxBorder(
+      sides: AnySide(
+        color: Color(0xFF2E685F),
+        width: 12,
+        align: AnySide.alignCenter,
+      ),
+      corners: RoundedCorner(radius: 24),
     ),
     background: AnyBackground(color: Color(0xFF85AEA8)),
-    corners: RoundedCorner(radius: 24),
   ),
 )
 ```
@@ -96,9 +95,18 @@ behavior.
 ## AnyBoxDecoration
 
 `AnyBoxDecoration` is the rectangular decoration most apps should start with.
-It extends `AnyDecoration` and creates four contour points for a box.
+It extends `AnyDecoration` and creates four contour points for a box. Border
+geometry is configured through `border: AnyBoxBorder(...)`.
 
 Useful fields:
+
+- `border`: side, corner, inner-corner, ratio, and shape configuration.
+- `background`: fill behind the side regions.
+- `shadows`: shadows painted from the configured contour.
+- `clipBase`: contour band returned by `getClipPath`.
+- `shadowBase`: contour band used as the source path for shadows.
+
+Useful `AnyBoxBorder` fields:
 
 - `sides`: default side for all edges.
 - `left`, `top`, `right`, `bottom`: per-edge overrides.
@@ -110,25 +118,38 @@ Useful fields:
 - `innerCorners`: default inner corner.
 - `innerTopLeft`, `innerTopRight`, `innerBottomRight`, `innerBottomLeft`:
   per-corner inner overrides.
-- `background`: fill behind the side regions.
-- `shadows`: shadows painted from the configured contour.
 - `ratio`: optional width / height ratio used to fit the decoration inside the
   paint bounds.
-- `circle`: convenience flag that uses an infinite rounded corner and a `1.0`
-  ratio.
+- `shape`: convenience setting for `rectangle`, `square`, `circle`, or `pill`.
 
 Example with independent side widths:
 
 ```dart
 const AnyBoxDecoration(
-  left: AnySide(color: Color(0xFF2E685F), width: 8),
-  top: AnySide(color: Color(0xFF2E685F), width: 16),
-  right: AnySide(color: Color(0xFF2E685F), width: 24),
-  bottom: AnySide(color: Color(0xFF2E685F), width: 32),
-  corners: RoundedCorner(radius: 20),
+  border: AnyBoxBorder(
+    left: AnySide(color: Color(0xFF2E685F), width: 8),
+    top: AnySide(color: Color(0xFF2E685F), width: 16),
+    right: AnySide(color: Color(0xFF2E685F), width: 24),
+    bottom: AnySide(color: Color(0xFF2E685F), width: 32),
+    corners: RoundedCorner(radius: 20),
+  ),
   background: AnyBackground(color: Color(0xFF85AEA8)),
 )
 ```
+
+## AnyBorder
+
+`AnyBorder` groups the border defaults shared by all `AnyDecoration`
+subclasses:
+
+- `sides`: default side for generated points.
+- `corners`: default outer corner for generated points.
+- `innerCorners`: optional default inner corner for generated points.
+- `ratio`: optional width / height ratio used to fit the contour inside the
+  paint bounds.
+
+Custom decoration subclasses can accept `super.border` and continue to call
+`point(...)`; missing point-specific values are resolved from `border`.
 
 ## AnySide
 
@@ -203,7 +224,7 @@ class TabDecoration extends AnyDecoration {
 
   const TabDecoration({
     super.background,
-    super.sides,
+    super.border,
     required this.top,
     this.topInner,
     required this.offset,

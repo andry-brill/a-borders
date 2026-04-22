@@ -1165,33 +1165,28 @@ class AnyRegions {
   }
 }
 
+typedef DecorationCacheKey = (AnyDecoration, Size, TextDirection?);
+
 /// Small shared cache for contours.
-///
-/// Keyed by decoration instance. The cached contour is reusable only if its
-/// local size and text direction still match.
 class IDecorationCache {
+
   static int limit = 1000;
 
-  static final LinkedHashMap<AnyDecoration, AnyContour> _contours =
-      LinkedHashMap<AnyDecoration, AnyContour>();
+  static final LinkedHashMap<DecorationCacheKey, AnyContour> _contours =
+      LinkedHashMap<DecorationCacheKey, AnyContour>();
 
-  static AnyContour? get(
-    AnyDecoration decoration,
-    Size size,
-    TextDirection? textDirection,
-  ) {
-    final contour = _contours[decoration];
+  static AnyContour? get(DecorationCacheKey key) {
+    final contour = _contours[key];
     if (contour == null) return null;
-    if (!contour.canReuseFor(size, textDirection)) return null;
 
-    _contours.remove(decoration);
-    _contours[decoration] = contour;
+    _contours.remove(key);
+    _contours[key] = contour;
     return contour;
   }
 
-  static void put(AnyDecoration decoration, AnyContour contour) {
-    _contours.remove(decoration);
-    _contours[decoration] = contour;
+  static void put(DecorationCacheKey key, AnyContour contour) {
+    _contours.remove(key);
+    _contours[key] = contour;
 
     while (_contours.length > limit) {
       _contours.remove(_contours.keys.first);
@@ -1204,9 +1199,6 @@ class IDecorationCache {
 }
 
 class AnyContour {
-  // Options that uses in cache to check that contour could be re-used
-  final Size size;
-  final TextDirection? textDirection;
 
   // Decoration options
   final AnyShapeBase shadowBase;
@@ -1215,8 +1207,6 @@ class AnyContour {
   final AnyFill? background;
 
   AnyContour({
-    required this.size,
-    required this.textDirection,
     required this.background,
     required this.backgroundBase,
     required this.clipBase,
@@ -1227,10 +1217,6 @@ class AnyContour {
       throw ArgumentError('At least 3 points are required to build a contour.');
     }
     _prepare(points);
-  }
-
-  bool canReuseFor(Size otherSize, TextDirection? otherTextDirection) {
-    return size == otherSize && textDirection == otherTextDirection;
   }
 
   int count = 0;
@@ -1982,6 +1968,50 @@ class AnyContour {
   }
 }
 
+/// Base class for borders built for [AnyDecoration].
+class AnyBorder {
+  /// Default side used by [point] when no point-specific side is provided.
+  final AnySide sides;
+
+  /// Default outer corner used by [point] when no point-specific corner is provided.
+  final AnyCorner corners;
+
+  /// Default inner corner used by [point] when no point-specific corner is provided.
+  final AnyCorner? innerCorners;
+
+  /// Optional width / height ratio used to fit the contour inside the paint size.
+  final double? ratio;
+
+  const AnyBorder({
+    AnySide? sides,
+    AnyCorner? corners,
+    this.innerCorners,
+    this.ratio,
+  })  : sides = sides ?? const AnySide(),
+        corners = corners ?? const RoundedCorner();
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is AnyBorder &&
+        other.runtimeType == runtimeType &&
+        other.ratio == ratio &&
+        other.sides == sides &&
+        other.corners == corners &&
+        other.innerCorners == innerCorners;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        ratio,
+        sides,
+        corners,
+        innerCorners,
+      );
+}
+
 /// Base class for decorations built from arbitrary contour points.
 ///
 /// Subclasses define their geometry by overriding [buildPoints]. They must also
@@ -2000,14 +2030,8 @@ abstract class AnyDecoration extends Decoration {
   /// Fill painted behind side regions.
   final AnyBackground? background;
 
-  /// Default side used by [point] when no point-specific side is provided.
-  final AnySide sides;
-
-  /// Default outer corner used by [point] when no point-specific corner is provided.
-  final AnyCorner corners;
-
-  /// Default inner corner used by [point] when no point-specific corner is provided.
-  final AnyCorner? innerCorners;
+  /// Border defaults used by [point] when no point-specific values are provided.
+  final AnyBorder border;
 
   /// Shadows painted from [shadowBase].
   final List<AnyShadow> shadows;
@@ -2021,21 +2045,14 @@ abstract class AnyDecoration extends Decoration {
   /// Whether built contours should be cached by decoration, size, and text direction.
   final bool enableCache;
 
-  /// Optional width / height ratio used to fit the contour inside the paint size.
-  final double? ratio;
-
   const AnyDecoration({
     this.shadows = const [],
     this.background,
     this.clipBase = AnyShapeBase.zeroBorder,
     this.shadowBase = AnyShapeBase.zeroBorder,
     this.enableCache = true,
-    this.ratio,
-    AnySide? sides,
-    AnyCorner? corners,
-    this.innerCorners,
-  })  : sides = sides ?? const AnySide(),
-        corners = corners ?? const RoundedCorner();
+    this.border = const AnyBorder(),
+  });
 
   /// Builds an [AnyPoint] using decoration defaults for missing values.
   AnyPoint point(
@@ -2046,9 +2063,9 @@ abstract class AnyDecoration extends Decoration {
   }) {
     return AnyPoint(
       point: point,
-      outer: outer ?? corners,
-      inner: inner ?? innerCorners,
-      side: side ?? sides,
+      outer: outer ?? border.corners,
+      inner: inner ?? border.innerCorners,
+      side: side ?? border.sides,
     );
   }
 
@@ -2074,18 +2091,19 @@ abstract class AnyDecoration extends Decoration {
   }
 
   AnyContour buildContour(Size size, TextDirection? textDirection) {
+
+    late final DecorationCacheKey key;
     if (enableCache) {
-      final cached = IDecorationCache.get(this, size, textDirection);
+      key = (this, size, textDirection);
+      final cached = IDecorationCache.get(key);
       if (cached != null) {
         return cached;
       }
     }
 
-    final bounds = fitRatio(size, ratio);
+    final bounds = fitRatio(size, border.ratio);
 
     final contour = AnyContour(
-      size: size,
-      textDirection: textDirection,
       points: points(bounds, textDirection),
       background: background,
       backgroundBase: background?.shapeBase ?? AnyShapeBase.zeroBorder,
@@ -2094,7 +2112,7 @@ abstract class AnyDecoration extends Decoration {
     );
 
     if (enableCache) {
-      IDecorationCache.put(this, contour);
+      IDecorationCache.put(key, contour);
     }
     return contour;
   }
@@ -2115,27 +2133,23 @@ abstract class AnyDecoration extends Decoration {
     if (identical(this, other)) return true;
 
     return other is AnyDecoration &&
+        other.runtimeType == runtimeType &&
         other.shadowBase == shadowBase &&
         other.clipBase == clipBase &&
         other.enableCache == enableCache &&
         other.background == background &&
-        other.ratio == ratio &&
-        other.sides == sides &&
-        other.corners == corners &&
-        other.innerCorners == innerCorners &&
+        other.border == border &&
         listEquals(other.shadows, shadows);
   }
 
   @override
   int get hashCode => Object.hash(
+        runtimeType,
         clipBase,
         shadowBase,
         enableCache,
         background,
-        ratio,
-        sides,
-        corners,
-        innerCorners,
+        border,
         Object.hashAll(shadows),
       );
 }
