@@ -1,42 +1,20 @@
-DUAL LICENSE AGREEMENT
+COMMUNITY LICENSE
 
-Copyright (c) 2026 BRYL AS
+Copyright (c) 2026 Andry Brill
 
-This package is dual-licensed under the MIT License and a Commercial License.
+You may use, copy, modify, and distribute this software for personal,
+educational, hobby, evaluation, and other non-commercial purposes only.
 
-You may choose which license applies to your use.
+Commercial use is permitted only if you have an active paid monthly
+GitHub Sponsors subscription.
 
----
+Commercial use includes use by or for a business, use in a
+revenue-generating product or service, use in internal business
+operations, or use for paid client work.
 
-## OPTION 1: MIT LICENSE (Open Source Use)
+If your GitHub Sponsors subscription ends, your right to use this
+software for commercial purposes also ends.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, subject to the following condition:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-
----
-
-## OPTION 2: COMMERCIAL LICENSE (Business Use Without Attribution)
-
-If you wish to use this software without the requirement to include the
-copyright notice and license, or for proprietary use, closed-source
-distribution, or commercial redistribution, you must obtain a commercial license.
-
-To obtain a commercial license, contact:
-
-[bril.andrew@gmail.com](mailto:bril.andrew@gmail.com)
-
----
-
-By using this software, you agree to the terms of either the MIT License
-or the Commercial License.
---------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
