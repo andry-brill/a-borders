@@ -279,6 +279,6 @@ const AnyTabDecoration(
 )
 ```
 
-> Warning: contour corners with angles of `0`, `180`, or `360` degrees are
+> Warning: contour corners with angles of `0`, `180`, or `360 (0)` degrees are
 > currently unstable. Their behavior may change in future versions.
 
