@@ -239,7 +239,7 @@ List<Widget> examples() {
       ),
     ),
     E(
-      title: 'CustomCorner',
+      title: 'NotchCorner',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
           sides: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
@@ -556,7 +556,7 @@ class H extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-      padding: EdgeInsetsGeometry.only(top: spacing / 4, bottom: spacing / 2),
+      padding: EdgeInsetsGeometry.only(top: spacing / 6, bottom: spacing / 4),
       child: Text(title, style: headerStyle));
 }
 
