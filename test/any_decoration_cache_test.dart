@@ -21,9 +21,9 @@ void main() {
     final key = (_TestDecoration(1), const Size(10, 10), TextDirection.ltr);
     final contour = _contour();
 
-    AnyDecorationCache.put(key, contour);
+    AnyDecorationCache.put(key, [contour]);
 
-    expect(AnyDecorationCache.get(key), same(contour));
+    expect(AnyDecorationCache.get(key)!.single, same(contour));
   });
 
   test('evicts least recently used contours when limit is exceeded', () {
@@ -38,13 +38,13 @@ void main() {
     final secondContour = _contour();
     final thirdContour = _contour();
 
-    AnyDecorationCache.put(firstKey, firstContour);
-    AnyDecorationCache.put(secondKey, secondContour);
-    AnyDecorationCache.put(thirdKey, thirdContour);
+    AnyDecorationCache.put(firstKey, [firstContour]);
+    AnyDecorationCache.put(secondKey, [secondContour]);
+    AnyDecorationCache.put(thirdKey, [thirdContour]);
 
     expect(AnyDecorationCache.get(firstKey), isNull);
-    expect(AnyDecorationCache.get(secondKey), same(secondContour));
-    expect(AnyDecorationCache.get(thirdKey), same(thirdContour));
+    expect(AnyDecorationCache.get(secondKey)!.single, same(secondContour));
+    expect(AnyDecorationCache.get(thirdKey)!.single, same(thirdContour));
   });
 
   test('refreshes key recency on get', () {
@@ -59,22 +59,22 @@ void main() {
     final secondContour = _contour();
     final thirdContour = _contour();
 
-    AnyDecorationCache.put(firstKey, firstContour);
-    AnyDecorationCache.put(secondKey, secondContour);
+    AnyDecorationCache.put(firstKey, [firstContour]);
+    AnyDecorationCache.put(secondKey, [secondContour]);
 
-    expect(AnyDecorationCache.get(firstKey), same(firstContour));
+    expect(AnyDecorationCache.get(firstKey)!.single, same(firstContour));
 
-    AnyDecorationCache.put(thirdKey, thirdContour);
+    AnyDecorationCache.put(thirdKey, [thirdContour]);
 
     expect(AnyDecorationCache.get(secondKey), isNull);
-    expect(AnyDecorationCache.get(firstKey), same(firstContour));
-    expect(AnyDecorationCache.get(thirdKey), same(thirdContour));
+    expect(AnyDecorationCache.get(firstKey)!.single, same(firstContour));
+    expect(AnyDecorationCache.get(thirdKey)!.single, same(thirdContour));
   });
 
   test('clear removes stored contours', () {
     final key = (_TestDecoration(1), const Size(10, 10), TextDirection.ltr);
 
-    AnyDecorationCache.put(key, _contour());
+    AnyDecorationCache.put(key, [_contour()]);
     AnyDecorationCache.clear();
 
     expect(AnyDecorationCache.get(key), isNull);
@@ -85,22 +85,22 @@ AnyContour _contour() {
   return AnyContour(
     points: [
       AnyPoint(
-        outer: const RoundedCorner(),
+        shape: const RoundedCorner(),
         point: Offset.zero,
         side: const AnySide(),
       ),
       AnyPoint(
-        outer: const RoundedCorner(),
+        shape: const RoundedCorner(),
         point: const Offset(10, 0),
         side: const AnySide(),
       ),
       AnyPoint(
-        outer: const RoundedCorner(),
+        shape: const RoundedCorner(),
         point: const Offset(10, 10),
         side: const AnySide(),
       ),
       AnyPoint(
-        outer: const RoundedCorner(),
+        shape: const RoundedCorner(),
         point: const Offset(0, 10),
         side: const AnySide(),
       ),
@@ -118,11 +118,13 @@ class _TestDecoration extends AnyDecoration {
   const _TestDecoration(this.value);
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
-        point(bounds.topLeft),
-        point(bounds.topRight),
-        point(bounds.bottomRight),
-        point(bounds.bottomLeft),
+  List<AnyPoint> buildPoints(
+          Rect bounds, TextDirection? textDirection, int borderIndex) =>
+      [
+        point(bounds.topLeft, borderIndex: borderIndex),
+        point(bounds.topRight, borderIndex: borderIndex),
+        point(bounds.bottomRight, borderIndex: borderIndex),
+        point(bounds.bottomLeft, borderIndex: borderIndex),
       ];
 
   @override

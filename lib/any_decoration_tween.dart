@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/animation.dart';
@@ -34,7 +35,20 @@ class _TweenDecoration extends AnyDecoration {
     required this.beginDecoration,
     required this.endDecoration,
     required this.t,
-  }) : super(
+  }) : super.multi(
+          borders: List<AnyBorder>.generate(
+            math.max(
+                beginDecoration.borders.length, endDecoration.borders.length),
+            (index) => index < beginDecoration.borders.length
+                ? beginDecoration.borders[index]
+                : endDecoration.borders[index],
+            growable: false,
+          ),
+          primaryBorderIndex: AnyUtils.pickLerp(
+            beginDecoration.primaryBorderIndex,
+            endDecoration.primaryBorderIndex,
+            t,
+          ),
           background: AnyBackground.lerp(
             beginDecoration.background,
             endDecoration.background,
@@ -71,17 +85,39 @@ class _TweenDecoration extends AnyDecoration {
   }
 
   @override
-  Rect fitRatio(Size size, double? ratio) {
-    final beginRatio = _effectiveRatio(size, beginDecoration.border.ratio);
-    final endRatio = _effectiveRatio(size, endDecoration.border.ratio);
+  Rect boundsForBorder(Size size, int borderIndex) {
+    final a = borderIndex < beginDecoration.borders.length
+        ? beginDecoration.borders[borderIndex]
+        : endDecoration.borders[borderIndex];
+    final b = borderIndex < endDecoration.borders.length
+        ? endDecoration.borders[borderIndex]
+        : a;
+    final beginRatio = _effectiveRatio(size, a.ratio);
+    final endRatio = _effectiveRatio(size, b.ratio);
     final lRatio = lerpDouble(beginRatio, endRatio, t)!;
     return super.fitRatio(size, lRatio);
   }
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
-    final a = beginDecoration.points(bounds, textDirection);
-    final b = endDecoration.points(bounds, textDirection);
+  List<AnyPoint> buildPoints(
+      Rect bounds, TextDirection? textDirection, int borderIndex) {
+    final hasBegin = borderIndex < beginDecoration.borders.length;
+    final hasEnd = borderIndex < endDecoration.borders.length;
+    var a = (hasBegin ? beginDecoration : endDecoration)
+        .points(bounds, textDirection, borderIndex: borderIndex);
+    var b = (hasEnd ? endDecoration : beginDecoration)
+        .points(bounds, textDirection, borderIndex: borderIndex);
+    List<AnyPoint> withoutWidths(List<AnyPoint> points) => points
+        .map((p) => AnyPoint(
+            shape: p.shape,
+            outer: p.outer,
+            inner: p.inner,
+            point: p.point,
+            side: p.side.copyWith(width: 0),
+            skip: p.skip))
+        .toList(growable: false);
+    if (!hasBegin) a = withoutWidths(a);
+    if (!hasEnd) b = withoutWidths(b);
     return AnyPoint.lerp(a, b, t)!;
   }
 

@@ -1,0 +1,3433 @@
+{
+  "rounded box": {
+    "geometry": [
+      [
+        "5396:9492a9f:6d70a59e",
+        "5440:8e870b4b:13a70842",
+        "5361:4f6e5dd0:1de8764b",
+        "5396:73d09a97:a038e3ae",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4997:3370cf4a:d13c1bcd"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4997:3370cf4a:d13c1bcd"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "bevel box": {
+    "geometry": [
+      [
+        "564:83130c38:3e40d329",
+        "1081:184c3a8e:1cf104bd",
+        "1097:c0eb5ba1:c273b9c6",
+        "780:95beb31c:aee7cdc1",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4994:e692c509:61400a04"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4994:e692c509:61400a04"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "circular scoop": {
+    "geometry": [
+      [
+        "5425:d6db0383:53ff8ac",
+        "7141:e7c4b008:fe399bdf",
+        "6339:8cce1777:48963228",
+        "5425:d6db0383:53ff8ac",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4999:57d80c12:93caa6f9"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4999:57d80c12:93caa6f9"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "distinct side fills": {
+    "geometry": [
+      [
+        "5396:9492a9f:6d70a59e",
+        "5413:7097bb4e:51c323bd",
+        "5374:2a2f5742:10f5e353",
+        "5396:d3e66027:f3ebc84e",
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(4.2, 0.0, 193.0, 12.7)",
+            "5080:6c7d07a5:3904854"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(187.3, 7.0, 200.0, 115.8)",
+            "5090:a0ff41d1:42d9d4b4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, 7.0, 193.0, 124.0)",
+            "5042:47cc37b:b567caae"
+          ]
+        ],
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(4.2, 0.0, 193.0, 12.7)",
+            "5080:6c7d07a5:3904854"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(187.3, 7.0, 200.0, 115.8)",
+            "5090:a0ff41d1:42d9d4b4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, 7.0, 193.0, 124.0)",
+            "5042:47cc37b:b567caae"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "authored boundaries": {
+    "geometry": [
+      [
+        "5395:7b91c007:9f5283cc",
+        "5440:b310b12b:a72ac322",
+        "581:34c08029:78a6927a",
+        "5396:73d09a97:a038e3ae",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4998:bc4a2e79:ce3cde0c"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4998:bc4a2e79:ce3cde0c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "triangle": {
+    "geometry": [
+      [
+        "4335:74416492:d9047221",
+        "4335:74416492:d9047221",
+        "4330:6691ea10:dd5360a1",
+        "4335:74416492:d9047221",
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(100.0, 6.7, 186.4, 113.1)",
+            "5096:cd489b55:8c827f9c"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(14.8, 111.4, 185.2, 120.0)",
+            "5084:472be357:6708c296"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(13.6, 6.7, 100.0, 113.1)",
+            "5096:622c1d15:b9f3888c"
+          ]
+        ],
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(100.0, 6.7, 186.4, 113.1)",
+            "5096:cd489b55:8c827f9c"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(14.8, 111.4, 185.2, 120.0)",
+            "5084:472be357:6708c296"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(13.6, 6.7, 100.0, 113.1)",
+            "5096:622c1d15:b9f3888c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "concave polygon": {
+    "geometry": [
+      [
+        "1147:ecb9d12:a6bfa91d",
+        "1147:ecb9d12:a6bfa91d",
+        "1612:bd89c1fd:c3cee438",
+        "1147:ecb9d12:a6bfa91d",
+        [
+          6,
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 0.0, 195.0, 7.8)",
+            "5105:81837fe6:1f0006a1"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(192.2, 5.0, 200.0, 55.0)",
+            "5101:4545e48:dacbc383"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(102.2, 52.2, 195.0, 65.0)",
+            "5105:b13b7554:5e1a19df"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(92.2, 62.2, 105.0, 115.0)",
+            "5106:bd411cff:22c97592"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 112.2, 95.0, 120.0)",
+            "5094:c2c803e7:4622c4b2"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 5.0, 7.8, 115.0)",
+            "5092:e3cf678f:ec3e223e"
+          ]
+        ],
+        [
+          6,
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 0.0, 195.0, 7.8)",
+            "5105:81837fe6:1f0006a1"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(192.2, 5.0, 200.0, 55.0)",
+            "5101:4545e48:dacbc383"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(102.2, 52.2, 195.0, 65.0)",
+            "5105:b13b7554:5e1a19df"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(92.2, 62.2, 105.0, 115.0)",
+            "5106:bd411cff:22c97592"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 112.2, 95.0, 120.0)",
+            "5094:c2c803e7:4622c4b2"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 5.0, 7.8, 115.0)",
+            "5092:e3cf678f:ec3e223e"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "elliptical offset": {
+    "geometry": [
+      [
+        "5446:ae3f5d0e:fbf186af",
+        "10343:e3945a27:f0357268",
+        "7348:e4252c2c:95ff5c09",
+        "5446:ae3f5d0e:fbf186af",
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4998:e3db2b37:a5902752"
+          ]
+        ],
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 124.0)",
+            "4998:e3db2b37:a5902752"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 8,
+      "flatten": 12,
+      "boolean": 10,
+      "assembly": 2,
+      "layer": 0
+    }
+  },
+  "unequal scoop offsets": {
+    "geometry": [
+      [
+        "5425:d6db0383:53ff8ac",
+        "7226:5f8e85ba:c17f588b",
+        "6457:dd93b78f:faac438",
+        "5425:d6db0383:53ff8ac",
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.0, -8.0, 204.0, 124.0)",
+            "4973:13fca498:80359073"
+          ]
+        ],
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.0, -8.0, 204.0, 124.0)",
+            "4973:13fca498:80359073"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 4,
+      "flatten": 12,
+      "boolean": 10,
+      "assembly": 2,
+      "layer": 0
+    }
+  },
+  "collapsed rounded interior": {
+    "geometry": [
+      [
+        "5396:9492a9f:6d70a59e",
+        "5396:9492a9f:6d70a59e",
+        "581:bee3675d:8f1859ae",
+        "5396:9492a9f:6d70a59e",
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 120.0)",
+            "4626:d3a4dcf9:a0b8fa04"
+          ]
+        ],
+        [
+          1,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 120.0)",
+            "4626:d3a4dcf9:a0b8fa04"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 8,
+      "boolean": 10,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "split neck": {
+    "geometry": [
+      [
+        "1719:70bc1673:696a6bc8",
+        "1719:70bc1673:696a6bc8",
+        "1639:759b1c25:e0570c22",
+        "1719:70bc1673:696a6bc8",
+        [
+          12,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 60.0, 12.0)",
+            "5095:670ed126:6a92486d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 0.0, 60.0, 32.0)",
+            "5101:e1bcf892:82abae7d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 20.0, 112.0, 32.0)",
+            "5100:3a07c097:bec7e0b6"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 0.0, 112.0, 32.0)",
+            "5101:7bccccda:a7de4935"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 0.0, 160.0, 12.0)",
+            "5095:ef7063f6:bb71728d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(148.0, 0.0, 160.0, 60.0)",
+            "5093:ad5a4fb8:45795bb"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 48.0, 160.0, 60.0)",
+            "5100:a08d9409:6c6acea8"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 32.0, 112.0, 60.0)",
+            "5103:70960134:d9d997b3"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(52.0, 32.0, 108.0, 40.0)",
+            "5093:96d89aac:2e77e1ff"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 32.0, 60.0, 60.0)",
+            "5101:11778a7a:1d793d7d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 48.0, 60.0, 60.0)",
+            "5100:9fc8fb51:c19c7220"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 12.0, 60.0)",
+            "5093:16c3bbc8:7ce397b"
+          ]
+        ],
+        [
+          12,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 60.0, 12.0)",
+            "5095:670ed126:6a92486d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 0.0, 60.0, 32.0)",
+            "5101:e1bcf892:82abae7d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 20.0, 112.0, 32.0)",
+            "5100:3a07c097:bec7e0b6"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 0.0, 112.0, 32.0)",
+            "5101:7bccccda:a7de4935"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 0.0, 160.0, 12.0)",
+            "5095:ef7063f6:bb71728d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(148.0, 0.0, 160.0, 60.0)",
+            "5093:ad5a4fb8:45795bb"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 48.0, 160.0, 60.0)",
+            "5100:a08d9409:6c6acea8"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(100.0, 32.0, 112.0, 60.0)",
+            "5103:70960134:d9d997b3"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(52.0, 32.0, 108.0, 40.0)",
+            "5093:96d89aac:2e77e1ff"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(48.0, 32.0, 60.0, 60.0)",
+            "5101:11778a7a:1d793d7d"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 48.0, 60.0, 60.0)",
+            "5100:9fc8fb51:c19c7220"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(0.0, 0.0, 12.0, 60.0)",
+            "5093:16c3bbc8:7ce397b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 24,
+      "boolean": 47,
+      "assembly": 2,
+      "layer": 0
+    }
+  },
+  "[0] Add a border layer t=0.1": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5407:2d84164b:adc77a4",
+        "5342:97fe1363:9e4f3e62",
+        "5342:d10a2f07:e6ab5b36",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5419:b3e4c4d6:24fbf75",
+        "5342:97fe1363:9e4f3e62",
+        "5342:8d80e153:87558d62",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.4, -0.4, 200.4, 100.4)",
+            "5106:cd10057:30dc62fa"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.4, -0.4, 200.4, 100.4)",
+            "5106:cd10057:30dc62fa"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[0] Add a border layer t=0.5": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5407:2d84164b:adc77a4",
+        "5342:97fe1363:9e4f3e62",
+        "5342:d10a2f07:e6ab5b36",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5413:368027be:ab5510d",
+        "5342:97fe1363:9e4f3e62",
+        "5342:74823fdb:86a7b0c2",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.0, -2.0, 202.0, 102.0)",
+            "5099:5efad2d8:aea766ef"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.0, -2.0, 202.0, 102.0)",
+            "5099:5efad2d8:aea766ef"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[0] Add a border layer t=0.9": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5407:2d84164b:adc77a4",
+        "5342:97fe1363:9e4f3e62",
+        "5342:d10a2f07:e6ab5b36",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.0, -8.0, 208.0, 108.0)",
+            "5017:9bcd0de0:d9838bc3"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5450:74fc0871:552f68bc",
+        "5342:97fe1363:9e4f3e62",
+        "5342:514ba1ef:1f82e2b6",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.6, -3.6, 203.6, 103.6)",
+            "5052:c70836af:a00f6ade"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.6, -3.6, 203.6, 103.6)",
+            "5052:c70836af:a00f6ade"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[1] Primary shape stays rounded\nExplicit outer corners change t=0.1": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "885:193235cc:87ea5df",
+        "5342:97fe1363:9e4f3e62",
+        "1080:c17ae2a1:be22cd98",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4957:94aa6cc:891fd9c7"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4957:94aa6cc:891fd9c7"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5377:c42a4fea:2402238d",
+        "5342:97fe1363:9e4f3e62",
+        "5342:6a73d89f:4b850bce",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[1] Primary shape stays rounded\nExplicit outer corners change t=0.5": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "571:c8a7a2e5:95c009da",
+        "5342:97fe1363:9e4f3e62",
+        "539:41ce64d5:ffa9253a",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4925:182e34:344ece67"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4925:182e34:344ece67"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5377:c42a4fea:2402238d",
+        "5342:97fe1363:9e4f3e62",
+        "5342:6a73d89f:4b850bce",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[1] Primary shape stays rounded\nExplicit outer corners change t=0.9": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5491:78545166:6875572d",
+        "5342:97fe1363:9e4f3e62",
+        "5390:3cd9854a:b6abbca3",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4944:76996961:8717a080"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, -12.0, 212.0, 112.0)",
+            "4944:76996961:8717a080"
+          ]
+        ]
+      ],
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5377:c42a4fea:2402238d",
+        "5342:97fe1363:9e4f3e62",
+        "5342:6a73d89f:4b850bce",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5053:e7d1d2dc:a9b1acef"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[2] Concentric scoops\nUniform arc spacing t=0.1": {
+    "geometry": [
+      [
+        "5430:a4b1c940:e934f021",
+        "7054:bda83bf3:f6badcfe",
+        "5430:a4b1c940:e934f021",
+        "5430:a4b1c940:e934f021",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4732:2638077b:30f9c52a"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.4, -8.4, 208.4, 108.4)",
+            "5018:792eef29:376a14a4"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4732:2638077b:30f9c52a"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.4, -8.4, 208.4, 108.4)",
+            "5018:792eef29:376a14a4"
+          ]
+        ]
+      ],
+      [
+        "5430:a4b1c940:e934f021",
+        "7141:67e1e0d7:390d1bf8",
+        "5430:a4b1c940:e934f021",
+        "5430:a4b1c940:e934f021",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.2, -3.2, 203.2, 103.2)",
+            "5050:f52f87c1:bd35634"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.2, -3.2, 203.2, 103.2)",
+            "5050:f52f87c1:bd35634"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[2] Concentric scoops\nUniform arc spacing t=0.5": {
+    "geometry": [
+      [
+        "5385:59a9fd91:535f145e",
+        "7118:e6ef5ae7:d2fd5b9e",
+        "5385:59a9fd91:535f145e",
+        "5385:59a9fd91:535f145e",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4737:7aed7650:2240f993"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.0, -10.0, 210.0, 110.0)",
+            "4963:de7919ac:2f64863"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4737:7aed7650:2240f993"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.0, -10.0, 210.0, 110.0)",
+            "4963:de7919ac:2f64863"
+          ]
+        ]
+      ],
+      [
+        "5385:59a9fd91:535f145e",
+        "7071:c972354b:f26ba030",
+        "5385:59a9fd91:535f145e",
+        "5385:59a9fd91:535f145e",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 104.0)",
+            "5052:e2ef2187:3aac3c66"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 104.0)",
+            "5052:e2ef2187:3aac3c66"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[2] Concentric scoops\nUniform arc spacing t=0.9": {
+    "geometry": [
+      [
+        "5430:2535fd2:e77be977",
+        "7527:fe574a3d:cbc9c2",
+        "5430:2535fd2:e77be977",
+        "5430:2535fd2:e77be977",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4752:a1d3a84d:91cdb7d4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.6, -11.6, 211.6, 111.6)",
+            "4952:d7d69c5f:3dc3a6e6"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4752:a1d3a84d:91cdb7d4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.6, -11.6, 211.6, 111.6)",
+            "4952:d7d69c5f:3dc3a6e6"
+          ]
+        ]
+      ],
+      [
+        "5430:2535fd2:e77be977",
+        "7084:df104f5c:4ca9c635",
+        "5430:2535fd2:e77be977",
+        "5430:2535fd2:e77be977",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.8, -4.8, 204.8, 104.8)",
+            "5034:e1dca2fb:b1f76026"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.8, -4.8, 204.8, 104.8)",
+            "5034:e1dca2fb:b1f76026"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[3] Elliptical scoop\nNormal offsets t=0.1": {
+    "geometry": [
+      [
+        "5624:c1ce6b52:3b68c083",
+        "7624:8a3cea58:91f9b095",
+        "5624:c1ce6b52:3b68c083",
+        "5624:c1ce6b52:3b68c083",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4727:c1537668:bdf26357"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.4, -4.4, 204.4, 104.4)",
+            "5050:6fab2519:714cf3e4"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4727:c1537668:bdf26357"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-4.4, -4.4, 204.4, 104.4)",
+            "5050:6fab2519:714cf3e4"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 4,
+      "flatten": 8,
+      "boolean": 6,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "[3] Elliptical scoop\nNormal offsets t=0.5": {
+    "geometry": [
+      [
+        "5396:741900ac:1ff305fd",
+        "6974:a87f345f:f5b18eae",
+        "5396:741900ac:1ff305fd",
+        "5396:741900ac:1ff305fd",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4728:9047780f:8d8bdc36"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.0, -6.0, 206.0, 106.0)",
+            "5022:147ff86d:ced5d4b0"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4728:9047780f:8d8bdc36"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.0, -6.0, 206.0, 106.0)",
+            "5022:147ff86d:ced5d4b0"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[3] Elliptical scoop\nNormal offsets t=0.9": {
+    "geometry": [
+      [
+        "5613:cb7c5244:1f82678b",
+        "10814:ffbc5811:2510b398",
+        "5613:cb7c5244:1f82678b",
+        "5613:cb7c5244:1f82678b",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4727:b4327a68:7078d667"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-7.6, -7.6, 207.6, 107.6)",
+            "5017:a3c74f28:ffbe8d13"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4727:b4327a68:7078d667"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-7.6, -7.6, 207.6, 107.6)",
+            "5017:a3c74f28:ffbe8d13"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 4,
+      "flatten": 8,
+      "boolean": 6,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "[4] Any align/width\nLTRB(in:center:out:center) t=0.1": {
+    "geometry": [
+      [
+        "5329:c91e62ba:730185c9",
+        "5871:9bf9d238:43043db7",
+        "5520:e76fd87f:ea170f12",
+        "5721:841612dd:b92ead02",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.3, -9.4, 227.6, 120.3)",
+            "4784:3c019f43:3e43326a"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.3, -9.4, 227.6, 120.3)",
+            "4784:3c019f43:3e43326a"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[4] Any align/width\nLTRB(in:center:out:center) t=0.5": {
+    "geometry": [
+      [
+        "5329:c91e62ba:730185c9",
+        "5736:17cbcf9:dbc38208",
+        "5392:4de9e2b9:8f45f424",
+        "5688:fdd1a513:af9f025a",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.5, -6.3, 218.8, 118.8)",
+            "4784:c2a65ff5:e2c3c3e4"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.5, -6.3, 218.8, 118.8)",
+            "4784:c2a65ff5:e2c3c3e4"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[4] Any align/width\nLTRB(in:center:out:center) t=0.9": {
+    "geometry": [
+      [
+        "5329:c91e62ba:730185c9",
+        "5928:95dfc7b2:c63444ab",
+        "5436:1b92362b:603fafbe",
+        "3198:43d9e3a:59db3d2f",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-33.3, -1.5, 211.6, 112.3)",
+            "4841:91050232:a1c52d8d"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4702:b7096435:fe6ab898"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-33.3, -1.5, 211.6, 112.3)",
+            "4841:91050232:a1c52d8d"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[5] No horizontal t=0.1": {
+    "geometry": [
+      [
+        "5324:da076f8a:549272db",
+        "5379:5a6c8d4e:5cf047e9",
+        "5324:da076f8a:549272db",
+        "5324:b18c657e:bf08a5f",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-28.0, 0.0, 228.0, 100.0)",
+            "5017:698f40ac:c6f2aea7"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-28.0, 0.0, 228.0, 100.0)",
+            "5017:698f40ac:c6f2aea7"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[5] No horizontal t=0.5": {
+    "geometry": [
+      [
+        "5328:75ed8c16:4295791f",
+        "5381:b8101fda:2dc5e67d",
+        "5328:75ed8c16:4295791f",
+        "5328:70d93716:4225273b",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-20.0, 0.0, 220.0, 100.0)",
+            "5031:71f12664:b2597ad3"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-20.0, 0.0, 220.0, 100.0)",
+            "5031:71f12664:b2597ad3"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[5] No horizontal t=0.9": {
+    "geometry": [
+      [
+        "5326:406443dd:6ca968c4",
+        "5348:9028f838:f89c4c95",
+        "5326:406443dd:6ca968c4",
+        "5326:1ce23e0f:389c247a",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, 0.0, 212.0, 100.0)",
+            "5067:c667b10c:dcc3b06b"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-12.0, 0.0, 212.0, 100.0)",
+            "5067:c667b10c:dcc3b06b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[6] Any corner t=0.1": {
+    "geometry": [
+      [
+        "3551:17c5d104:d6da47ff",
+        "3714:4e245bd8:673c7835",
+        "3268:3626a060:db920425",
+        "2132:dbb4e3ba:af45b4d7",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-19.9, -2.0, 210.5, 102.1)",
+            "4945:8234a8cc:478aa1ff"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-20.5, -1.5, 220.5, 92.1)",
+            "5033:96b5afba:5f2ac995"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-19.9, -2.0, 210.5, 102.1)",
+            "4945:8234a8cc:478aa1ff"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-20.5, -1.5, 220.5, 92.1)",
+            "5033:96b5afba:5f2ac995"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 2,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[6] Any corner t=0.5": {
+    "geometry": [
+      [
+        "3551:17c5d104:d6da47ff",
+        "3635:7c72263d:5297c96",
+        "2998:19533248:87c7dd5",
+        "2117:6c53eb7:4408c20c",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-21.9, -11.3, 212.5, 111.3)",
+            "4902:6d413c15:654cbb70"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-22.5, -10.7, 222.5, 101.3)",
+            "5019:cf19f900:7399a757"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-21.9, -11.3, 212.5, 111.3)",
+            "4902:6d413c15:654cbb70"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-22.5, -10.7, 222.5, 101.3)",
+            "5019:cf19f900:7399a757"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 2,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[6] Any corner t=0.9": {
+    "geometry": [
+      [
+        "3551:17c5d104:d6da47ff",
+        "3721:a04837db:38a728c",
+        "3076:c4ea7875:659ef13c",
+        "2118:36ce621e:ccb3a8bb",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-23.9, -22.0, 214.5, 122.1)",
+            "4903:829fe8ce:d6b58e95"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-24.5, -21.5, 224.5, 112.1)",
+            "4993:acacf490:e2f4f01b"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-23.9, -22.0, 214.5, 122.1)",
+            "4903:829fe8ce:d6b58e95"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-24.5, -21.5, 224.5, 112.1)",
+            "4993:acacf490:e2f4f01b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 2,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[7] Back+T+B t=0.1": {
+    "geometry": [
+      [
+        "5327:dd52ca82:13a7a57d",
+        "5487:ab9d8839:ade71292",
+        "5397:8d260887:2edbf2c8",
+        "5375:9f8fa685:99f72d72",
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.8, -19.8, 202.8, 119.8)",
+            "4559:dee0d940:c6d775ef"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(11.0, -19.8, 189.0, 119.8)",
+            "4961:e5bcb464:affdaf7f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.8, -6.0, 202.8, 106.0)",
+            "4991:200bdd6c:b247f6cb"
+          ]
+        ],
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.8, -19.8, 202.8, 119.8)",
+            "4559:dee0d940:c6d775ef"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(11.0, -19.8, 189.0, 119.8)",
+            "4961:e5bcb464:affdaf7f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.8, -6.0, 202.8, 106.0)",
+            "4991:200bdd6c:b247f6cb"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[7] Back+T+B t=0.5": {
+    "geometry": [
+      [
+        "5340:a7775e35:4fcf1554",
+        "5436:3ae2d90f:a0d3e376",
+        "5346:60c2fe33:8532def6",
+        "5347:95b821aa:9ae09ed",
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.8, -15.0, 208.8, 115.0)",
+            "4563:4277b0b0:4c63f30f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(1.5, -15.0, 198.5, 115.0)",
+            "4895:1a79389c:6f6e38bb"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.8, -4.7, 208.8, 104.7)",
+            "5033:e83a7570:9c4ffe0b"
+          ]
+        ],
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.8, -15.0, 208.8, 115.0)",
+            "4563:4277b0b0:4c63f30f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(1.5, -15.0, 198.5, 115.0)",
+            "4895:1a79389c:6f6e38bb"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-8.8, -4.7, 208.8, 104.7)",
+            "5033:e83a7570:9c4ffe0b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[7] Back+T+B t=0.9": {
+    "geometry": [
+      [
+        "5337:a7bb3261:89b9f256",
+        "5582:4402fe82:ae679673",
+        "3113:1bb3d951:a757d7d2",
+        "5519:93c0dc40:7ae65813",
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.8, -3.8, 206.8, 103.8)",
+            "4624:fa734c5d:aea7584"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.0, -3.8, 200.0, 103.8)",
+            "4764:6db2b885:75f981f4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.8, 2.9, 206.8, 97.1)",
+            "5083:f16ad6d0:daf0fe97"
+          ]
+        ],
+        [
+          3,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.8, -3.8, 206.8, 103.8)",
+            "4624:fa734c5d:aea7584"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.0, -3.8, 200.0, 103.8)",
+            "4764:6db2b885:75f981f4"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.8, 2.9, 206.8, 97.1)",
+            "5083:f16ad6d0:daf0fe97"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[8] Gradient t=0.1": {
+    "geometry": [
+      [
+        "5342:97fe1363:9e4f3e62",
+        "5580:e3a5d41e:b38d1093",
+        "5413:b11f929c:c7d93ffb",
+        "5350:644d3bf3:b78a41e2",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, -10.4, 210.4, 110.4)",
+            "4889:b3c0f626:b28cc339"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4713:8c502240:ea0af9f3"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, -10.4, 210.4, 110.4)",
+            "4889:b3c0f626:b28cc339"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[8] Gradient t=0.5": {
+    "geometry": [
+      [
+        "523:caee75ad:850a07a",
+        "587:92259bd:5741a79a",
+        "603:775466d5:81f48c2a",
+        "523:caee75ad:850a07a",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4701:40bb451c:78a47e7f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -11.3, 211.3, 111.3)",
+            "4927:41651c90:60c32c0f"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4701:40bb451c:78a47e7f"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -11.3, 211.3, 111.3)",
+            "4927:41651c90:60c32c0f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[8] Gradient t=0.9": {
+    "geometry": [
+      [
+        "767:8023ce37:b342d5b0",
+        "1099:c48e9459:f907c90a",
+        "1146:2d64e3dc:aaca42c5",
+        "959:d3260175:7e8e6e1a",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4741:cef8644c:1b1329ef"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, -10.4, 210.4, 110.4)",
+            "4975:f43df0a8:6d381107"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(0.0, 0.0, 200.0, 100.0)",
+            "4741:cef8644c:1b1329ef"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, -10.4, 210.4, 110.4)",
+            "4975:f43df0a8:6d381107"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[9] Gradient HV t=0.1": {
+    "geometry": [
+      [
+        "547:a5c02d7b:ad0a2db4",
+        "1116:fbdafd86:3730e113",
+        "1093:223a933c:35026e1f",
+        "1188:8533ac0a:f7b87e4f",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(4.8, -9.5, 195.2, 109.5)",
+            "4972:280469ab:a409c282"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, 5.1, 210.4, 94.9)",
+            "5047:a92c57bc:bf64ee7b"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(4.8, -9.5, 195.2, 109.5)",
+            "4972:280469ab:a409c282"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, 5.1, 210.4, 94.9)",
+            "5047:a92c57bc:bf64ee7b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[9] Gradient HV t=0.5": {
+    "geometry": [
+      [
+        "539:41ce64d5:ffa9253a",
+        "607:1191718b:7a33ccf8",
+        "603:3d136c0f:41f8bad4",
+        "539:41ce64d5:ffa9253a",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -7.5, 211.3, 107.5)",
+            "4987:5961bc:ae0aaa23"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -7.5, 211.3, 107.5)",
+            "5055:cfa3f50c:aa39eedb"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -7.5, 211.3, 107.5)",
+            "4987:5961bc:ae0aaa23"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-11.3, -7.5, 211.3, 107.5)",
+            "5055:cfa3f50c:aa39eedb"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[9] Gradient HV t=0.9": {
+    "geometry": [
+      [
+        "5345:272f9afc:45b51daf",
+        "5460:1bcc3eb1:11f97264",
+        "5423:ab8cb28b:3b51ab70",
+        "5349:df524f1a:4ccaf585",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.7, -5.5, 202.7, 105.5)",
+            "4994:a44fd95b:283d6246"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, 0.8, 210.4, 99.2)",
+            "5077:18c303c:cca9f69f"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.7, -5.5, 202.7, 105.5)",
+            "4994:a44fd95b:283d6246"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-10.4, 0.8, 210.4, 99.2)",
+            "5077:18c303c:cca9f69f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[10] Images t=0.1": {
+    "geometry": [
+      [
+        "5370:25bd05dd:277c55a8",
+        "5459:30af84b1:6f494602",
+        "5370:25bd05dd:277c55a8",
+        "5370:2005772d:a3b049c8",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(45.0, 0.0, 155.0, 100.0)",
+            "4915:fde98694:50ff1b73"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(25.0, -20.0, 175.0, 120.0)",
+            "4931:9203c2cc:9e9bb74b"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(45.0, 0.0, 155.0, 100.0)",
+            "4915:fde98694:50ff1b73"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(25.0, -20.0, 175.0, 120.0)",
+            "4931:9203c2cc:9e9bb74b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[10] Images t=0.5": {
+    "geometry": [
+      [
+        "531:e0a3d3c1:7397f9ee",
+        "591:6a64beb9:1e1ef82e",
+        "531:e0a3d3c1:7397f9ee",
+        "531:e0a3d3c1:7397f9ee",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(25.0, 0.0, 175.0, 100.0)",
+            "4813:fae2b51c:9b3287df"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, -20.0, 195.0, 120.0)",
+            "4861:659bb208:a4984db3"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(25.0, 0.0, 175.0, 100.0)",
+            "4813:fae2b51c:9b3287df"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, -20.0, 195.0, 120.0)",
+            "4861:659bb208:a4984db3"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[10] Images t=0.9": {
+    "geometry": [
+      [
+        "765:3e61c4f6:44acb655",
+        "1069:90d663dc:a7ebd447",
+        "765:3e61c4f6:44acb655",
+        "861:ea140c32:a521ab31",
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 0.0, 195.0, 100.0)",
+            "4789:6c6da5b4:79e8dac7"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-15.0, -20.0, 215.0, 120.0)",
+            "4877:237c80e8:2ba4adb3"
+          ]
+        ],
+        [
+          2,
+          [
+            "nonZero",
+            "Rect.fromLTRB(5.0, 0.0, 195.0, 100.0)",
+            "4789:6c6da5b4:79e8dac7"
+          ],
+          [
+            "nonZero",
+            "Rect.fromLTRB(-15.0, -20.0, 215.0, 120.0)",
+            "4877:237c80e8:2ba4adb3"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[11] Concentric scoops\nUniform arc spacing t=0.1": {
+    "geometry": [
+      [
+        "5430:a4b1c940:e934f021",
+        "7465:55424792:b3507abd",
+        "6145:9f692800:5daec833",
+        "5430:a4b1c940:e934f021",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-9.5, -9.5, 209.5, 109.5)",
+            "4984:1e1fe111:65e1c8b8"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-9.5, -9.5, 209.5, 109.5)",
+            "4984:1e1fe111:65e1c8b8"
+          ]
+        ]
+      ],
+      [
+        "5430:a4b1c940:e934f021",
+        "7231:2a7319e5:799f4e8e",
+        "6362:d2579f84:eb25e4f5",
+        "5430:a4b1c940:e934f021",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 104.0)",
+            "5047:45beab70:74ed586f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-4.0, -4.0, 204.0, 104.0)",
+            "5047:45beab70:74ed586f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[11] Concentric scoops\nUniform arc spacing t=0.5": {
+    "geometry": [
+      [
+        "5385:59a9fd91:535f145e",
+        "7091:1cbfb9d9:1e57084a",
+        "6332:324f0b05:e6930d58",
+        "5385:59a9fd91:535f145e",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.5, -6.5, 206.5, 106.5)",
+            "4947:5da66f04:c4e2ddb"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-6.5, -6.5, 206.5, 106.5)",
+            "4947:5da66f04:c4e2ddb"
+          ]
+        ]
+      ],
+      [
+        "5385:59a9fd91:535f145e",
+        "6962:34c484a0:924838a1",
+        "6277:96e5f4fe:4383c765",
+        "5385:59a9fd91:535f145e",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5032:1ca45187:2758cac6"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-3.0, -3.0, 203.0, 103.0)",
+            "5032:1ca45187:2758cac6"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[11] Concentric scoops\nUniform arc spacing t=0.9": {
+    "geometry": [
+      [
+        "5430:2535fd2:e77be977",
+        "7366:7709f0c:acd779f5",
+        "6361:29b5b92:70f91465",
+        "5430:2535fd2:e77be977",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.5, -1.5, 201.5, 101.5)",
+            "4962:b4d789d7:b9aed0a"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.5, -1.5, 201.5, 101.5)",
+            "4962:b4d789d7:b9aed0a"
+          ]
+        ]
+      ],
+      [
+        "5430:2535fd2:e77be977",
+        "7641:3c18b780:54a0de7f",
+        "6256:131d4c7c:c5341725",
+        "5430:2535fd2:e77be977",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.8, -0.8, 200.8, 100.8)",
+            "5032:c2384467:8c725596"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-0.8, -0.8, 200.8, 100.8)",
+            "5032:c2384467:8c725596"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[12] Normal t=0.1": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5481:147e2050:e8157973",
+        "5430:31c3e923:e0f0e88e",
+        "5322:bbfe621d:c92422b0",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[12] Normal t=0.5": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5406:8b940efe:abf4d093",
+        "5340:bf2ad29:1fe8efc8",
+        "5322:d66fb6d:5df7e600",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[12] Normal t=0.9": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5482:7d3c587d:dab12904",
+        "5428:580bd56d:34f38b58",
+        "5322:82ce3d1d:976efa20",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[13] Inner t=0.1": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5481:147e2050:e8157973",
+        "5430:31c3e923:e0f0e88e",
+        "5322:bbfe621d:c92422b0",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[13] Inner t=0.5": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5406:8b940efe:abf4d093",
+        "5340:bf2ad29:1fe8efc8",
+        "5322:d66fb6d:5df7e600",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[13] Inner t=0.9": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5482:7d3c587d:dab12904",
+        "5428:580bd56d:34f38b58",
+        "5322:82ce3d1d:976efa20",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[14] Outer t=0.1": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5481:147e2050:e8157973",
+        "5430:31c3e923:e0f0e88e",
+        "5322:bbfe621d:c92422b0",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[14] Outer t=0.5": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5406:8b940efe:abf4d093",
+        "5340:bf2ad29:1fe8efc8",
+        "5322:d66fb6d:5df7e600",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[14] Outer t=0.9": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5482:7d3c587d:dab12904",
+        "5428:580bd56d:34f38b58",
+        "5322:82ce3d1d:976efa20",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[15] Solid t=0.1": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5481:147e2050:e8157973",
+        "5430:31c3e923:e0f0e88e",
+        "5322:bbfe621d:c92422b0",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5086:f4667ad9:d02b774c"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[15] Solid t=0.5": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5406:8b940efe:abf4d093",
+        "5340:bf2ad29:1fe8efc8",
+        "5322:d66fb6d:5df7e600",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5091:d72a8d4:2cd4050b"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[15] Solid t=0.9": {
+    "geometry": [
+      [
+        "5314:938ac89d:12398fb8",
+        "5482:7d3c587d:dab12904",
+        "5428:580bd56d:34f38b58",
+        "5322:82ce3d1d:976efa20",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5097:1271b9f4:427e078f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[16] Normal t=0.1": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1091:5d9b5678:4b241603",
+        "1092:5df4a8f9:482d5068",
+        "796:703e397:48d7a1ce",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[16] Normal t=0.5": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1083:6ff98c3f:66634d34",
+        "1083:5873024:fbb007fb",
+        "753:b882f9:1787c4c2",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[16] Normal t=0.9": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1097:e9bb1e85:81e59ef2",
+        "1094:1b680b36:2e1b14e3",
+        "851:f654ba0a:1c9d0969",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[17] Inner t=0.1": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1091:5d9b5678:4b241603",
+        "1092:5df4a8f9:482d5068",
+        "796:703e397:48d7a1ce",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[17] Inner t=0.5": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1083:6ff98c3f:66634d34",
+        "1083:5873024:fbb007fb",
+        "753:b882f9:1787c4c2",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[17] Inner t=0.9": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1097:e9bb1e85:81e59ef2",
+        "1094:1b680b36:2e1b14e3",
+        "851:f654ba0a:1c9d0969",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[18] Outer t=0.1": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1091:5d9b5678:4b241603",
+        "1092:5df4a8f9:482d5068",
+        "796:703e397:48d7a1ce",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[18] Outer t=0.5": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1083:6ff98c3f:66634d34",
+        "1083:5873024:fbb007fb",
+        "753:b882f9:1787c4c2",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[18] Outer t=0.9": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1097:e9bb1e85:81e59ef2",
+        "1094:1b680b36:2e1b14e3",
+        "851:f654ba0a:1c9d0969",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[19] Solid t=0.1": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1091:5d9b5678:4b241603",
+        "1092:5df4a8f9:482d5068",
+        "796:703e397:48d7a1ce",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-2.3, -2.3, 202.4, 102.3)",
+            "5085:1e3ae06c:9a5a14af"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[19] Solid t=0.5": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1083:6ff98c3f:66634d34",
+        "1083:5873024:fbb007fb",
+        "753:b882f9:1787c4c2",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.8, -1.8, 201.8, 101.8)",
+            "5093:dff2ba1c:803fd98f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[19] Solid t=0.9": {
+    "geometry": [
+      [
+        "607:e3ec5cc7:df3c0724",
+        "1097:e9bb1e85:81e59ef2",
+        "1094:1b680b36:2e1b14e3",
+        "851:f654ba0a:1c9d0969",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-1.1, -1.1, 201.1, 101.2)",
+            "5107:b4610078:6218e3cf"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[20] Tab t=0.1": {
+    "geometry": [
+      [
+        "5878:bfeecdc8:ba834855",
+        "5878:bfeecdc8:ba834855",
+        "5878:bfeecdc8:ba834855",
+        "5878:bfeecdc8:ba834855",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-29.0, 0.0, 229.0, 100.0)",
+            "4705:c6ddf780:e1f3b0d3"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-29.0, 0.0, 229.0, 100.0)",
+            "4705:c6ddf780:e1f3b0d3"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[20] Tab t=0.5": {
+    "geometry": [
+      [
+        "822:bd3eee72:4830b1af",
+        "822:bd3eee72:4830b1af",
+        "822:bd3eee72:4830b1af",
+        "822:bd3eee72:4830b1af",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-25.0, 0.0, 225.0, 100.0)",
+            "4701:40bb451c:78a47e7f"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-25.0, 0.0, 225.0, 100.0)",
+            "4701:40bb451c:78a47e7f"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[20] Tab t=0.9": {
+    "geometry": [
+      [
+        "1051:bd1a225d:8c74d73e",
+        "1051:bd1a225d:8c74d73e",
+        "1051:bd1a225d:8c74d73e",
+        "1051:bd1a225d:8c74d73e",
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-21.0, 0.0, 221.0, 100.0)",
+            "4705:c6ddf780:e1f3b0d3"
+          ]
+        ],
+        [
+          1,
+          [
+            "nonZero",
+            "Rect.fromLTRB(-21.0, 0.0, 221.0, 100.0)",
+            "4705:c6ddf780:e1f3b0d3"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 0,
+      "boolean": 0,
+      "assembly": 0,
+      "layer": 0
+    }
+  },
+  "[21] Crown t=0.1": {
+    "geometry": [
+      [
+        "1913:bf189c50:ced5f8f",
+        "2092:f571d5ae:2de15c87",
+        "2200:d1844d02:acf28c8f",
+        "2197:e1b11f74:64b3e0f3",
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-11.8, -3.4, 211.8, 110.0)",
+            "5020:8ccbf4f3:b3c410a2"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -22.4, 220.0, 120.0)",
+            "4907:e15191be:dcc2893d"
+          ]
+        ],
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-11.8, -3.4, 211.8, 110.0)",
+            "5020:8ccbf4f3:b3c410a2"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -22.4, 220.0, 120.0)",
+            "4907:e15191be:dcc2893d"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 18,
+      "boolean": 40,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "[21] Crown t=0.5": {
+    "geometry": [
+      [
+        "1234:13cb06c1:ad4642d8",
+        "1582:2ad92e3a:42a0166f",
+        "1250:4cb05fb9:87d3a110",
+        "1283:4dccd7ad:adad7b36",
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -15.0, 220.0, 110.0)",
+            "5017:970671e0:e4f11bf3"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -57.0, 220.0, 120.0)",
+            "4905:5511eab8:4ba786db"
+          ]
+        ],
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -15.0, 220.0, 110.0)",
+            "5017:970671e0:e4f11bf3"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -57.0, 220.0, 120.0)",
+            "4905:5511eab8:4ba786db"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 18,
+      "boolean": 40,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "[21] Crown t=0.9": {
+    "geometry": [
+      [
+        "10229:6d3400eb:68660a64",
+        "10744:4b35b41f:566478f6",
+        "4147:52d4754c:b920616b",
+        "4235:3d2e8c78:d1c7f233",
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-14.6, -3.4, 214.6, 110.0)",
+            "5028:c7084413:3d5446da"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -71.4, 220.0, 120.0)",
+            "4925:88fe4b4:a00a87f7"
+          ]
+        ],
+        [
+          2,
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-14.6, -3.4, 214.6, 110.0)",
+            "5028:c7084413:3d5446da"
+          ],
+          [
+            "evenOdd",
+            "Rect.fromLTRB(-20.0, -71.4, 220.0, 120.0)",
+            "4925:88fe4b4:a00a87f7"
+          ]
+        ]
+      ]
+    ],
+    "work": {
+      "fit": 0,
+      "flatten": 18,
+      "boolean": 40,
+      "assembly": 1,
+      "layer": 0
+    }
+  },
+  "corner -1.0 30 0": "16927:b0d50f4d:8409a012",
+  "corner -1.0 30 1": "1251:bb6d45cb:58625560",
+  "corner -1.0 30 2": "14086:2a910562:61933baf",
+  "corner -1.0 30 3": "1250:ba43537a:3be7f7b",
+  "corner -1.0 30 4": "14150:77319700:539a8561",
+  "corner -1.0 30 5": "1024:5dabe72:70d57c2f",
+  "corner -1.0 30 6": "23071:5c91d0fd:fa78c266",
+  "corner -1.0 30 7": "2079:b8558111:a4115446",
+  "corner -1.0 30 8": "3680:a66dd967:3a459ba",
+  "corner -1.0 30 9": "917:61964ca6:d777e279",
+  "corner -1.0 30 10": "897:a607f6b3:f6d41f98",
+  "corner -1.0 90 0": "8456:b8bb115:86a6cb04",
+  "corner -1.0 90 1": "1203:106fc31b:ae02e918",
+  "corner -1.0 90 2": "6984:60ffc81a:bd351af7",
+  "corner -1.0 90 3": "1208:bceaa751:df127488",
+  "corner -1.0 90 4": "7014:b67b5c9c:e2ec1b69",
+  "corner -1.0 90 5": "940:9571d8b:c5fdbf6",
+  "corner -1.0 90 6": "11464:cbae9878:7ab09065",
+  "corner -1.0 90 7": "6449:7e4c125f:6e59ac40",
+  "corner -1.0 90 8": "9404:b01d09af:eb2b512e",
+  "corner -1.0 90 9": "817:7c5a252:6b0b82f5",
+  "corner -1.0 90 10": "852:106a8752:2fc28f4b",
+  "corner -1.0 150 0": "3908:733df350:e60f1c7d",
+  "corner -1.0 150 1": "1263:dbddd2ca:509a6fb1",
+  "corner -1.0 150 2": "3899:18b40f6:da67deb1",
+  "corner -1.0 150 3": "1257:3382a5fa:da575841",
+  "corner -1.0 150 4": "3872:adf6273f:f197bc4a",
+  "corner -1.0 150 5": "1043:d1f72629:d58d0922",
+  "corner -1.0 150 6": "6173:b89c80b6:e2670fe9",
+  "corner -1.0 150 7": "12661:1345b207:e3b021a0",
+  "corner -1.0 150 8": "19553:f2b3b153:bdbc7b60",
+  "corner -1.0 150 9": "926:407fcc95:b19ea2f0",
+  "corner -1.0 150 10": "904:174c4ca:fcd45507",
+  "corner 1.0 30 0": "11452:4ad3f7d9:4f5684f4",
+  "corner 1.0 30 1": "1150:fbd9dd1f:c10b3fd6",
+  "corner 1.0 30 2": "11480:160a9bb3:d2ac17d6",
+  "corner 1.0 30 3": "1151:ab80ea2a:b1da88fd",
+  "corner 1.0 30 4": "14115:b0985674:788aeec3",
+  "corner 1.0 30 5": "1007:ede8ff28:e6f548db",
+  "corner 1.0 30 6": "17476:82197bc:ac36aa81",
+  "corner 1.0 30 7": "2615:9c0a2113:d31c67fc",
+  "corner 1.0 30 8": "3441:383effbb:d205bb7c",
+  "corner 1.0 30 9": "925:86a7f16e:b67ce8d9",
+  "corner 1.0 30 10": "898:a32f8a18:576a34e5",
+  "corner 1.0 90 0": "5706:79c24af0:e378f295",
+  "corner 1.0 90 1": "1249:2d887197:b22eddf0",
+  "corner 1.0 90 2": "5706:1bb4d755:d735c7a4",
+  "corner 1.0 90 3": "1246:c31d8f76:96c44db3",
+  "corner 1.0 90 4": "6939:12d4fed9:950153ce",
+  "corner 1.0 90 5": "997:f82e31bb:8bece094",
+  "corner 1.0 90 6": "8691:d61df1e6:994297e1",
+  "corner 1.0 90 7": "6661:c01b42c4:892c4f53",
+  "corner 1.0 90 8": "8287:f56c99b5:c03b11da",
+  "corner 1.0 90 9": "757:c2ae2986:fd3e81a9",
+  "corner 1.0 90 10": "819:5e48d259:dba68812",
+  "corner 1.0 150 0": "3325:5eb701a4:356c773",
+  "corner 1.0 150 1": "1253:6384fa76:b4dda2a5",
+  "corner 1.0 150 2": "3341:6d8672a:a5817f9",
+  "corner 1.0 150 3": "1253:edef8394:4f01da9b",
+  "corner 1.0 150 4": "3939:ec67f35e:2424cd59",
+  "corner 1.0 150 5": "1009:458ff63f:ef274f08",
+  "corner 1.0 150 6": "4849:4e468eca:ba3a3a8d",
+  "corner 1.0 150 7": "13742:f36194ea:781911bf",
+  "corner 1.0 150 8": "20374:8ed997df:a29a7ad6",
+  "corner 1.0 150 9": "918:e3ca66ed:d0fa7490",
+  "corner 1.0 150 10": "896:d0c6dd2e:f7511a63"
+}

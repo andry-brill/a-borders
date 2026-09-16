@@ -29,17 +29,23 @@ class AnyBoxBorder extends AnyBorder {
   /// Fallback side used by the left and right edges.
   final AnySide? vertical;
 
-  /// Outer corner used at the top-left point.
+  /// Shape corner used at the top-left point.
   final AnyCorner? topLeft;
 
-  /// Outer corner used at the top-right point.
+  /// Shape corner used at the top-right point.
   final AnyCorner? topRight;
 
-  /// Outer corner used at the bottom-right point.
+  /// Shape corner used at the bottom-right point.
   final AnyCorner? bottomRight;
 
-  /// Outer corner used at the bottom-left point.
+  /// Shape corner used at the bottom-left point.
   final AnyCorner? bottomLeft;
+
+  /// Explicit outer corner overrides; null derives them from the shape.
+  final AnyCorner? outerTopLeft;
+  final AnyCorner? outerTopRight;
+  final AnyCorner? outerBottomRight;
+  final AnyCorner? outerBottomLeft;
 
   /// Inner corner used at the top-left point.
   final AnyCorner? innerTopLeft;
@@ -57,6 +63,7 @@ class AnyBoxBorder extends AnyBorder {
     double? ratio,
     AnyBoxShape shape = AnyBoxShape.rectangle,
     AnyCorner? corners,
+    super.outerCorners,
     super.innerCorners,
     super.sides,
     this.left,
@@ -69,6 +76,10 @@ class AnyBoxBorder extends AnyBorder {
     this.topRight,
     this.bottomRight,
     this.bottomLeft,
+    this.outerTopLeft,
+    this.outerTopRight,
+    this.outerBottomRight,
+    this.outerBottomLeft,
     this.innerTopLeft,
     this.innerTopRight,
     this.innerBottomRight,
@@ -97,6 +108,10 @@ class AnyBoxBorder extends AnyBorder {
         other.topRight == topRight &&
         other.bottomRight == bottomRight &&
         other.bottomLeft == bottomLeft &&
+        other.outerTopLeft == outerTopLeft &&
+        other.outerTopRight == outerTopRight &&
+        other.outerBottomRight == outerBottomRight &&
+        other.outerBottomLeft == outerBottomLeft &&
         other.innerTopLeft == innerTopLeft &&
         other.innerTopRight == innerTopRight &&
         other.innerBottomRight == innerBottomRight &&
@@ -117,6 +132,10 @@ class AnyBoxBorder extends AnyBorder {
         topRight,
         bottomRight,
         bottomLeft,
+        outerTopLeft,
+        outerTopRight,
+        outerBottomRight,
+        outerBottomLeft,
         innerTopLeft,
         innerTopRight,
         innerBottomRight,
@@ -135,36 +154,61 @@ class AnyBoxDecoration extends AnyDecoration {
     super.enableCache,
   }) : super(border: border);
 
+  const AnyBoxDecoration.multi({
+    required List<AnyBoxBorder> borders,
+    super.primaryBorderIndex,
+    super.shadows,
+    super.clipBase,
+    super.shadowBase,
+    super.background,
+    super.enableCache,
+  }) : super.multi(borders: borders);
+
+  @override
+  List<AnyBoxBorder> get borders => super.borders.cast<AnyBoxBorder>();
+
   @override
   AnyBoxBorder get border => super.border as AnyBoxBorder;
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
-        point(
-          bounds.topLeft,
-          outer: border.topLeft,
-          inner: border.innerTopLeft,
-          side: border.top ?? border.horizontal,
-        ),
-        point(
-          bounds.topRight,
-          outer: border.topRight,
-          inner: border.innerTopRight,
-          side: border.right ?? border.vertical,
-        ),
-        point(
-          bounds.bottomRight,
-          outer: border.bottomRight,
-          inner: border.innerBottomRight,
-          side: border.bottom ?? border.horizontal,
-        ),
-        point(
-          bounds.bottomLeft,
-          outer: border.bottomLeft,
-          inner: border.innerBottomLeft,
-          side: border.left ?? border.vertical,
-        ),
-      ];
+  List<AnyPoint> buildPoints(
+      Rect bounds, TextDirection? textDirection, int borderIndex) {
+    final border = borders[borderIndex];
+    return [
+      point(
+        bounds.topLeft,
+        borderIndex: borderIndex,
+        shape: border.topLeft,
+        outer: border.outerTopLeft,
+        inner: border.innerTopLeft,
+        side: border.top ?? border.horizontal,
+      ),
+      point(
+        bounds.topRight,
+        borderIndex: borderIndex,
+        shape: border.topRight,
+        outer: border.outerTopRight,
+        inner: border.innerTopRight,
+        side: border.right ?? border.vertical,
+      ),
+      point(
+        bounds.bottomRight,
+        borderIndex: borderIndex,
+        shape: border.bottomRight,
+        outer: border.outerBottomRight,
+        inner: border.innerBottomRight,
+        side: border.bottom ?? border.horizontal,
+      ),
+      point(
+        bounds.bottomLeft,
+        borderIndex: borderIndex,
+        shape: border.bottomLeft,
+        outer: border.outerBottomLeft,
+        inner: border.innerBottomLeft,
+        side: border.left ?? border.vertical,
+      ),
+    ];
+  }
 
   @override
   bool operator ==(Object other) {
@@ -175,5 +219,4 @@ class AnyBoxDecoration extends AnyDecoration {
 
   @override
   int get hashCode => Object.hash(super.hashCode, AnyBoxDecoration);
-
 }

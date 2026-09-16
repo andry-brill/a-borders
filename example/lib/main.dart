@@ -1,28 +1,136 @@
+import 'dart:math' as math;
+
 import 'package:any_borders/any_borders.dart';
 import 'package:any_borders/extras/any_tab_decoration.dart';
 
 import 'package:flutter/material.dart';
+import 'corner_inspector.dart';
 
 List<Widget> examples() {
   const box = [
+    H('2.0: shape corners and layers'),
+    E(
+      title: 'Add a border layer',
+      begin: AnyBoxDecoration(
+        border: AnyBoxBorder(
+            corners: RoundedCorner(radius: 24),
+            sides:
+                AnySide(width: 8, align: AnySide.alignOutside, color: greenD)),
+        background: AnyBackground(color: greenL),
+      ),
+      end: AnyBoxDecoration.multi(
+        borders: [
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              sides: AnySide(
+                  width: 8, align: AnySide.alignOutside, color: greenD)),
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              sides:
+                  AnySide(width: 4, align: AnySide.alignOutside, color: blueL)),
+        ],
+        background: AnyBackground(color: greenL),
+      ),
+    ),
+    E(
+      title: 'Primary shape stays rounded\nExplicit outer corners change',
+      begin: AnyBoxDecoration.multi(
+        primaryBorderIndex: 1,
+        borders: [
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              outerCorners: BevelCorner(radius: 32),
+              sides: AnySide(
+                  width: 12, align: AnySide.alignOutside, color: greenD)),
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              sides:
+                  AnySide(width: 3, align: AnySide.alignOutside, color: blueL)),
+        ],
+        background: AnyBackground(color: greenL),
+        shadows: [AnyShadow(color: Color(0x55000000), blurRadius: 5)],
+      ),
+      end: AnyBoxDecoration.multi(
+        primaryBorderIndex: 1,
+        borders: [
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              outerCorners: RoundedCorner(radius: 36),
+              sides: AnySide(
+                  width: 12, align: AnySide.alignOutside, color: greenD)),
+          AnyBoxBorder(
+              corners: RoundedCorner(radius: 24),
+              sides:
+                  AnySide(width: 3, align: AnySide.alignOutside, color: blueL)),
+        ],
+        background: AnyBackground(color: greenL),
+        shadows: [AnyShadow(color: Color(0x55000000), blurRadius: 5)],
+      ),
+    ),
+    E(
+      title: 'Concentric scoops\nUniform arc spacing',
+      begin: AnyBoxDecoration.multi(borders: [
+        AnyBoxBorder(
+            corners: InverseRoundedCorner(radius: 20),
+            sides:
+                AnySide(width: 8, align: AnySide.alignOutside, color: greenD)),
+        AnyBoxBorder(
+            corners: InverseRoundedCorner(radius: 20),
+            sides:
+                AnySide(width: 3, align: AnySide.alignOutside, color: blueL)),
+      ], background: AnyBackground(color: greenL)),
+      end: AnyBoxDecoration.multi(borders: [
+        AnyBoxBorder(
+            corners: InverseRoundedCorner(radius: 28),
+            sides:
+                AnySide(width: 12, align: AnySide.alignOutside, color: greenD)),
+        AnyBoxBorder(
+            corners: InverseRoundedCorner(radius: 28),
+            sides:
+                AnySide(width: 5, align: AnySide.alignOutside, color: blueL)),
+      ], background: AnyBackground(color: greenL)),
+    ),
+    E(
+      title: 'Elliptical scoop\nNormal offsets',
+      begin: AnyBoxDecoration(
+          border: AnyBoxBorder(
+              corners: InverseRoundedCorner.elliptical(p: 24, n: 16),
+              sides: AnySide(
+                  width: 4, align: AnySide.alignOutside, color: greenD)),
+          background: AnyBackground(color: greenL)),
+      end: AnyBoxDecoration(
+          border: AnyBoxBorder(
+              corners: InverseRoundedCorner.elliptical(p: 16, n: 24),
+              sides: AnySide(
+                  width: 8, align: AnySide.alignOutside, color: greenD)),
+          background: AnyBackground(color: greenL)),
+    ),
     H('AnyBoxDecoration'),
     E(
       title: 'Any align/width\nLTRB(in:center:out:center)',
       begin: AnyBoxDecoration(
           border: AnyBoxBorder(
-              left: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
-              top: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-              right: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
-              bottom: AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
+              left:
+                  AnySide(color: greenD, width: 10, align: AnySide.alignInside),
+              top:
+                  AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+              right: AnySide(
+                  color: greenD, width: 30, align: AnySide.alignOutside),
+              bottom:
+                  AnySide(color: greenD, width: 40, align: AnySide.alignCenter),
               corners: RoundedCorner(radius: 10),
               innerCorners: RoundedCorner(radius: 10)),
           background: AnyBackground(color: greenL)),
       end: AnyBoxDecoration(
           border: AnyBoxBorder(
-              left: AnySide(color: greenD, width: 40, align: AnySide.alignOutside),
-              top: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-              right: AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
-              bottom: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+              left: AnySide(
+                  color: greenD, width: 40, align: AnySide.alignOutside),
+              top:
+                  AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              right:
+                  AnySide(color: greenD, width: 20, align: AnySide.alignCenter),
+              bottom: AnySide(
+                  color: greenD, width: 10, align: AnySide.alignOutside),
               corners: RoundedCorner(radius: 10),
               innerCorners: RoundedCorner(radius: 10)),
           background: AnyBackground(color: greenL)),
@@ -31,14 +139,16 @@ List<Widget> examples() {
       title: 'No horizontal',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
-            vertical: AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
+            vertical:
+                AnySide(color: greenD, width: 30, align: AnySide.alignOutside),
             horizontal: AnySide(color: greenL, align: AnySide.alignInside),
             corners: RoundedCorner(radius: 30),
             innerCorners: RoundedCorner(radius: 30)),
       ),
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
-            vertical: AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
+            vertical:
+                AnySide(color: greenD, width: 10, align: AnySide.alignOutside),
             horizontal: AnySide(color: greenL, align: AnySide.alignInside),
             corners: RoundedCorner(radius: 20),
             innerCorners: RoundedCorner(radius: 20)),
@@ -48,28 +158,40 @@ List<Widget> examples() {
       title: 'Any corner',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
-            vertical: AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
-            horizontal: AnySide(color: greenL, width: 20, align: AnySide.alignInside),
+            vertical:
+                AnySide(color: greenD, width: 20, align: AnySide.alignOutside),
+            horizontal:
+                AnySide(color: greenL, width: 20, align: AnySide.alignInside),
             topLeft: RoundedCorner(radius: 2),
+            outerTopLeft: RoundedCorner(radius: 2),
             innerTopLeft: BevelCorner(radius: 30),
             topRight: InverseRoundedCorner(radius: 20),
+            outerTopRight: InverseRoundedCorner(radius: 20),
             innerTopRight: BevelCorner(radius: 10),
             bottomRight: BevelCorner(radius: 20),
+            outerBottomRight: BevelCorner(radius: 20),
             innerBottomRight: RoundedCorner(radius: 40),
             bottomLeft: InverseRoundedCorner(radius: 20),
+            outerBottomLeft: InverseRoundedCorner(radius: 20),
             innerBottomLeft: RoundedCorner(radius: 2)),
       ),
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
-            vertical: AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
-            horizontal: AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
+            vertical:
+                AnySide(color: greenD, width: 25, align: AnySide.alignOutside),
+            horizontal:
+                AnySide(color: greenL, width: 25, align: AnySide.alignOutside),
             topLeft: RoundedCorner(radius: 2),
+            outerTopLeft: RoundedCorner(radius: 2),
             innerTopLeft: BevelCorner(radius: 30),
             topRight: InverseRoundedCorner(radius: 20),
+            outerTopRight: InverseRoundedCorner(radius: 20),
             innerTopRight: BevelCorner(radius: 30),
             bottomRight: BevelCorner(radius: 20),
+            outerBottomRight: BevelCorner(radius: 20),
             innerBottomRight: RoundedCorner(radius: 40),
             bottomLeft: InverseRoundedCorner(radius: 20),
+            outerBottomLeft: InverseRoundedCorner(radius: 20),
             innerBottomLeft: RoundedCorner(radius: 40)),
       ),
     ),
@@ -77,32 +199,51 @@ List<Widget> examples() {
       title: 'Back+T+B',
       begin: AnyBoxDecoration(
           border: AnyBoxBorder(
-              left: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-              top: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
-              right: AnySide(color: greenD, width: 30, align: AnySide.alignInside),
-              bottom: AnySide(color: greenL, width: 20, align: AnySide.alignOutside),
-              corners: RoundedCorner(radius: 50)),
-          background: AnyBackground(color: greenL)),
+              left:
+                  AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              top: AnySide(
+                  color: greenL, width: 20, align: AnySide.alignOutside),
+              right:
+                  AnySide(color: greenD, width: 30, align: AnySide.alignInside),
+              bottom: AnySide(
+                  color: greenL, width: 20, align: AnySide.alignOutside),
+              corners: RoundedCorner(radius: 50),
+              outerCorners: RoundedCorner(radius: 50),
+              innerTopLeft: RoundedCorner.elliptical(p: 20, n: 30),
+              innerTopRight: RoundedCorner.elliptical(p: 30, n: 20),
+              innerBottomRight: RoundedCorner.elliptical(p: 20, n: 30),
+              innerBottomLeft: RoundedCorner.elliptical(p: 30, n: 20)),
+          background: AnyBackground(
+              color: greenL, shapeBase: AnyShapeBase.outerBorder)),
       end: AnyBoxDecoration(
           border: AnyBoxBorder(
-              left: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
-              top: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
-              right: AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
-              bottom: AnySide(color: greenL, width: 40, align: AnySide.alignInside),
-              corners: RoundedCorner(radius: 20)),
-          background: AnyBackground(color: greenL)),
+              left:
+                  AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+              top:
+                  AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+              right:
+                  AnySide(color: greenD, width: 5, align: AnySide.alignOutside),
+              bottom:
+                  AnySide(color: greenL, width: 40, align: AnySide.alignInside),
+              corners: RoundedCorner(radius: 20),
+              outerCorners: RoundedCorner(radius: 20),
+              innerCorners: RoundedCorner()),
+          background: AnyBackground(
+              color: greenL, shapeBase: AnyShapeBase.outerBorder)),
     ),
     E(
       title: 'Gradient',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
-            sides: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+            sides: AnySide(
+                gradient: gradientBG, width: 20, align: AnySide.alignCenter),
             corners: RoundedCorner(radius: 30)),
         background: AnyBackground(gradient: gradientBGL),
       ),
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
-            sides: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
+            sides: AnySide(
+                gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
             corners: BevelCorner(radius: 40)),
         background: AnyBackground(gradient: gradientBG),
       ),
@@ -111,54 +252,66 @@ List<Widget> examples() {
       title: 'Gradient HV',
       begin: AnyBoxDecoration(
           border: AnyBoxBorder(
-              horizontal: AnySide(gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-              vertical: AnySide(gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
+              horizontal: AnySide(
+                  gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+              vertical: AnySide(
+                  gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
               corners: BevelCorner(radius: 30))),
       end: AnyBoxDecoration(
           border: AnyBoxBorder(
-              left: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-              right: AnySide(gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-              top: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-              bottom: AnySide(gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+              left: AnySide(
+                  gradient: gradientBGL,
+                  width: 10,
+                  align: AnySide.alignOutside),
+              right: AnySide(
+                  gradient: gradientBGL,
+                  width: 10,
+                  align: AnySide.alignOutside),
+              top: AnySide(
+                  gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+              bottom: AnySide(
+                  gradient: gradientBG, width: 10, align: AnySide.alignCenter),
               corners: RoundedCorner(radius: 20))),
     ),
     E(
       title: 'Images',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
-            sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+            sides: AnySide(
+                image: marbleBlue, width: 20, align: AnySide.alignOutside),
             shape: AnyBoxShape.circle),
         background: AnyBackground(image: marbleGreen),
       ),
       end: AnyBoxDecoration(
           border: AnyBoxBorder(
-              sides: AnySide(image: marbleBlue, width: 20, align: AnySide.alignOutside),
+              sides: AnySide(
+                  image: marbleBlue, width: 20, align: AnySide.alignOutside),
               corners: BevelCorner(radius: double.infinity)),
           background: AnyBackground(image: marbleGreen)),
     ),
-    Stack(children: [
-      SizedBox(
-          width: w,
-          height: h,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-                border: Border.symmetric(
-                    horizontal: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside),
-                    vertical: BorderSide(width: 20, color: alpha33, strokeAlign: AnySide.alignOutside)),
-                borderRadius: BorderRadiusGeometry.only(topLeft: Radius.elliptical(80, 40))),
-          )),
       E(
-        title: 'BoxDecoration elliptical\nDiff when Outer',
-        begin: AnyBoxDecoration(
-            border: AnyBoxBorder(
-                sides: AnySide(color: alpha99, width: 20, align: AnySide.alignOutside),
-                topLeft: RoundedCorner.elliptical(n: 80, p: 40))),
-        end: AnyBoxDecoration(
-            border: AnyBoxBorder(
-                sides: AnySide(color: alpha99, width: 20, align: AnySide.alignInside),
-                topLeft: RoundedCorner.elliptical(n: 80, p: 40))),
+        title: 'Concentric scoops\nUniform arc spacing',
+        begin: AnyBoxDecoration.multi(borders: [
+          AnyBoxBorder(
+              corners: InverseRoundedCorner(radius: 20),
+              sides:
+              AnySide(width: 10, align: AnySide.alignOutside, color: greenD)),
+          AnyBoxBorder(
+              corners: InverseRoundedCorner(radius: 20),
+              sides:
+              AnySide(width: 4, align: AnySide.alignOutside, color: greenL)),
+        ]),
+        end: AnyBoxDecoration.multi(borders: [
+          AnyBoxBorder(
+              corners: InverseRoundedCorner(radius: 28),
+              sides:
+              AnySide(width: 16, align: AnySide.alignInside, color: greenD)),
+          AnyBoxBorder(
+              corners: InverseRoundedCorner(radius: 28),
+              sides:
+              AnySide(width: 8, align: AnySide.alignInside, color: greenL)),
+        ]),
       ),
-    ]),
   ];
 
   final shadows = [
@@ -189,11 +342,17 @@ List<Widget> examples() {
       title: 'Crown',
       begin: CrownDecoration(
         type: CrownType.flat,
-        border: AnyBorder(corners: BevelCorner(radius: 20)),
+        border: AnyBorder(
+            corners: BevelCorner(radius: 20),
+            outerCorners: BevelCorner(radius: 20),
+            innerCorners: BevelCorner(radius: 8.284271247461902)),
       ),
       end: CrownDecoration(
         type: CrownType.spike,
-        border: AnyBorder(corners: RoundedCorner(radius: 20)),
+        border: AnyBorder(
+            corners: RoundedCorner(radius: 20),
+            outerCorners: RoundedCorner(radius: 20),
+            innerCorners: RoundedCorner()),
       ),
     ),
   ];
@@ -344,7 +503,6 @@ List<E> buildShadows(
   ];
 }
 
-
 enum CrownType {
   flat(0, 0.5, greenL, greenD),
   spike(-0.5, 0.25, blueL, blueD);
@@ -373,7 +531,8 @@ class CrownDecoration extends AnyDecoration {
   int get hashCode => Object.hash(super.hashCode, type.hashCode);
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(
+      Rect bounds, TextDirection? textDirection, int borderIndex) {
     final w4 = bounds.width / 4.0;
     final w2 = bounds.width / 2.0;
 
@@ -391,26 +550,63 @@ class CrownDecoration extends AnyDecoration {
     final subLx = bounds.left + w4;
     final subRx = bounds.right - w4;
 
-    return [
-      point(bounds.topLeft, side: inner),
-      point(
-        Offset(subLx, bounds.top + bounds.height * type.subDy),
-        side: outer,
-      ),
-      point(
-        Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy),
-        side: outer,
-      ),
-      point(
-        Offset(subRx, bounds.top + bounds.height * type.subDy),
-        side: inner,
-      ),
-      point(bounds.topRight, side: outer),
-      point(bounds.bottomRight, side: outer),
-      point(Offset(subRx, bounds.bottom), side: inner),
-      point(Offset(subLx, bounds.bottom), side: outer),
-      point(bounds.bottomLeft, side: outer),
+    final vertices = [
+      bounds.topLeft,
+      Offset(subLx, bounds.top + bounds.height * type.subDy),
+      Offset(bounds.left + w2, bounds.top + bounds.height * type.mainDy),
+      Offset(subRx, bounds.top + bounds.height * type.subDy),
+      bounds.topRight,
+      bounds.bottomRight,
+      Offset(subRx, bounds.bottom),
+      Offset(subLx, bounds.bottom),
+      bounds.bottomLeft,
     ];
+    final sideSettings = [
+      inner,
+      outer,
+      outer,
+      inner,
+      outer,
+      outer,
+      inner,
+      outer,
+      outer
+    ];
+    final border = borders[borderIndex];
+    return List.generate(vertices.length, (i) {
+      // This showcase authors both boundaries. Its valley, tip and lower
+      // corners are distinct design choices, independent of the shape band.
+      final AnyCorner innerCorner;
+      if (i == 0 || i == 4) {
+        innerCorner =
+            (border.innerCorners ?? border.corners).copyWith(p: 0, n: 0);
+      } else if (i == 1 || i == 3) {
+        innerCorner = type == CrownType.flat
+            ? BevelCorner(radius: 20 * (3 - math.sqrt(2)))
+            : const RoundedCorner(radius: 40);
+      } else {
+        innerCorner = border.innerCorners ?? const RoundedCorner();
+      }
+      AnyCorner contacts(AnyCorner corner) {
+        // The original drawing specified perpendicular corner dimensions.
+        // Translate those authored dimensions into 2.0 ray-based parameters
+        // to preserve its contact positions, including at non-right angles.
+        final u = vertices[(i - 1) % vertices.length] - vertices[i];
+        final v = vertices[(i + 1) % vertices.length] - vertices[i];
+        final denominator = u.distance * v.distance;
+        final sine = (u.dx * v.dy - u.dy * v.dx).abs() / denominator;
+        final cosine = (u.dx * v.dx + u.dy * v.dy) / denominator;
+        if (sine < 1e-9) return corner.copyWith(p: 0, n: 0);
+        final factor = corner is RoundedCorner ? 1 / (1 + cosine) : 1 / sine;
+        return corner * factor;
+      }
+
+      return point(vertices[i],
+          borderIndex: borderIndex,
+          side: sideSettings[i],
+          outer: contacts(border.outerCorners ?? border.corners),
+          inner: contacts(innerCorner));
+    });
   }
 }
 
@@ -487,8 +683,10 @@ class _ExampleToggleBus extends ChangeNotifier {
   _ExampleToggleBus._();
 
   static final _ExampleToggleBus instance = _ExampleToggleBus._();
+  bool expanded = false;
 
   void toggleAll() {
+    expanded = !expanded;
     notifyListeners();
   }
 }
@@ -544,15 +742,23 @@ class _ExamplePageState extends State<_ExamplePage> {
       behavior: HitTestBehavior.translucent,
       onTap: _ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsetsGeometry.only(bottom: spacing, top: spacing),
-            child: Center(
-                child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            )),
+        appBar: AppBar(title: const Text('Any Borders 2.0'), actions: [
+          TextButton.icon(
+              icon: const Icon(Icons.architecture),
+              label: const Text('Inspect corners'),
+              onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                      builder: (_) => const CornerInspector()))),
+        ]),
+        body: ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: spacing),
+          addAutomaticKeepAlives: false,
+          itemCount: children.length,
+          itemBuilder: (context, index) => Center(
+            child: SizedBox(
+              width: rowLimit * w + (rowLimit - 1) * spacing,
+              child: children[index],
+            ),
           ),
         ),
       ),
@@ -581,14 +787,13 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
   late final Animation<double> _animation;
   late AnyDecorationTween _tween;
 
-  bool get _expanded => _controller.value >= 0.5;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
       duration: duration,
+      value: _ExampleToggleBus.instance.expanded ? 1 : 0,
     );
     _animation = CurvedAnimation(parent: _controller, curve: curve);
     _tween = AnyDecorationTween(
@@ -613,10 +818,10 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
   void _toggle() {
     if (!mounted) return;
 
-    if (_expanded) {
-      _controller.reverse();
-    } else {
+    if (_ExampleToggleBus.instance.expanded) {
       _controller.forward();
+    } else {
+      _controller.reverse();
     }
   }
 

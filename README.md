@@ -16,8 +16,10 @@ use solid colors, gradients, images, or combinations of them.
 ## Central idea
 
 - `AnyDecoration` defines a contour by returning a list of `AnyPoint`s.
-- `AnyPoint` carries an outer corner, an optional inner corner, and the `AnySide` painted until the next point.
-- `AnyBorder` used by `point(...)`  for side, outer-corner, inner-corner, and ratio defaults.
+- `AnyPoint` requires a shape corner, with optional inner/outer overrides and the `AnySide` painted until the next point.
+- `AnyBorder` supplies side, shape-corner, optional boundary-corner, and ratio defaults to `point(...)`.
+- Missing inner and outer corners derive independently from the normalized shape.
+- Multiple borders paint in list order; the primary border supplies decoration effects.
 - `AnyFill` is the shared color / gradient / image contract used by sides, backgrounds, and shadows.
 
 ## Quick Start
@@ -40,43 +42,119 @@ Container(
 )
 ```
 
+## Multiple borders
+
+```dart
+const AnyBoxDecoration.multi(
+  primaryBorderIndex: 0,
+  borders: [
+    AnyBoxBorder(
+      corners: RoundedCorner(radius: 20),
+      sides: AnySide(width: 4, align: AnySide.alignOutside,
+          color: Color(0xFF1565C0)),
+    ),
+    AnyBoxBorder(
+      corners: RoundedCorner(radius: 20),
+      sides: AnySide(width: 2, align: AnySide.alignOutside,
+          color: Color(0xFFFFFFFF)),
+    ),
+  ],
+  background: AnyBackground(color: Color(0xFFE3F2FD)),
+)
+```
+
+The first entry paints first. Later entries cover earlier ones: the two-pixel
+white border covers two pixels of the blue border. There is no cumulative
+placement. Each layer fits its own ratio and shape into the same paint size.
+
+`border` returns the primary border; `borders` is a read-only ordered view.
+`primaryBorderIndex` selects all background, clipping and shadow paths; there
+is no silhouette union. Effects paint once before border layers. The three
+default selectors use `shapeBorder`, so explicit outer corners do not change
+the default clip or background shape.
+
+The list must be nonempty and the primary index in range. Keep supplied lists
+immutable after construction. Runtime validation happens before geometry so
+constructors remain `const`. Use a zero-width single border for background-only
+decoration. A single border and its equivalent one-entry multi decoration
+compare equally.
+
+`buildContours(size, direction)` returns every layer; `buildContour` returns the
+primary layer. Tweens pair layers by index and animate inserted or removed
+layers from/to zero width. See the [2.0 migration guide](MIGRATION.md).
+
+An explicit boundary override and primary selection can be combined:
+
+```dart
+const AnyBoxDecoration.multi(
+  primaryBorderIndex: 1,
+  borders: [
+    AnyBoxBorder(sides: AnySide(width: 6, color: Color(0xFF1565C0))),
+    AnyBoxBorder(
+      corners: RoundedCorner(radius: 20),
+      outerTopLeft: BevelCorner(radius: 28),
+      sides: AnySide(width: 2, color: Color(0xFFFFFFFF)),
+    ),
+  ],
+  clipBase: AnyShapeBase.shapeBorder,
+  background: AnyBackground(color: Color(0xFFE3F2FD)),
+)
+```
+
+Here clipping and the background follow the second layer's rounded source;
+its explicit outer bevel affects only that border's outer boundary.
+
 ## Corners
 
-All corners derive from `AnyCorner`. The constructor `radius` form creates an
-even corner, while the `elliptical` constructors allow different extents along
-the previous and next sides.
+`AnyCorner` describes source geometry. `p` belongs to the ray pointing toward
+the previous vertex; `n` belongs to the ray toward the next vertex. Reversing a
+custom outline requires swapping `p`/`n` and moving each side setting to the
+corresponding reversed edge.
 
-> Warning: contour corners with angles of `0`, `180`, or `360` degrees are
-> currently unstable. Their behavior may change in future versions.
-
-### RoundedCorner
-
-`RoundedCorner` creates a rounded arc between neighboring sides.
+| Type | Meaning of `p` / `n` | Source contacts at angle θ |
+| --- | --- | --- |
+| `RoundedCorner` | Ray-based scaling of a unit circular fillet | `p × cot(θ/2)`, `n × cot(θ/2)` |
+| `InverseRoundedCorner` | Ray-based scaling of a circular sector centered at the vertex | `p`, `n` |
+| `BevelCorner` | Straight-cut distances along the incident rays | `p`, `n` |
 
 ```dart
-const RoundedCorner(radius: 24)
+const RoundedCorner(radius: 24) // A genuine circle, including at 60 degrees.
 const RoundedCorner.elliptical(p: 40, n: 16)
-```
-
-### BevelCorner
-
-`BevelCorner` replaces the arc with a straight bevel segment.
-
-```dart
 const BevelCorner(radius: 24)
-const BevelCorner.elliptical(p: 40, n: 16)
-```
-
-### InverseRoundedCorner (beta)
-
-`InverseRoundedCorner` creates an inward rounded contour. This corner is marked
-as beta because edge cases and conversion behavior may still change.
-
-```dart
-const InverseRoundedCorner(radius: 18)
 const InverseRoundedCorner.elliptical(p: 32, n: 18)
 ```
 
+At a right angle the ray axes are perpendicular. At other angles the elliptical
+forms are affine images in the two-ray basis; `p` and `n` are not necessarily
+the ellipse's principal semiaxes. Equal values produce circular rounded and
+inverse-rounded source corners. Source normalization preserves their proportions
+and is independent of border width.
+
+Automatic rounded boundaries adjust the corresponding radius component: at a
+convex box corner, the next side changes `p` and the previous side changes `n`.
+Growing a tiny rounded radius uses a continuous taper that keeps zero sharp.
+`dynamicRatio` remains the default; unequal widths can correctly produce an
+elliptical boundary around a circular source.
+
+Bevel boundaries use intersections of displaced lines. Automatic scoop boundaries
+share the shape vertex as their reference center and follow the source curve's
+normal. With equal widths, circular scoops are concentric: an outside distance
+`d` gives radius `r-d`, and an inside distance `d` gives radius `r+d` at a convex
+vertex. Elliptical scoops use parallel curves, which need not be ellipses.
+Side intersections trim the curves; outward contacts use straight tangent joins.
+There are no auxiliary rounded joins. Uniform thickness applies along the
+surviving curved part; the sharp joins intentionally differ from round offsets.
+Explicit inner/outer scoops retain their authored dimensions and are centered
+at their own inner/outer side intersections, independently of the shape.
+
+Automatic filled boundaries can become empty or split into several components.
+Supported inputs are simple source outlines and the tab's collinear/backtracking
+helper construction. Skip duplicate vertices; arbitrary authored self-intersecting
+outlines are rejected. Parallel helper vertices resolve without a fillet.
+
+See [geometry policies, precision, and regression tests](GEOMETRY.md). Open
+**Inspect corners** in the example app to examine source/inner/outer curves,
+centers, tangents, unequal widths, and the reported mixed-alignment box.
 
 ## AnyFill
 
@@ -102,7 +180,9 @@ geometry is configured through `border: AnyBoxBorder(...)`.
 
 Useful fields:
 
-- `border`: side, corner, inner-corner, ratio, and shape configuration.
+- `border`: primary side, shape-corner, boundary-corner, ratio, and shape configuration.
+- `borders`: ordered border layers (use `.multi` to supply a list).
+- `primaryBorderIndex`: the layer supplying decoration-level paths.
 - `background`: fill behind the side regions.
 - `shadows`: shadows painted from the configured contour.
 - `clipBase`: contour band returned by `getClipPath`.
@@ -114,9 +194,10 @@ Useful `AnyBoxBorder` fields:
 - `left`, `top`, `right`, `bottom`: per-edge overrides.
 - `horizontal`: fallback for top and bottom.
 - `vertical`: fallback for left and right.
-- `corners`: default outer corner.
-- `topLeft`, `topRight`, `bottomRight`, `bottomLeft`: per-corner outer
-  overrides.
+- `corners`: default shape corner.
+- `topLeft`, `topRight`, `bottomRight`, `bottomLeft`: shape-corner overrides.
+- `outerCorners`: optional default outer corner.
+- `outerTopLeft`, `outerTopRight`, `outerBottomRight`, `outerBottomLeft`: outer overrides.
 - `innerCorners`: default inner corner.
 - `innerTopLeft`, `innerTopRight`, `innerBottomRight`, `innerBottomLeft`:
   per-corner inner overrides.
@@ -145,13 +226,15 @@ const AnyBoxDecoration(
 subclasses:
 
 - `sides`: default side for generated points.
-- `corners`: default outer corner for generated points.
+- `corners`: default shape corner for generated points.
+- `outerCorners`: optional default outer corner for generated points.
 - `innerCorners`: optional default inner corner for generated points.
 - `ratio`: optional width / height ratio used to fit the contour inside the
   paint bounds.
 
 Custom decoration subclasses can accept `super.border` and continue to call
-`point(...)`; missing point-specific values are resolved from `border`.
+`point(..., borderIndex: borderIndex)`; missing point-specific values resolve
+from the selected border.
 
 ## AnySide
 
@@ -181,36 +264,50 @@ const AnySide(
 `AnyBackground` paints behind side regions and also implements `AnyFill`.
 `shapeBase` chooses which contour band is used for the background path:
 
-- `AnyShapeBase.zeroBorder`: the source contour points.
+- `AnyShapeBase.shapeBorder`: directly resolved source shape (the default).
+- `AnyShapeBase.zeroBorder`: legacy zero-offset boundary derived from outer corners.
 - `AnyShapeBase.outerBorder`: the outside of aligned sides.
 - `AnyShapeBase.innerBorder`: the inside of aligned sides.
 
 ```dart
 const AnyBackground(
   color: Color(0xFF85AEA8),
-  shapeBase: AnyShapeBase.zeroBorder,
+  shapeBase: AnyShapeBase.shapeBorder,
 )
 ```
 
 ## AnyCorner
 
-`AnyCorner` is the strategy interface for corner geometry. A corner defines its
-extent along the previous side with `p` and along the next side with `n`.
-Concrete corners handle path construction, side consumption, interpolation, and
-conversion between outer, base, and inner contour bands.
+`AnyCorner` is an immutable descriptor. `resolve(frame)` returns an
+`AnyResolvedCorner`; `resolveBoundary(source, previousDistance: ...,
+nextDistance: ...)` derives a boundary using named signed distances (positive
+inward). Built-in descriptors resolve finite dimensions after normalization.
 
-For normal use, choose one of:
+`AnyResolvedCorner` exposes canonical segments, actual `previousExtent` and
+`nextExtent`, points, tangents, and path subdivision. `parameters` is nullable:
+a custom resolved curve may not be representable by another `p`/`n` pair. The
+contour's four corner collections now contain resolved corners.
 
-- `RoundedCorner`
-- `BevelCorner`
-- `InverseRoundedCorner` (beta)
+Rounded and bevel descriptors support these converter policies:
 
-Use `CornerConverter` on supported corners to control how corners are converted
-when borders move inward or outward:
+- `dynamicRatio` (default): adjust the two components independently.
+- `preserveRatio`: retain rounded proportions; use one weighted parallel bevel.
+- `equal`: retain the authored dimensions at the shifted vertex.
 
-- `CornerConverter.dynamicRatio`: adjust each extent independently.
-- `CornerConverter.preserveRatio`: preserve the original corner ratio.
-- `CornerConverter.equal`: keep the same corner unchanged.
+These are shape-design policies, not universal constant-distance offsets.
+Scoop boundaries use the shared-origin normal-offset policy described above.
+See the [advanced API migration](MIGRATION.md#advanced-corner-api).
+
+## Custom corners
+
+Extend `AnyCorner` and select an `AnyCornerGeometry` through `geometry`.
+Built-ins pair with `RoundedCornerGeometry`, `BevelCornerGeometry`, and
+`InverseRoundedCornerGeometry`. The engine uses the same public contracts for
+custom corners and has no concrete-corner registry.
+
+See the [custom-corner guide](CUSTOM_CORNERS.md),
+[complete NotchCorner example](example/lib/custom_corner.dart), and
+[migration notes](MIGRATION.md#custom-corner-providers).
 
 ## Custom Decorations
 
@@ -225,12 +322,12 @@ class DiamondDecoration extends AnyDecoration {
   });
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection, int borderIndex) {
     return [
-      point(bounds.topCenter),
-      point(bounds.centerRight),
-      point(bounds.bottomCenter),
-      point(bounds.centerLeft),
+      point(bounds.topCenter, borderIndex: borderIndex),
+      point(bounds.centerRight, borderIndex: borderIndex),
+      point(bounds.bottomCenter, borderIndex: borderIndex),
+      point(bounds.centerLeft, borderIndex: borderIndex),
     ];
   }
 
@@ -246,6 +343,8 @@ class DiamondDecoration extends AnyDecoration {
 
 Custom `AnyDecoration` subclasses should override `operator ==` and `hashCode`
 for every field they add. Contour caching depends on decoration equality.
+`points(bounds, direction, borderIndex: i)` selects one point list; omitting the
+index uses the primary border. The cache stores read-only ordered contour lists.
 
 ## Extras
 
@@ -264,8 +363,8 @@ import 'package:any_borders/extras/any_tab_decoration.dart';
 ### AnyTabDecoration
 
 - `AnyTabDecoration` creates a tab-like contour configured through `AnyBoxBorder`. 
-- The tab offsets are derived from the bottom corner extents instead of a
-separate offset.
+- Tab offsets derive from each layer's bottom shape corners.
+- `AnyTabDecoration.multi` accepts independently configured border layers.
 - `offsetOutward` defaults to `true`, so the lower tab expands outside the
 provided bounds. Set it to `false` to keep the tab inset inside the bounds.
 
@@ -279,6 +378,6 @@ const AnyTabDecoration(
 )
 ```
 
-> Warning: contour corners with angles of `0`, `180`, or `360 (0)` degrees are
-> currently unstable. Their behavior may change in future versions.
+Tab helper vertices keep their side settings and skipped-point behavior.
+Parallel vertices have no fillet; offset sides are connected explicitly.
 

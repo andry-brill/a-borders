@@ -4,9 +4,7 @@ import 'package:any_borders/any_borders.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-
   test('AnyDecoration stores border defaults in AnyBorder', () {
-
     const border = AnyBorder(
       sides: AnySide(width: 4),
       corners: RoundedCorner(radius: 12),
@@ -23,11 +21,10 @@ void main() {
           .size,
       const Size(200, 100),
     );
-
   });
 
-  test('AnyBoxDecoration equality is based on AnyBoxBorder and runtimeType', () {
-
+  test('AnyBoxDecoration equality is based on AnyBoxBorder and runtimeType',
+      () {
     const a = AnyBoxDecoration(
       border: AnyBoxBorder(
         sides: AnySide(width: 4),
@@ -50,11 +47,9 @@ void main() {
     expect(a, b);
     expect(a, isNot(c));
     expect(a, isNot(_TestDecoration(border: a.border)));
-
   });
 
   test('AnyBorder equality does not mix base and box border types', () {
-
     const base = AnyBorder(
       sides: AnySide(width: 4),
       corners: RoundedCorner(radius: 12),
@@ -67,7 +62,6 @@ void main() {
 
     expect(base == box, isFalse);
     expect(box == base, isFalse);
-
   });
 }
 
@@ -75,10 +69,12 @@ class _TestDecoration extends AnyDecoration {
   const _TestDecoration({super.border});
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) => [
-        point(bounds.topLeft),
-        point(bounds.topRight),
-        point(bounds.bottomRight),
-        point(bounds.bottomLeft),
+  List<AnyPoint> buildPoints(
+          Rect bounds, TextDirection? textDirection, int borderIndex) =>
+      [
+        point(bounds.topLeft, borderIndex: borderIndex),
+        point(bounds.topRight, borderIndex: borderIndex),
+        point(bounds.bottomRight, borderIndex: borderIndex),
+        point(bounds.bottomLeft, borderIndex: borderIndex),
       ];
 }

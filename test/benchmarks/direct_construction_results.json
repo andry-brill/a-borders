@@ -1,0 +1,1742 @@
+{
+  "date": "2026-09-15",
+  "flutter": "3.47.3 e8113bf456",
+  "engine": "06a2e2a110",
+  "dart": "3.13.3",
+  "backend": "Windows Flutter test (debug JIT, native Skia)",
+  "method": "Five separate invocations; two warmup passes each. Fixtures average 30 fresh constructions; gallery averages five tween positions for each of 22 indexed examples. Sums are category workloads, not a frame-rate estimate.",
+  "summary": {
+    "ordinary_ms": {
+      "before": {
+        "median": 7.056,
+        "minimum": 6.894,
+        "maximum": 8.391
+      },
+      "after": {
+        "median": 0.998,
+        "minimum": 0.953,
+        "maximum": 1.071
+      }
+    },
+    "fallback_ms": {
+      "before": {
+        "median": 9.967,
+        "minimum": 9.511,
+        "maximum": 12.209
+      },
+      "after": {
+        "median": 8.911,
+        "minimum": 8.671,
+        "maximum": 9.347
+      }
+    },
+    "gallery_ms": {
+      "before": {
+        "median": 21.305,
+        "minimum": 20.337,
+        "maximum": 22.841
+      },
+      "after": {
+        "median": 8.971,
+        "minimum": 8.67,
+        "maximum": 10.502
+      }
+    }
+  },
+  "runs": {
+    "before": [
+      {
+        "run": 1,
+        "ordinary_ms": 7.056,
+        "fallback_ms": 9.861,
+        "gallery_ms": 21.305,
+        "fixtures": {
+          "rounded box": 0.324,
+          "bevel box": 0.061,
+          "circular scoop": 2.549,
+          "distinct side fills": 0.442,
+          "authored boundaries": 0.197,
+          "triangle": 2.477,
+          "concave polygon": 1.006,
+          "elliptical offset": 4.104,
+          "unequal scoop offsets": 3.094,
+          "collapsed rounded interior": 1.262,
+          "split neck": 1.401
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.214,
+            "regions_ms": 0.337
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.414,
+            "regions_ms": 0.295
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.33,
+            "regions_ms": 2.706
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.159,
+            "regions_ms": 1.963
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.11,
+            "regions_ms": 0.277
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.114,
+            "regions_ms": 0.409
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.119,
+            "regions_ms": 1.775
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.132,
+            "regions_ms": 0.349
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.185,
+            "regions_ms": 0.431
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.097,
+            "regions_ms": 0.3
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.107,
+            "regions_ms": 0.113
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.34,
+            "regions_ms": 5.393
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.113,
+            "regions_ms": 0.227
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.199,
+            "regions_ms": 0.338
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.084,
+            "regions_ms": 0.199
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.169,
+            "regions_ms": 0.205
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.045,
+            "regions_ms": 0.049
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.035,
+            "regions_ms": 0.035
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.03,
+            "regions_ms": 0.035
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.04,
+            "regions_ms": 0.03
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.079,
+            "regions_ms": 0.011
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.147,
+            "regions_ms": 2.567
+          }
+        ]
+      },
+      {
+        "run": 2,
+        "ordinary_ms": 8.391,
+        "fallback_ms": 12.209,
+        "gallery_ms": 20.337,
+        "fixtures": {
+          "rounded box": 0.4,
+          "bevel box": 0.092,
+          "circular scoop": 3.142,
+          "distinct side fills": 0.476,
+          "authored boundaries": 0.27,
+          "triangle": 2.941,
+          "concave polygon": 1.07,
+          "elliptical offset": 4.689,
+          "unequal scoop offsets": 3.596,
+          "collapsed rounded interior": 1.939,
+          "split neck": 1.983
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.387,
+            "regions_ms": 0.343
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.345,
+            "regions_ms": 0.275
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.392,
+            "regions_ms": 2.713
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.205,
+            "regions_ms": 1.649
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.101,
+            "regions_ms": 0.319
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.117,
+            "regions_ms": 0.42
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.094,
+            "regions_ms": 1.729
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.142,
+            "regions_ms": 0.416
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.209,
+            "regions_ms": 0.294
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.07,
+            "regions_ms": 0.207
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.065,
+            "regions_ms": 0.091
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.31,
+            "regions_ms": 5.079
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.113,
+            "regions_ms": 0.244
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.101,
+            "regions_ms": 0.207
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.08,
+            "regions_ms": 0.185
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.089,
+            "regions_ms": 0.257
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.045,
+            "regions_ms": 0.064
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.045,
+            "regions_ms": 0.038
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.031,
+            "regions_ms": 0.031
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.032,
+            "regions_ms": 0.036
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.087,
+            "regions_ms": 0.01
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.145,
+            "regions_ms": 2.527
+          }
+        ]
+      },
+      {
+        "run": 3,
+        "ordinary_ms": 7.514,
+        "fallback_ms": 9.967,
+        "gallery_ms": 20.839,
+        "fixtures": {
+          "rounded box": 0.323,
+          "bevel box": 0.076,
+          "circular scoop": 2.636,
+          "distinct side fills": 0.447,
+          "authored boundaries": 0.229,
+          "triangle": 2.704,
+          "concave polygon": 1.098,
+          "elliptical offset": 4.309,
+          "unequal scoop offsets": 3.073,
+          "collapsed rounded interior": 1.246,
+          "split neck": 1.339
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.224,
+            "regions_ms": 0.482
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.192,
+            "regions_ms": 0.46
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.647,
+            "regions_ms": 2.784
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.181,
+            "regions_ms": 1.666
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.104,
+            "regions_ms": 0.241
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.141,
+            "regions_ms": 0.516
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.292,
+            "regions_ms": 1.633
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.123,
+            "regions_ms": 0.363
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.169,
+            "regions_ms": 0.117
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.079,
+            "regions_ms": 0.487
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.075,
+            "regions_ms": 0.084
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.321,
+            "regions_ms": 5.169
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.096,
+            "regions_ms": 0.199
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.096,
+            "regions_ms": 0.25
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.086,
+            "regions_ms": 0.19
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.094,
+            "regions_ms": 0.191
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.038,
+            "regions_ms": 0.085
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.043,
+            "regions_ms": 0.038
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.032,
+            "regions_ms": 0.033
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.033,
+            "regions_ms": 0.033
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.065,
+            "regions_ms": 0.009
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.156,
+            "regions_ms": 2.522
+          }
+        ]
+      },
+      {
+        "run": 4,
+        "ordinary_ms": 6.894,
+        "fallback_ms": 9.511,
+        "gallery_ms": 21.569,
+        "fixtures": {
+          "rounded box": 0.299,
+          "bevel box": 0.102,
+          "circular scoop": 2.437,
+          "distinct side fills": 0.44,
+          "authored boundaries": 0.219,
+          "triangle": 2.433,
+          "concave polygon": 0.964,
+          "elliptical offset": 3.989,
+          "unequal scoop offsets": 2.874,
+          "collapsed rounded interior": 1.269,
+          "split neck": 1.379
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.224,
+            "regions_ms": 0.346
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.462,
+            "regions_ms": 0.321
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.447,
+            "regions_ms": 2.969
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.258,
+            "regions_ms": 2.123
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.11,
+            "regions_ms": 0.302
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.109,
+            "regions_ms": 0.551
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.099,
+            "regions_ms": 1.66
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.131,
+            "regions_ms": 0.669
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.17,
+            "regions_ms": 0.116
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.06,
+            "regions_ms": 0.197
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.068,
+            "regions_ms": 0.085
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.227,
+            "regions_ms": 5.447
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.171,
+            "regions_ms": 0.201
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.089,
+            "regions_ms": 0.192
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.091,
+            "regions_ms": 0.184
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.093,
+            "regions_ms": 0.253
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.035,
+            "regions_ms": 0.035
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.04,
+            "regions_ms": 0.033
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.03,
+            "regions_ms": 0.031
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.035,
+            "regions_ms": 0.032
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.077,
+            "regions_ms": 0.01
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.154,
+            "regions_ms": 2.633
+          }
+        ]
+      },
+      {
+        "run": 5,
+        "ordinary_ms": 7.021,
+        "fallback_ms": 10.587,
+        "gallery_ms": 22.841,
+        "fixtures": {
+          "rounded box": 0.319,
+          "bevel box": 0.062,
+          "circular scoop": 2.466,
+          "distinct side fills": 0.426,
+          "authored boundaries": 0.214,
+          "triangle": 2.532,
+          "concave polygon": 1.003,
+          "elliptical offset": 4.763,
+          "unequal scoop offsets": 3.133,
+          "collapsed rounded interior": 1.259,
+          "split neck": 1.433
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.217,
+            "regions_ms": 0.306
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.205,
+            "regions_ms": 0.489
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.448,
+            "regions_ms": 3.107
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.173,
+            "regions_ms": 1.906
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.148,
+            "regions_ms": 0.297
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.238,
+            "regions_ms": 0.445
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.126,
+            "regions_ms": 1.801
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.15,
+            "regions_ms": 0.557
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.176,
+            "regions_ms": 0.108
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.068,
+            "regions_ms": 0.212
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.08,
+            "regions_ms": 0.131
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.471,
+            "regions_ms": 6.097
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.189,
+            "regions_ms": 0.215
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.105,
+            "regions_ms": 0.198
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.152,
+            "regions_ms": 0.2
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.091,
+            "regions_ms": 0.196
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.045,
+            "regions_ms": 0.053
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.045,
+            "regions_ms": 0.04
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.046,
+            "regions_ms": 0.039
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.038,
+            "regions_ms": 0.034
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.093,
+            "regions_ms": 0.013
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.249,
+            "regions_ms": 2.843
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "run": 1,
+        "ordinary_ms": 0.998,
+        "fallback_ms": 9.347,
+        "gallery_ms": 9.808,
+        "fixtures": {
+          "rounded box": 0.102,
+          "bevel box": 0.039,
+          "circular scoop": 0.291,
+          "distinct side fills": 0.187,
+          "authored boundaries": 0.12,
+          "triangle": 0.157,
+          "concave polygon": 0.102,
+          "elliptical offset": 3.924,
+          "unequal scoop offsets": 2.792,
+          "collapsed rounded interior": 1.204,
+          "split neck": 1.427
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.124,
+            "regions_ms": 0.129
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.1,
+            "regions_ms": 0.191
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.288,
+            "regions_ms": 0.266
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.103,
+            "regions_ms": 1.788
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.061,
+            "regions_ms": 0.108
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.075,
+            "regions_ms": 0.358
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.058,
+            "regions_ms": 0.132
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.074,
+            "regions_ms": 0.162
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.223,
+            "regions_ms": 0.154
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.048,
+            "regions_ms": 0.129
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.164,
+            "regions_ms": 0.059
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.114,
+            "regions_ms": 0.504
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.151,
+            "regions_ms": 0.122
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.062,
+            "regions_ms": 0.245
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.049,
+            "regions_ms": 0.071
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.043,
+            "regions_ms": 0.054
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.036,
+            "regions_ms": 0.027
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.053,
+            "regions_ms": 0.031
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.039,
+            "regions_ms": 0.027
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.043,
+            "regions_ms": 0.028
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.079,
+            "regions_ms": 0.021
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.19,
+            "regions_ms": 3.027
+          }
+        ]
+      },
+      {
+        "run": 2,
+        "ordinary_ms": 0.953,
+        "fallback_ms": 8.99,
+        "gallery_ms": 8.882,
+        "fixtures": {
+          "rounded box": 0.098,
+          "bevel box": 0.036,
+          "circular scoop": 0.26,
+          "distinct side fills": 0.193,
+          "authored boundaries": 0.119,
+          "triangle": 0.142,
+          "concave polygon": 0.105,
+          "elliptical offset": 4.037,
+          "unequal scoop offsets": 2.53,
+          "collapsed rounded interior": 1.096,
+          "split neck": 1.327
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.1,
+            "regions_ms": 0.125
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.099,
+            "regions_ms": 0.187
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.127,
+            "regions_ms": 0.424
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.09,
+            "regions_ms": 1.786
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.06,
+            "regions_ms": 0.139
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.073,
+            "regions_ms": 0.347
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.057,
+            "regions_ms": 0.134
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.064,
+            "regions_ms": 0.173
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.244,
+            "regions_ms": 0.071
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.045,
+            "regions_ms": 0.112
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.115,
+            "regions_ms": 0.044
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.132,
+            "regions_ms": 0.455
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.141,
+            "regions_ms": 0.062
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.048,
+            "regions_ms": 0.115
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.044,
+            "regions_ms": 0.051
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.048,
+            "regions_ms": 0.063
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.036,
+            "regions_ms": 0.026
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.04,
+            "regions_ms": 0.037
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.035,
+            "regions_ms": 0.028
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.039,
+            "regions_ms": 0.026
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.06,
+            "regions_ms": 0.016
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.116,
+            "regions_ms": 2.646
+          }
+        ]
+      },
+      {
+        "run": 3,
+        "ordinary_ms": 0.98,
+        "fallback_ms": 8.671,
+        "gallery_ms": 8.67,
+        "fixtures": {
+          "rounded box": 0.099,
+          "bevel box": 0.036,
+          "circular scoop": 0.26,
+          "distinct side fills": 0.2,
+          "authored boundaries": 0.119,
+          "triangle": 0.143,
+          "concave polygon": 0.122,
+          "elliptical offset": 3.631,
+          "unequal scoop offsets": 2.591,
+          "collapsed rounded interior": 1.108,
+          "split neck": 1.341
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.094,
+            "regions_ms": 0.106
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.083,
+            "regions_ms": 0.158
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.136,
+            "regions_ms": 0.36
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.085,
+            "regions_ms": 1.675
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.055,
+            "regions_ms": 0.123
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.065,
+            "regions_ms": 0.348
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.056,
+            "regions_ms": 0.138
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.065,
+            "regions_ms": 0.269
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.252,
+            "regions_ms": 0.079
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.053,
+            "regions_ms": 0.114
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.046,
+            "regions_ms": 0.126
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.134,
+            "regions_ms": 0.491
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.07,
+            "regions_ms": 0.101
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.061,
+            "regions_ms": 0.142
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.044,
+            "regions_ms": 0.057
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.041,
+            "regions_ms": 0.048
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.039,
+            "regions_ms": 0.026
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.033,
+            "regions_ms": 0.024
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.033,
+            "regions_ms": 0.033
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.033,
+            "regions_ms": 0.025
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.058,
+            "regions_ms": 0.017
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.124,
+            "regions_ms": 2.551
+          }
+        ]
+      },
+      {
+        "run": 4,
+        "ordinary_ms": 1.017,
+        "fallback_ms": 8.911,
+        "gallery_ms": 8.971,
+        "fixtures": {
+          "rounded box": 0.106,
+          "bevel box": 0.04,
+          "circular scoop": 0.298,
+          "distinct side fills": 0.185,
+          "authored boundaries": 0.127,
+          "triangle": 0.155,
+          "concave polygon": 0.105,
+          "elliptical offset": 3.739,
+          "unequal scoop offsets": 2.633,
+          "collapsed rounded interior": 1.153,
+          "split neck": 1.386
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.118,
+            "regions_ms": 0.108
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.083,
+            "regions_ms": 0.156
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.12,
+            "regions_ms": 0.403
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.108,
+            "regions_ms": 2.006
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.051,
+            "regions_ms": 0.118
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.07,
+            "regions_ms": 0.413
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.059,
+            "regions_ms": 0.142
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.177,
+            "regions_ms": 0.244
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.11,
+            "regions_ms": 0.048
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.045,
+            "regions_ms": 0.102
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.051,
+            "regions_ms": 0.066
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.193,
+            "regions_ms": 0.536
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.053,
+            "regions_ms": 0.066
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.141,
+            "regions_ms": 0.052
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.041,
+            "regions_ms": 0.047
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.051,
+            "regions_ms": 0.064
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.033,
+            "regions_ms": 0.026
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.042,
+            "regions_ms": 0.033
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.036,
+            "regions_ms": 0.023
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.032,
+            "regions_ms": 0.025
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.059,
+            "regions_ms": 0.021
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.124,
+            "regions_ms": 2.476
+          }
+        ]
+      },
+      {
+        "run": 5,
+        "ordinary_ms": 1.071,
+        "fallback_ms": 8.732,
+        "gallery_ms": 10.502,
+        "fixtures": {
+          "rounded box": 0.104,
+          "bevel box": 0.035,
+          "circular scoop": 0.327,
+          "distinct side fills": 0.183,
+          "authored boundaries": 0.143,
+          "triangle": 0.183,
+          "concave polygon": 0.097,
+          "elliptical offset": 3.734,
+          "unequal scoop offsets": 2.612,
+          "collapsed rounded interior": 1.074,
+          "split neck": 1.312
+        },
+        "gallery": [
+          {
+            "index": 0,
+            "title": "Add a border layer",
+            "build_ms": 0.128,
+            "regions_ms": 0.134
+          },
+          {
+            "index": 1,
+            "title": "Primary shape stays rounded Explicit outer corners change",
+            "build_ms": 0.099,
+            "regions_ms": 0.196
+          },
+          {
+            "index": 2,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.336,
+            "regions_ms": 0.761
+          },
+          {
+            "index": 3,
+            "title": "Elliptical scoop Normal offsets",
+            "build_ms": 0.118,
+            "regions_ms": 1.701
+          },
+          {
+            "index": 4,
+            "title": "Any align/width LTRB(in:center:out:center)",
+            "build_ms": 0.068,
+            "regions_ms": 0.117
+          },
+          {
+            "index": 5,
+            "title": "No horizontal",
+            "build_ms": 0.101,
+            "regions_ms": 0.71
+          },
+          {
+            "index": 6,
+            "title": "Any corner",
+            "build_ms": 0.067,
+            "regions_ms": 0.201
+          },
+          {
+            "index": 7,
+            "title": "Back+T+B",
+            "build_ms": 0.059,
+            "regions_ms": 0.155
+          },
+          {
+            "index": 8,
+            "title": "Gradient",
+            "build_ms": 0.145,
+            "regions_ms": 0.052
+          },
+          {
+            "index": 9,
+            "title": "Gradient HV",
+            "build_ms": 0.041,
+            "regions_ms": 0.095
+          },
+          {
+            "index": 10,
+            "title": "Images",
+            "build_ms": 0.099,
+            "regions_ms": 0.105
+          },
+          {
+            "index": 11,
+            "title": "Concentric scoops Uniform arc spacing",
+            "build_ms": 0.112,
+            "regions_ms": 0.53
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "build_ms": 0.042,
+            "regions_ms": 0.046
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "build_ms": 0.06,
+            "regions_ms": 0.063
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "build_ms": 0.041,
+            "regions_ms": 0.046
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "build_ms": 0.05,
+            "regions_ms": 0.161
+          },
+          {
+            "index": 16,
+            "title": "Normal",
+            "build_ms": 0.037,
+            "regions_ms": 0.041
+          },
+          {
+            "index": 17,
+            "title": "Inner",
+            "build_ms": 0.052,
+            "regions_ms": 0.029
+          },
+          {
+            "index": 18,
+            "title": "Outer",
+            "build_ms": 0.04,
+            "regions_ms": 0.046
+          },
+          {
+            "index": 19,
+            "title": "Solid",
+            "build_ms": 0.053,
+            "regions_ms": 0.042
+          },
+          {
+            "index": 20,
+            "title": "Tab",
+            "build_ms": 0.1,
+            "regions_ms": 0.011
+          },
+          {
+            "index": 21,
+            "title": "Crown",
+            "build_ms": 0.216,
+            "regions_ms": 3.199
+          }
+        ]
+      }
+    ]
+  },
+  "browser": {
+    "version": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/152.0.7977.83",
+      "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "jsVersion": "15.2.124.21"
+    },
+    "backend": "CanvasKit profile build, visible dedicated Chrome, native window occlusion throttling disabled",
+    "scene": "Gallery indices 0,2,3,4,6,11; 200x120 logical units each; repeat(reverse:true), 2-second duration",
+    "method": "Three 8-second captures per version, each warmed for 8 seconds. Inactive captures rejected. Final after captures refreshed following final background-certification guard.",
+    "viewport": {
+      "width": 1087,
+      "height": 727,
+      "dpr": 1.25
+    },
+    "runs": [
+      {
+        "variant": "before",
+        "run": 1,
+        "taskMs": 7997.754000000001,
+        "scriptMs": 7871.059,
+        "animationCallbacks": 350,
+        "callbackMs": 7865.9259999999995,
+        "callbackMedianMs": 21.511,
+        "callbackP95Ms": 29.145,
+        "displayFrameEvents": 353,
+        "gpuCommandMs": 334.049999999999,
+        "compositorPaintMs": 60.02300000000004
+      },
+      {
+        "variant": "before",
+        "run": 2,
+        "taskMs": 7994.197,
+        "scriptMs": 7816.033,
+        "animationCallbacks": 383,
+        "callbackMs": 7838.789999999996,
+        "callbackMedianMs": 20.099,
+        "callbackP95Ms": 23.793,
+        "displayFrameEvents": 385,
+        "gpuCommandMs": 327.27899999999903,
+        "compositorPaintMs": 61.11599999999998
+      },
+      {
+        "variant": "before",
+        "run": 3,
+        "taskMs": 7994.886,
+        "scriptMs": 7818.1050000000005,
+        "animationCallbacks": 389,
+        "callbackMs": 7818.012999999998,
+        "callbackMedianMs": 19.632,
+        "callbackP95Ms": 23.671,
+        "displayFrameEvents": 392,
+        "gpuCommandMs": 321.4279999999986,
+        "compositorPaintMs": 60.584999999999994
+      },
+      {
+        "variant": "after",
+        "run": 1,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "taskMs": 7981.093,
+        "scriptMs": 7662.2429999999995,
+        "animationCallbacks": 827,
+        "callbackMs": 7737.949000000001,
+        "callbackMedianMs": 8.659,
+        "callbackP95Ms": 13.509,
+        "displayFrameEvents": 829,
+        "gpuCommandMs": 754.6249999999917,
+        "compositorPaintMs": 147.59000000000006
+      },
+      {
+        "variant": "after",
+        "run": 2,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "taskMs": 7983.574999999999,
+        "scriptMs": 7566.559,
+        "animationCallbacks": 887,
+        "callbackMs": 7640.468999999996,
+        "callbackMedianMs": 8.084,
+        "callbackP95Ms": 11.716,
+        "displayFrameEvents": 890,
+        "gpuCommandMs": 745.0259999999935,
+        "compositorPaintMs": 147.65900000000016
+      },
+      {
+        "variant": "after",
+        "run": 3,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "taskMs": 7984.504999999999,
+        "scriptMs": 7650.592,
+        "animationCallbacks": 941,
+        "callbackMs": 7722.935000000003,
+        "callbackMedianMs": 8.003,
+        "callbackP95Ms": 9.898,
+        "displayFrameEvents": 944,
+        "gpuCommandMs": 787.8919999999907,
+        "compositorPaintMs": 160.28900000000007
+      }
+    ],
+    "summary": {
+      "before": {
+        "callback_median_ms": {
+          "median": 20.099,
+          "minimum": 19.632,
+          "maximum": 21.511
+        },
+        "callback_p95_ms": {
+          "median": 23.793,
+          "minimum": 23.671,
+          "maximum": 29.145
+        },
+        "gpu_command_ms_per_presentation": {
+          "median": 0.8500753246753222,
+          "minimum": 0.8199693877550984,
+          "maximum": 0.9463172804532549
+        },
+        "compositor_paint_ms_per_presentation": {
+          "median": 0.15874285714285707,
+          "minimum": 0.1545535714285714,
+          "maximum": 0.17003682719546753
+        }
+      },
+      "after": {
+        "callback_median_ms": {
+          "median": 8.084,
+          "minimum": 8.003,
+          "maximum": 8.659
+        },
+        "callback_p95_ms": {
+          "median": 11.716,
+          "minimum": 9.898,
+          "maximum": 13.509
+        },
+        "gpu_command_ms_per_presentation": {
+          "median": 0.837107865168532,
+          "minimum": 0.8346313559321936,
+          "maximum": 0.9102834740651287
+        },
+        "compositor_paint_ms_per_presentation": {
+          "median": 0.1697976694915255,
+          "minimum": 0.16590898876404514,
+          "maximum": 0.1780337756332932
+        }
+      }
+    },
+    "check_result": "PASS: 90 border-hole checks and 254400 multi-fill coverage checks. Solid, gradient, image, and shadow fills preserve holes; side seams and varying gradient alpha retain coverage at DPR 1, 2, 3.",
+    "errors": []
+  }
+}

@@ -28,11 +28,27 @@ class AnyTabDecoration extends AnyDecoration {
     super.enableCache,
   }) : super(border: border);
 
+  const AnyTabDecoration.multi({
+    this.offsetOutward = true,
+    required List<AnyBoxBorder> borders,
+    super.primaryBorderIndex,
+    super.shadows,
+    super.clipBase,
+    super.shadowBase,
+    super.background,
+    super.enableCache,
+  }) : super.multi(borders: borders);
+
+  @override
+  List<AnyBoxBorder> get borders => super.borders.cast<AnyBoxBorder>();
+
   @override
   AnyBoxBorder get border => super.border as AnyBoxBorder;
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection) {
+  List<AnyPoint> buildPoints(
+      Rect bounds, TextDirection? textDirection, int borderIndex) {
+    final border = borders[borderIndex];
     final bottomLeftCorner = border.bottomLeft ?? border.corners;
     final bottomRightCorner = border.bottomRight ?? border.corners;
 
@@ -71,6 +87,8 @@ class AnyTabDecoration extends AnyDecoration {
     return [
       point(
         firstPoint,
+        borderIndex: borderIndex,
+        shape: zero,
         outer: zero,
         inner: zero,
         skip: firstPoint == leftBottomPoint,
@@ -78,30 +96,40 @@ class AnyTabDecoration extends AnyDecoration {
       ),
       point(
         leftBottomPoint,
-        outer: border.bottomLeft,
+        borderIndex: borderIndex,
+        shape: border.bottomLeft,
+        outer: border.outerBottomLeft,
         inner: border.innerBottomLeft,
         side: border.left ?? border.vertical,
       ),
       point(
         leftTopPoint,
-        outer: border.topLeft,
+        borderIndex: borderIndex,
+        shape: border.topLeft,
+        outer: border.outerTopLeft,
         inner: border.innerTopLeft,
         side: border.top ?? border.horizontal,
       ),
       point(
         rightTopPoint,
-        outer: border.topRight,
+        borderIndex: borderIndex,
+        shape: border.topRight,
+        outer: border.outerTopRight,
         inner: border.innerTopRight,
         side: border.right ?? border.vertical,
       ),
       point(
         rightBottomPoint,
-        outer: border.bottomRight,
+        borderIndex: borderIndex,
+        shape: border.bottomRight,
+        outer: border.outerBottomRight,
         inner: border.innerBottomRight,
         side: border.bottom ?? border.horizontal,
       ),
       point(
         lastPoint,
+        borderIndex: borderIndex,
+        shape: zero,
         outer: zero,
         inner: zero,
         skip: rightBottomPoint == lastPoint,

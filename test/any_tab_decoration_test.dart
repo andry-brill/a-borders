@@ -5,6 +5,38 @@ import 'package:any_borders/any_extras.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+      'backtracking helpers preserve the closing side inside and outside offsets',
+      () {
+    for (final outward in [true, false]) {
+      for (final align in [-1.0, 0.0, 1.0]) {
+        final decoration = AnyTabDecoration(
+            offsetOutward: outward,
+            enableCache: false,
+            border: AnyBoxBorder(
+                corners: const RoundedCorner(radius: 18),
+                sides: AnySide(
+                    width: 10, align: align, color: const Color(0xff000000))));
+        final c =
+            decoration.buildContour(const Size(100, 70), TextDirection.ltr);
+        final inside = 10 * (1 - align) / 2, outside = 10 * (1 + align) / 2;
+        final inner = c.pathFor(AnyShapeBase.innerBorder),
+            outer = c.pathFor(AnyShapeBase.outerBorder);
+        expect(inner.contains(Offset(50, 70 - inside - 0.1)), isTrue);
+        expect(inner.contains(Offset(50, 70 - inside + 0.1)), isFalse);
+        expect(outer.contains(Offset(50, 70 + outside - 0.1)), isTrue);
+        expect(outer.contains(Offset(50, 70 + outside + 0.1)), isFalse);
+        final middle = Offset(50, 70 + (outside - inside) / 2);
+        expect(
+            c
+                .regions(backgroundMerge: false)
+                .regions
+                .where((r) => r.$2.contains(middle))
+                .length,
+            1);
+      }
+    }
+  });
   test('derives outward tab offsets from bottom corner extents by default', () {
     const decoration = AnyTabDecoration(
       border: AnyBoxBorder(
