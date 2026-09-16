@@ -704,6 +704,11 @@ dependency boundary. Internal assertion-only diagnostics count fitting,
 flattening, boolean operations, general assembly, and painter layers; they are
 inactive in profile/release builds.
 
+Canonical snapshots store numeric coordinates and allow floating-point roundoff
+of `max(1e-12, abs(expected) * 1e-14)` across platforms. Segment structure,
+corner types, sampled fill membership, and work counts must match exactly.
+This comparison allowance is separate from construction and raster tolerances.
+
 ```sh
 flutter analyze
 flutter test
