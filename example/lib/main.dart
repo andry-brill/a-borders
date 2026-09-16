@@ -5,6 +5,7 @@ import 'package:any_borders/extras/any_tab_decoration.dart';
 
 import 'package:flutter/material.dart';
 import 'corner_inspector.dart';
+import 'custom_corner.dart';
 
 List<Widget> examples() {
   const box = [
@@ -227,7 +228,7 @@ List<Widget> examples() {
         border: AnyBorder(
             corners: BevelCorner(radius: 20),
             outerCorners: BevelCorner(radius: 20),
-            innerCorners: BevelCorner(radius: 8.284271247461902)),
+            innerCorners: BevelCorner(radius: 8)),
       ),
       end: CrownDecoration(
         type: CrownType.spike,
@@ -235,6 +236,21 @@ List<Widget> examples() {
             corners: RoundedCorner(radius: 20),
             outerCorners: RoundedCorner(radius: 20),
             innerCorners: RoundedCorner()),
+      ),
+    ),
+    E(
+      title: 'CustomCorner',
+      begin: AnyBoxDecoration(
+        border: AnyBoxBorder(
+          sides: AnySide(color: greenD, width: 10, align: AnySide.alignInside),
+          corners: NotchCorner(p: 40, n: 40, bend: 0.2),
+        ),
+      ),
+      end: AnyBoxDecoration(
+        border: AnyBoxBorder(
+          sides: AnySide(color: greenD, width: 12, align: AnySide.alignInside),
+          corners: NotchCorner(p: 30, n: 30, bend: 0.4),
+        ),
       ),
     ),
   ];

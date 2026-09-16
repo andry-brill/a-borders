@@ -2,8 +2,7 @@
 
 [![Tests](https://github.com/andry-brill/a-borders/actions/workflows/test.yml/badge.svg)](https://github.com/andry-brill/a-borders/actions/workflows/test.yml)
 
-A Flutter package for shapes with independent side widths, aligned borders,
-custom corners, layered fills, and shadows.
+A Flutter package for custom shapes and layered borders with per-side widths and alignment, independent inner and outer corners, and inset/outset path offsets. Combine solid colors, gradients, images, shadows, and clipping, animate between decorations, or extend the library with your own shapes and corner geometry.
 
 ![App Screenshot](https://raw.githubusercontent.com/andry-brill/a-borders/main/example/web/screenshot.png)
 
@@ -48,45 +47,68 @@ to the painter. Each corner selects its geometry provider; core code depends on
 the shared contract and never imports concrete corner implementations.
 
 ```mermaid
+---
+config:
+  layout: dagre
+---
 flowchart TB
-  Tween["AnyDecorationTween<br/>interpolate decoration settings"] -.-> Decoration
-  Decoration["AnyDecoration / AnyBoxDecoration<br/>fit ratio; build offset points for each border"]
-  Border["AnyBorder / AnyBoxBorder<br/>side, corner, ratio and offset settings"] --> Decoration
-  Decoration --> Points["AnyPoint<br/>displaced vertex, outgoing AnySide and corner settings"]
-  Points --> Contour
-  Cache["AnyDecorationCache<br/>reuse contour lists by decoration, size and direction"] -.-> Contour
-
-  subgraph Core["Generic geometry"]
-    Prepared["Prepared contour transitions (internal)<br/>reuse endpoint preparation across frames"]
-    Contour["AnyContour<br/>normalize sources; resolve requested boundaries lazily"]
-    Tween -.-> Prepared --> Contour
-    Frame["AnyCornerFrame<br/>rays, normals, winding and shifted vertex"]
-    API["AnyCornerGeometry<br/>sizing, source, boundary and transition contracts"]
-    Resolved["AnyResolvedCorner<br/>canonical AnyCornerSegments, extents, traits and provider state"]
-    Assembly["AnyContour region assembly<br/>whole-contour checks; direct or general construction"]
-    Regions["AnyRegions<br/>filled paths paired with fills"]
-    Contour --> Frame --> API --> Resolved --> Assembly --> Regions
-    API -.->|optional transition specialization| Prepared
-  end
-
-  Corner["AnyCorner<br/>immutable settings; geometry getter"]
-  Points -.-> Corner
-  Corner -.->|implemented by| CornerTypes
-  subgraph Providers["Implementations"]
+  subgraph Execution[" "]
     direction TB
-    CornerTypes["RoundedCorner<br/>BevelCorner<br/>InverseRoundedCorner<br/>Custom corner"]
-    GeometryTypes["RoundedCornerGeometry<br/>BevelCornerGeometry<br/>InverseRoundedCornerGeometry<br/>Custom geometry provider"]
-    CornerTypes -.->|geometry getter selects corresponding provider| GeometryTypes
+    subgraph Core["Generic geometry"]
+      Tween["AnyDecorationTween<br/>interpolate decoration settings"]
+      Prepared["Prepared contour transitions (internal)<br/>reuse endpoint preparation across frames"]
+      Contour["AnyContour<br/>normalize sources; resolve requested boundaries lazily"]
+      Frame["AnyCornerFrame<br/>rays, normals, winding and shifted vertex"]
+      API["AnyCornerGeometry<br/>sizing, source, boundary and transition contracts"]
+      Resolved["AnyResolvedCorner<br/>canonical AnyCornerSegments, extents, traits and provider state"]
+      Assembly["AnyContour region assembly<br/>whole-contour checks; direct or general construction"]
+      Regions["AnyRegions<br/>filled paths paired with fills"]
+      %% Invisible parallel links keep the main flow in one reading column.
+      Tween ~~~ Prepared ~~~ Contour ~~~ Frame ~~~ API ~~~ Resolved ~~~ Assembly ~~~ Regions
+      Tween -.-> Prepared --> Contour --> Frame --> API --> Resolved --> Assembly --> Regions
+      Tween ~~~ Prepared ~~~ Contour ~~~ Frame ~~~ API ~~~ Resolved ~~~ Assembly ~~~ Regions
+      Prepared -.-|optional transition specialization| API
+    end
+    Painter["Decoration BoxPainter<br/>effects, fill coverage and ordered border layers"]
+    Canvas["Flutter Canvas"]
+    Regions ~~~ Painter ~~~ Canvas
+    Regions --> Painter --> Canvas
+    Regions ~~~ Painter ~~~ Canvas
+    Contour -->|selected background, clip and shadow paths| Painter
   end
-  GeometryTypes -.->|implement| API
-  Contour -->|selected background, clip and shadow paths| Painter
-  Regions --> Painter["Decoration BoxPainter<br/>effects, fill coverage and ordered border layers"]
-  Fills["AnyFill<br/>shared by AnySide, AnyBackground and AnyShadow"] -.-> Painter
-  Painter --> Canvas["Flutter Canvas"]
+
+  subgraph Settings[" "]
+    direction TB
+    Border["AnyBorder / AnyBoxBorder<br/>side, corner, ratio and offset settings"]
+    Decoration["AnyDecoration / AnyBoxDecoration<br/>fit ratio; build offset points for each border"]
+    Points["AnyPoint<br/>displaced vertex, outgoing AnySide and corner settings"]
+    Corner["AnyCorner<br/>immutable settings; geometry getter"]
+    Border --> Decoration --> Points -.-> Corner
+    subgraph Providers["Implementations"]
+      direction TB
+      CornerTypes["RoundedCorner<br/>BevelCorner<br/>InverseRoundedCorner<br/>Custom corner"]
+      GeometryTypes["RoundedCornerGeometry<br/>BevelCornerGeometry<br/>InverseRoundedCornerGeometry<br/>Custom geometry provider"]
+      CornerTypes -.->|geometry getter selects corresponding provider| GeometryTypes
+    end
+    Corner -.->|implemented by| CornerTypes
+    Cache["AnyDecorationCache<br/>reuse contour lists by decoration, size and direction"]
+    Fills["AnyFill<br/>shared by AnySide, AnyBackground and AnyShadow"]
+    GeometryTypes ~~~ Cache ~~~ Fills
+  end
+
+  Tween -.-> Decoration
+  Points --> Contour
+  API -.-|implemented by| GeometryTypes
+  Contour -.- Cache
+  Fills -.-> Painter
+
+  style Execution fill:none,stroke:none
+  style Settings fill:none,stroke:none
 ```
 
-Solid arrows show construction and data flow; dotted arrows show configuration,
-provider implementations, and reuse. Frames, edge allocation, curve mathematics,
+Read each column from top to bottom. Solid arrows show construction and data flow;
+dotted links show configuration, provider implementations, and reuse.
+Frames, edge allocation, curve mathematics,
 contour checks, region assembly, and painting are fixed shared mechanics.
 Providers supply local corner behavior through the contract; there is no
 registration step or configurable optimization pipeline.
@@ -722,7 +744,8 @@ Measured on Windows with an Intel i7-10870H, Flutter 3.47.3 and Dart 3.13.3.
 The comparison uses five warmed native runs per version, alternating execution
 order with identical inputs and dependency versions. Values are median
 milliseconds with minimum–maximum run averages in parentheses. Indexed names
-refer to the current 18-example gallery.
+refer to the 18-example gallery captured for this measurement, before the
+NotchCorner example was added.
 
 | Native CPU geometry | Before preparation | With preparation | Median change |
 | --- | ---: | ---: | ---: |

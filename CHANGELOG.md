@@ -2,6 +2,8 @@
 
 ### New
 
+- Add a NotchCorner example to the gallery's Custom section, animating its
+  two-segment corner into a straight bevel through the custom `bend` setting.
 - Lazy, reusable animation preparation owned by `AnyDecorationTween`. Retain one
   point context per layer and reuse fixed frames, normalized source settings,
   and unchanged source curves. Prepare requested explicit/automatic boundary
