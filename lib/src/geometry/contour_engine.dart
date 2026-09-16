@@ -2,6 +2,20 @@ part of 'core.dart';
 
 extension _ContourGeometry on AnyContour {
   void _prepareGeometry(List<AnyPoint> points) {
+    if (points.isEmpty) {
+      count = 0;
+      sides = const [];
+      frames = const [];
+      shapeCorners = const [];
+      sideInsideOffset = const [];
+      sideOutsideOffset = const [];
+      sideLength = const [];
+      _outerSettings = const [];
+      _innerSettings = const [];
+      _explicitOuter = const [];
+      _explicitInner = const [];
+      return;
+    }
     if (points.length < 3)
       throw ArgumentError('At least 3 active points are required.');
     count = points.length;
@@ -139,6 +153,7 @@ extension _ContourGeometry on AnyContour {
   Path _areaFor(AnyShapeBase base) {
     final cached = _paths[base];
     if (cached != null) return cached;
+    if (count == 0) return _paths[base] = Path();
     if (base == AnyShapeBase.shapeBorder || base == AnyShapeBase.zeroBorder) {
       return _paths[base] = _outline(_corners(base));
     }
@@ -430,6 +445,7 @@ extension _ContourGeometry on AnyContour {
   }
 
   AnyRegions _buildRegions(bool backgroundMerge) {
+    if (count == 0) return AnyRegions(regions: const []);
     final backgroundFill = background;
     var backgroundTarget = backgroundPath;
     if (!sides.any((s) => s.width > 0 && s.hasFill)) {

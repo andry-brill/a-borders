@@ -39,9 +39,25 @@ class _TweenDecoration extends AnyDecoration {
           borders: List<AnyBorder>.generate(
             math.max(
                 beginDecoration.borders.length, endDecoration.borders.length),
-            (index) => index < beginDecoration.borders.length
-                ? beginDecoration.borders[index]
-                : endDecoration.borders[index],
+            (index) {
+              final a = index < beginDecoration.borders.length
+                  ? beginDecoration.borders[index]
+                  : endDecoration.borders[index];
+              final b = index < endDecoration.borders.length
+                  ? endDecoration.borders[index]
+                  : a;
+              if (a.offset == b.offset) return a;
+              // Actual point/corner settings interpolate in buildPoints. Keep
+              // the generic layer metadata's offset in sync with those points.
+              return AnyBorder(
+                sides: a.sides,
+                corners: a.corners,
+                outerCorners: a.outerCorners,
+                innerCorners: a.innerCorners,
+                ratio: a.ratio,
+                offset: lerpDouble(a.offset, b.offset, t)!,
+              );
+            },
             growable: false,
           ),
           primaryBorderIndex: AnyUtils.pickLerp(
@@ -70,6 +86,7 @@ class _TweenDecoration extends AnyDecoration {
             t,
           ),
           enableCache: false,
+          offset: lerpDouble(beginDecoration.offset, endDecoration.offset, t)!,
         );
 
   double _effectiveRatio(Size size, double? ratio) {
@@ -99,14 +116,17 @@ class _TweenDecoration extends AnyDecoration {
   }
 
   @override
-  List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? textDirection, int borderIndex) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
+      int borderIndex, double offset) {
     final hasBegin = borderIndex < beginDecoration.borders.length;
     final hasEnd = borderIndex < endDecoration.borders.length;
+    // Both builders use the current offset. Using their endpoint offsets would
+    // interpolate already exhausted point lists and switch them at the midpoint
+    // instead of letting the current outline reach its actual collapse point.
     var a = (hasBegin ? beginDecoration : endDecoration)
-        .points(bounds, textDirection, borderIndex: borderIndex);
+        .buildPoints(bounds, textDirection, borderIndex, offset);
     var b = (hasEnd ? endDecoration : beginDecoration)
-        .points(bounds, textDirection, borderIndex: borderIndex);
+        .buildPoints(bounds, textDirection, borderIndex, offset);
     List<AnyPoint> withoutWidths(List<AnyPoint> points) => points
         .map((p) => AnyPoint(
             shape: p.shape,
@@ -116,8 +136,12 @@ class _TweenDecoration extends AnyDecoration {
             side: p.side.copyWith(width: 0),
             skip: p.skip))
         .toList(growable: false);
-    if (!hasBegin) a = withoutWidths(a);
-    if (!hasEnd) b = withoutWidths(b);
+    if (!hasBegin) {
+      a = withoutWidths(a);
+    }
+    if (!hasEnd) {
+      b = withoutWidths(b);
+    }
     return AnyPoint.lerp(a, b, t)!;
   }
 

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import 'support/fill_regressions.dart';
+import 'support/path_offset_regressions.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,8 +11,10 @@ Future<void> main() async {
   try {
     final count = await checkFillRegressions();
     final sideCount = await checkSideFillRegressions();
+    final offsetCount = await checkPathOffsetRegressions();
     result =
-        'PASS: $count border-hole checks and $sideCount multi-fill coverage checks. '
+        'PASS: $count border-hole checks, $sideCount multi-fill coverage checks, '
+        'and $offsetCount path-offset checks. '
         'Solid, gradient, image, and shadow fills preserve holes; side seams and '
         'varying gradient alpha retain coverage at DPR 1, 2, 3.';
   } catch (error, stack) {

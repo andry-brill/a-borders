@@ -66,6 +66,7 @@ class AnyBoxBorder extends AnyBorder {
     super.outerCorners,
     super.innerCorners,
     super.sides,
+    super.offset,
     this.left,
     this.top,
     this.right,
@@ -152,6 +153,7 @@ class AnyBoxDecoration extends AnyDecoration {
     super.shadowBase,
     super.background,
     super.enableCache,
+    super.offset,
   }) : super(border: border);
 
   const AnyBoxDecoration.multi({
@@ -162,6 +164,7 @@ class AnyBoxDecoration extends AnyDecoration {
     super.shadowBase,
     super.background,
     super.enableCache,
+    super.offset,
   }) : super.multi(borders: borders);
 
   @override
@@ -171,8 +174,12 @@ class AnyBoxDecoration extends AnyDecoration {
   AnyBoxBorder get border => super.border as AnyBoxBorder;
 
   @override
-  List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? textDirection, int borderIndex) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
+      int borderIndex, double offset) {
+    // For these four axis-aligned edges, line displacement is Rect.inflate.
+    // Corner descriptors are assigned below, after the vertices have moved.
+    bounds = bounds.inflate(offset);
+    if (bounds.isEmpty) return const [];
     final border = borders[borderIndex];
     return [
       point(

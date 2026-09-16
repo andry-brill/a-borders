@@ -8,6 +8,7 @@ import 'any_fill.dart';
 import 'any_shadow.dart';
 import 'any_utils.dart';
 import 'src/geometry_diagnostics.dart' as diagnostics;
+import 'src/point_offset.dart';
 
 import 'src/geometry/core.dart';
 import 'src/corners/rounded_corner.dart';
@@ -126,12 +127,17 @@ class AnyBorder {
   /// Optional width / height ratio used to fit the contour inside the paint size.
   final double? ratio;
 
+  /// Path displacement in logical units, added to [AnyDecoration.offset].
+  /// Negative values inset; positive values outset. Must be finite.
+  final double offset;
+
   const AnyBorder({
     AnySide? sides,
     AnyCorner? corners,
     this.outerCorners,
     this.innerCorners,
     this.ratio,
+    this.offset = 0.0,
   })  : sides = sides ?? const AnySide(),
         corners = corners ?? const RoundedCorner();
 
@@ -142,6 +148,7 @@ class AnyBorder {
     return other is AnyBorder &&
         other.runtimeType == runtimeType &&
         other.ratio == ratio &&
+        other.offset == offset &&
         other.sides == sides &&
         other.corners == corners &&
         other.outerCorners == outerCorners &&
@@ -152,6 +159,7 @@ class AnyBorder {
   int get hashCode => Object.hash(
         runtimeType,
         ratio,
+        offset,
         sides,
         corners,
         outerCorners,
@@ -165,13 +173,17 @@ class AnyBorder {
 /// override [operator ==] and [hashCode] when they add fields, because contour
 /// caching is keyed by decoration equality.
 abstract class AnyDecoration extends Decoration {
-  /// Build raw contour points for [borderIndex] within the fitted [bounds].
-  /// Forward the index to [point] so defaults come from the selected layer.
+  /// Build contour points for [borderIndex] from the fitted [bounds].
+  /// [offset] is the combined decoration and border displacement: positive
+  /// outward, negative inward. Apply it to the outline before assigning corners.
+  /// Forward [borderIndex] to [point] for layer defaults. Return an empty list
+  /// when the inset exhausts the outline.
   @protected
   List<AnyPoint> buildPoints(
     Rect bounds,
     TextDirection? textDirection,
     int borderIndex,
+    double offset,
   );
 
   @nonVirtual
@@ -180,7 +192,8 @@ abstract class AnyDecoration extends Decoration {
     final index = borderIndex ?? primaryBorderIndex;
     _validateBorders();
     RangeError.checkValidIndex(index, borders, 'borderIndex');
-    return buildPoints(bounds, textDirection, index);
+    return buildPoints(
+        bounds, textDirection, index, offset + borders[index].offset);
   }
 
   /// Fill painted behind side regions.
@@ -215,12 +228,17 @@ abstract class AnyDecoration extends Decoration {
   /// Whether built contours should be cached by decoration, size, and text direction.
   final bool enableCache;
 
+  /// Path displacement added to each border's offset, in logical units.
+  /// Negative values inset; positive values outset. Must be finite.
+  final double offset;
+
   const AnyDecoration({
     this.shadows = const [],
     this.background,
     this.clipBase = AnyShapeBase.shapeBorder,
     this.shadowBase = AnyShapeBase.shapeBorder,
     this.enableCache = true,
+    this.offset = 0.0,
     AnyBorder border = const AnyBorder(),
   })  : _singleBorder = border,
         _multipleBorders = null,
@@ -238,11 +256,15 @@ abstract class AnyDecoration extends Decoration {
     this.clipBase = AnyShapeBase.shapeBorder,
     this.shadowBase = AnyShapeBase.shapeBorder,
     this.enableCache = true,
+    this.offset = 0.0,
   })  : assert(primaryBorderIndex >= 0),
         _singleBorder = null,
         _multipleBorders = borders;
 
   void _validateBorders() {
+    if (!offset.isFinite) {
+      throw ArgumentError.value(offset, 'offset', 'Must be finite');
+    }
     final count = _multipleBorders?.length ?? 1;
     if (count == 0) {
       throw ArgumentError.value(
@@ -250,6 +272,12 @@ abstract class AnyDecoration extends Decoration {
     }
     RangeError.checkValidIndex(primaryBorderIndex,
         _multipleBorders ?? [_singleBorder!], 'primaryBorderIndex');
+    for (final border in _multipleBorders ?? [_singleBorder!]) {
+      if (!border.offset.isFinite || !(offset + border.offset).isFinite) {
+        throw ArgumentError(
+            'Border offsets and combined offsets must be finite.');
+      }
+    }
   }
 
   /// Builds an [AnyPoint] using decoration defaults for missing values.
@@ -272,6 +300,16 @@ abstract class AnyDecoration extends Decoration {
       skip: skip,
     );
   }
+
+  /// Move a polygon's straight edges by [offset] and intersect adjacent lines.
+  /// Corner and side settings are retained; resolution happens afterwards.
+  /// Supports either winding and straight helper vertices. The offset must
+  /// preserve the polygon's edges, or completely exhaust a convex polygon.
+  /// For disappearing edges, split outlines or reversing helpers, implement
+  /// the shape's construction rules directly in [buildPoints].
+  @protected
+  List<AnyPoint> offsetPoints(List<AnyPoint> points, double offset) =>
+      offsetContourPoints(points, offset);
 
   Rect fitRatio(Size size, double? ratio) {
     if (ratio == null || ratio <= 0.0) {
@@ -356,6 +394,7 @@ abstract class AnyDecoration extends Decoration {
         other.shadowBase == shadowBase &&
         other.clipBase == clipBase &&
         other.enableCache == enableCache &&
+        other.offset == offset &&
         other.background == background &&
         other.primaryBorderIndex == primaryBorderIndex &&
         listEquals(other.borders, borders) &&
@@ -368,6 +407,7 @@ abstract class AnyDecoration extends Decoration {
         clipBase,
         shadowBase,
         enableCache,
+        offset,
         background,
         primaryBorderIndex,
         Object.hashAll(borders),

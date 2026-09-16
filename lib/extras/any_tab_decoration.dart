@@ -26,6 +26,7 @@ class AnyTabDecoration extends AnyDecoration {
     super.shadowBase,
     super.background,
     super.enableCache,
+    super.offset,
   }) : super(border: border);
 
   const AnyTabDecoration.multi({
@@ -37,6 +38,7 @@ class AnyTabDecoration extends AnyDecoration {
     super.shadowBase,
     super.background,
     super.enableCache,
+    super.offset,
   }) : super.multi(borders: borders);
 
   @override
@@ -46,8 +48,13 @@ class AnyTabDecoration extends AnyDecoration {
   AnyBoxBorder get border => super.border as AnyBoxBorder;
 
   @override
-  List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? textDirection, int borderIndex) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
+      int borderIndex, double offset) {
+    // Offset the tab's construction rectangle, then rebuild its lower helpers
+    // from the unchanged corner extents. The helpers are not polygon edges to
+    // miter independently: the first/last vertices reverse along the baseline.
+    bounds = bounds.inflate(offset);
+    if (bounds.isEmpty) return const [];
     final border = borders[borderIndex];
     final bottomLeftCorner = border.bottomLeft ?? border.corners;
     final bottomRightCorner = border.bottomRight ?? border.corners;

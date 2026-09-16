@@ -253,12 +253,12 @@ class _Polygon extends AnyDecoration {
   const _Polygon.multi({required super.borders}) : super.multi();
 
   @override
-  List<AnyPoint> buildPoints(
-          Rect bounds, TextDirection? textDirection, int borderIndex) =>
-      [
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
+          int borderIndex, double offset) =>
+      offsetPoints([
         point(bounds.topLeft, borderIndex: borderIndex),
         point(bounds.topRight, borderIndex: borderIndex),
         point(bounds.bottomRight, borderIndex: borderIndex),
         point(bounds.bottomLeft, borderIndex: borderIndex),
-      ];
+      ], offset);
 }

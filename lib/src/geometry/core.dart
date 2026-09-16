@@ -228,6 +228,7 @@ class AnyRegions {
 
 /// Resolved geometry for one border layer. Local corner segments are retained
 /// for inspection; [pathFor] returns the final, topology-correct filled area.
+/// An empty point list represents an exhausted outline and produces empty paths.
 class AnyContour {
   final AnyShapeBase shadowBase;
   final AnyShapeBase clipBase;

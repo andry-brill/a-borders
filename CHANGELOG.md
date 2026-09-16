@@ -2,6 +2,15 @@
 
 ### New
 
+- Add finite `double offset = 0.0` to decorations and borders, including box and
+  tab constructors. Negative values inset and positive values outset; each
+  layer passes `decoration.offset + border.offset` to `buildPoints`. Builders
+  displace outline vertices before corner normalization and resolution, keeping
+  configured corner profiles. Border widths apply to the displaced source;
+  primary-layer effects follow its paths. Include offsets in interpolation,
+  equality, and cache identity. Add `offsetPoints` for polygon edge construction.
+  Cover fixed corner radii, independent layers, empty insets, custom builders
+  and providers, and native/CanvasKit pixels at DPR 1/2/3.
 - Independent source, inner, and outer corner roles. `AnyPoint.shape` defines
   the source; optional boundary overrides derive independently when omitted.
   `outerCorners` and per-corner `outer*` box settings support authored outer
@@ -184,6 +193,11 @@ independent interior alpha; native seam checks retain their six-level tolerance.
 
 ### Migration
 
+Path offsets default to zero. Custom decoration constructors can expose
+`super.offset`; custom builders must accept the fourth positional `double offset`
+and apply it to their outline points. It is already the decoration-plus-border
+sum. Do not pass it to corner providers as a boundary distance.
+
 #### 1. Separate source settings from boundary overrides
 
 In 1.x, `corners` and `topLeft`/`topRight`/`bottomRight`/`bottomLeft` described
@@ -255,18 +269,20 @@ source shape.
 
 #### 3. Update custom point builders and cache access
 
-Add the required third positional `borderIndex` to `buildPoints` and pass it
-to every `point(...)` call:
+Add the third positional `borderIndex` and fourth positional `double offset`
+to `buildPoints`. Pass the index to every `point(...)` call and apply the offset
+once, while constructing the outline:
 
 ```dart
 @override
 List<AnyPoint> buildPoints(
-    Rect bounds, TextDirection? textDirection, int borderIndex) => [
+    Rect bounds, TextDirection? textDirection, int borderIndex,
+    double offset) => offsetPoints([
   point(bounds.topCenter, borderIndex: borderIndex),
   point(bounds.centerRight, borderIndex: borderIndex),
   point(bounds.bottomCenter, borderIndex: borderIndex),
   point(bounds.centerLeft, borderIndex: borderIndex),
-];
+], offset);
 ```
 
 Read `borders[borderIndex]` for per-layer settings rather than the primary
