@@ -10,7 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import '../example/lib/main.dart' as gallery;
 import 'support/direct_geometry_fixtures.dart';
 
-// Captured before the provider relocation. Two independent 32-bit streams and
+// Static cases retain the provider-relocation baseline; gallery cases track the
+// current authored examples and prepared transitions. Two 32-bit streams and
 // the byte length compact exact, ordered JSON doubles without rounding them.
 String signature(Object value) {
   final bytes = utf8.encode(jsonEncode(value));
@@ -52,7 +53,7 @@ Object cornerData(AnyResolvedCorner corner) => [
     ];
 
 void main() {
-  test('provider relocation preserves geometry, ownership and work', () {
+  test('canonical geometry, ownership and work characterization', () {
     final actual = <String, Object>{};
     void capture(String name, List<AnyContour> Function() build) {
       final work = GeometryDiagnostics();

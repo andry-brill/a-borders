@@ -57,13 +57,16 @@ flowchart TB
   Cache["AnyDecorationCache<br/>reuse contour lists by decoration, size and direction"] -.-> Contour
 
   subgraph Core["Generic geometry"]
+    Prepared["Prepared contour transitions (internal)<br/>reuse endpoint preparation across frames"]
     Contour["AnyContour<br/>normalize sources; resolve requested boundaries lazily"]
+    Tween -.-> Prepared --> Contour
     Frame["AnyCornerFrame<br/>rays, normals, winding and shifted vertex"]
-    API["AnyCornerGeometry<br/>sizing, source and boundary construction contract"]
+    API["AnyCornerGeometry<br/>sizing, source, boundary and transition contracts"]
     Resolved["AnyResolvedCorner<br/>canonical AnyCornerSegments, extents, traits and provider state"]
     Assembly["AnyContour region assembly<br/>whole-contour checks; direct or general construction"]
     Regions["AnyRegions<br/>filled paths paired with fills"]
     Contour --> Frame --> API --> Resolved --> Assembly --> Regions
+    API -.->|optional transition specialization| Prepared
   end
 
   Corner["AnyCorner<br/>immutable settings; geometry getter"]
@@ -518,6 +521,22 @@ Inheriting a built-in descriptor/provider does not automatically grant built-in
 shortcuts. `isRectangularDescriptor` is a provider helper; the engine never
 consults it directly.
 
+### Custom boundary transitions
+
+A provider can override `prepareTransition(from, to)` to return an
+`AnyCornerTransition`. Its `resolve(frame, t)` evaluates the prepared local
+geometry in the current frame. The source provider is offered the pair first,
+then the destination provider if different. Returning null uses the shared
+canonical-segment transition. Custom corners need no registration or engine
+changes.
+
+Use the protected `parameterTransition(from, to)` builder only when the two
+finite descriptors fully describe the resolved endpoint curves. They are already
+fitted; do not allocate their contacts again. A specialized transition owns any
+immutable preparation it needs and supplies accurate local eligibility traits.
+The generic curve route does not inherit rectangular shortcuts or opaque provider
+state from either endpoint.
+
 ## Custom decorations
 
 Extend `AnyDecoration` and return contour points from `buildPoints`. Forward
@@ -558,8 +577,9 @@ Use `borders[borderIndex]` for custom per-layer settings. Explicit values passed
 to `point(...)` take precedence over border defaults. When constructing
 `AnyPoint` directly, supply its required `shape` descriptor. The public
 `points(bounds, direction, borderIndex: i)` selects one point list; omitting the
-index selects the primary border. `point(...)` assigns settings without moving
-coordinates. `offsetPoints` moves each active polygon edge along its normal and
+index selects the primary border. This exposes point settings; use `buildContour`
+or `buildContours` to inspect prepared animation geometry. `point(...)` assigns
+settings without moving coordinates. `offsetPoints` moves each active polygon edge along its normal and
 intersects adjacent lines, keeping side and corner descriptors unchanged. It
 supports either winding and straight helper vertices; zero offset reuses the
 point list. A completely exhausted convex inset returns an empty list.
@@ -573,15 +593,40 @@ in decoration equality and hashing.
 ## Animation and caching
 
 `AnyDecorationTween` pairs borders by list index. Inserted and removed layers
-grow from or shrink to zero width, keeping their endpoint shape/fill settings;
-ratios and path offsets interpolate independently. Both endpoint point builders
-receive the current interpolated offset before their points are interpolated.
-Added or removed layers keep
-their endpoint border offset while the decoration offset interpolates. Primary
-selection, nullable boundary overrides, and mismatched point lists switch at the
-midpoint. Different corner types use
-a shrink/switch/grow transition. Exact endpoint decorations are returned at
-zero and one.
+grow from or shrink to zero width, keeping their endpoint shape/fill settings.
+Ratios and path offsets interpolate independently. Both endpoint point builders
+receive the current interpolated offset; added or removed layers retain their
+endpoint border offset. Exact endpoint decorations are returned at zero and one.
+
+When an inner or outer corner changes between an explicit override and automatic
+construction, the tween lazily prepares both effective boundaries. Built-in
+providers interpolate equivalent corner parameters when possible. Otherwise,
+the shared implementation matches canonical segment intervals by exact
+subdivision and interpolates their control points in the current corner frame.
+For example, an explicit circle can transition continuously into the ellipse
+produced by unequal side widths, without a midpoint switch. Outer-derived zero
+boundaries get their own prepared transition so provider continuation state is
+never interpolated as arbitrary data.
+
+Preparation belongs to the tween and is reused by its sampled decorations.
+Keep the same tween for an animation; creating a new tween discards preparation.
+It retains at most one point context per layer, keyed by fitted bounds, direction,
+and effective offset. Fixed point frames, source normalization, and unchanged
+source curves are reused. Changing the tween endpoints creates a new plan;
+previously sampled decorations retain their own endpoint definitions. A changed
+point context replaces that layer's preparation. Custom point builders must be
+deterministic for their settings and arguments. When contexts keep changing and
+no boundary morph is needed, contours use ordinary source evaluation without
+preparing source caches that cannot be reused.
+
+Only requested boundaries are prepared. Ordinary automatic/automatic and
+explicit/explicit transitions retain their existing corner policies, including
+shrink/switch/grow interpolation between different corner types. Discrete settings, mismatched
+point counts, and changed skip flags retain midpoint selection. If an automatic
+endpoint's filled area differs from its raw corner outline, such as a split or
+exhausted interior, the boundary retains the existing midpoint fallback rather
+than morphing into an incorrect area. Whole-contour checks still select direct
+or general assembly for each sampled frame; painting is unchanged.
 
 `AnyDecorationCache` stores read-only contour lists by decoration equality,
 size, and text direction. Equality and hashing include both decoration and border
@@ -637,10 +682,11 @@ flutter analyze
 flutter test
 flutter test test/benchmarks/animation_geometry.dart --reporter expanded
 flutter test --dart-define=SETTLED_GEOMETRY_BENCHMARK=true test/benchmarks/animation_geometry.dart --reporter expanded
+flutter test test/benchmarks/prepared_animation.dart --reporter expanded
 ```
 
 The native benchmark separates contour preparation from region construction
-across isolated fixtures and 22 indexed gallery examples. Its default protocol
+across isolated fixtures and the current indexed gallery examples. Its default protocol
 uses two warm-up passes; the optional settled protocol adds prolonged JIT
 warm-up. CPU geometry timings do not measure animation frame rate or GPU work.
 
@@ -669,6 +715,52 @@ runs CanvasKit checks, and closes its isolated browser. `CHROME_PATH` selects
 the executable; `CHECK_ONLY=1` runs only checks, `PROFILE_VARIANT=after` captures
 only that build, and `PROFILE_REVERSE=1` reverses capture order. These settings
 belong to the benchmark harness.
+
+### Prepared animation measurements
+
+Measured on Windows with an Intel i7-10870H, Flutter 3.47.3 and Dart 3.13.3.
+The comparison uses five warmed native runs per version, alternating execution
+order with identical inputs and dependency versions. Values are median
+milliseconds with minimum–maximum run averages in parentheses. Indexed names
+refer to the current 18-example gallery.
+
+| Native CPU geometry | Before preparation | With preparation | Median change |
+| --- | ---: | ---: | ---: |
+| Ordinary static fixtures, combined | 0.647 (0.597–0.684) | 0.656 (0.626–0.699) | +1.4% |
+| Fallback static fixtures, combined | 7.949 (7.418–9.421) | 7.528 (7.437–8.075) | −5.3% |
+| Persistent tween gallery, all 18 examples | 4.228 (4.179–4.737) | 4.234 (4.101–5.065) | +0.1% |
+| Five-sample gallery with fresh tweens | 3.787 (3.717–4.192) | 4.098 (3.831–4.306) | +8.2% |
+| [1] No horizontal | 0.141 (0.138–0.147) | 0.145 (0.139–0.179) | +3.0% |
+| [6] Images | 0.047 (0.045–0.055) | 0.059 (0.055–0.061) | +24.3% |
+| [9] Inner | 0.059 (0.054–0.062) | 0.045 (0.042–0.060) | −23.8% |
+
+Aggregate geometry throughput is unchanged within observed variation. Reusable
+cases benefit from preparation; changing contexts cannot amortize it. The Images
+case changes its fitted aspect ratio each frame and adds about 0.012 ms of CPU
+geometry work. Fresh tweens also pay the initial preparation cost. The No
+horizontal case now produces continuous effective boundary
+geometry. These measurements do not establish a general FPS increase.
+
+Visible CanvasKit profiling used Chrome 152.0.7977.83, a 1087×727 viewport at
+DPR 1.25, and three interleaved runs per build of the same six-example scene.
+Each trace followed an eight-second warmup and measured eight seconds.
+
+| Browser measurement | Before | After |
+| --- | ---: | ---: |
+| Median animation callback, ms | 4.621 (4.587–5.112) | 4.706 (4.658–4.766) |
+| 95th-percentile animation callback, ms | 6.057 (5.687–7.167) | 5.921 (5.906–5.999) |
+| Compositor displayed events/second | 59.69 (59.61–59.98) | 60.01 (59.97–60.06) |
+
+Both builds sustain approximately 60 displayed frames per second in this scene.
+Callback timings overlap across runs. Display cadence is measured separately
+from CPU geometry; GPU command timings in the full record are CPU trace events,
+not measurements of GPU execution time. CanvasKit passed 58,812 independent
+transition pixel checks plus the existing hole, multi-fill, and offset checks
+at DPR 1/2/3. The complete Flutter suite passes 234 tests; the analyzer is clean.
+
+The [complete measurement record](test/benchmarks/prepared_transition_results.json)
+includes all indexed examples, raw runs, the initial pre-implementation capture,
+environment details, and the separate Chrome comparison.
 
 You might also like [any_sparklines](https://pub.dev/packages/any_sparklines).
 

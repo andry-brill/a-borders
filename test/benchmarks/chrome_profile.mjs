@@ -105,7 +105,8 @@ try {
       for (const e of events) if (e.ph === 'X' && e.dur) sums[e.name] = (sums[e.name] || 0) + e.dur / 1000;
       const callbacks = events.filter(e => e.name === 'FireAnimationFrame' && e.ph === 'X');
       const callbackDurations = callbacks.map(e => e.dur / 1000).sort((a, b) => a - b);
-      const record = { variant, run, viewport, taskMs: metrics.TaskDuration * 1000,
+      const record = { variant, run, viewport, windowSeconds: metrics.Timestamp,
+        taskMs: metrics.TaskDuration * 1000,
         scriptMs: metrics.ScriptDuration * 1000,
         animationCallbacks: callbacks.length,
         callbackMs: callbacks.reduce((sum, e) => sum + e.dur / 1000, 0),

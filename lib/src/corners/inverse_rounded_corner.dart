@@ -34,6 +34,20 @@ class InverseRoundedCornerGeometry extends AnyCornerGeometry {
   const InverseRoundedCornerGeometry();
 
   @override
+  AnyCornerTransition? prepareTransition(
+      AnyResolvedCorner from, AnyResolvedCorner to) {
+    // Only exact built-in descriptors opt into this shortcut. Custom providers
+    // can supply their own transition; derived non-descriptor curves use the
+    // shared canonical segment route.
+    final a = from.parameters, b = to.parameters;
+    if (from.source.runtimeType != InverseRoundedCorner ||
+        to.source.runtimeType != InverseRoundedCorner ||
+        a?.runtimeType != InverseRoundedCorner ||
+        b?.runtimeType != InverseRoundedCorner) return null;
+    return parameterTransition(a!, b!);
+  }
+
+  @override
   double contactScale(AnyCorner corner, AnyCornerFrame frame) => 1;
   @override
   bool get retainsSingleZeroExtent => false;

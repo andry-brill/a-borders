@@ -12,8 +12,6 @@ extension _ContourGeometry on AnyContour {
       sideLength = const [];
       _outerSettings = const [];
       _innerSettings = const [];
-      _explicitOuter = const [];
-      _explicitInner = const [];
       return;
     }
     if (points.length < 3)
@@ -35,36 +33,52 @@ extension _ContourGeometry on AnyContour {
         List.unmodifiable(sides.map((s) => s.width * (1 - s.align) / 2));
     sideOutsideOffset =
         List.unmodifiable(sides.map((s) => s.width * (1 + s.align) / 2));
-    final directions = <Offset>[], lengths = <double>[];
-    var area = 0.0;
-    final origin = points.first.point;
-    for (var i = 0; i < count; i++) {
-      final a = points[i].point, b = points[wrap(i + 1)].point;
-      final delta = b - a, length = delta.distance;
-      if (length <= 1e-12)
-        throw ArgumentError('Side $i has zero length; skip duplicate points.');
-      directions.add(delta / length);
-      lengths.add(length);
-      area += geometryCross(a - origin, b - origin);
+    final prepared = _transition;
+    if (prepared?._frames != null) {
+      frames = prepared!._frames!;
+      sideLength = prepared._lengths!;
+    } else {
+      final directions = <Offset>[], lengths = <double>[];
+      var area = 0.0;
+      final origin = points.first.point;
+      for (var i = 0; i < count; i++) {
+        final a = points[i].point, b = points[wrap(i + 1)].point;
+        final delta = b - a, length = delta.distance;
+        if (length <= 1e-12)
+          throw ArgumentError(
+              'Side $i has zero length; skip duplicate points.');
+        directions.add(delta / length);
+        lengths.add(length);
+        area += geometryCross(a - origin, b - origin);
+      }
+      if (area.abs() < 1e-12)
+        throw ArgumentError('A contour must enclose a nonzero area.');
+      final winding = area > 0 ? 1.0 : -1.0;
+      sideLength = List.unmodifiable(lengths);
+      frames = List.unmodifiable(List.generate(
+          count,
+          (i) => AnyCornerFrame(
+              vertex: points[i].point,
+              previousRay: -directions[wrap(i - 1)],
+              nextRay: directions[i],
+              previousNormal: geometryLeft(directions[wrap(i - 1)]) * winding,
+              nextNormal: geometryLeft(directions[i]) * winding,
+              winding: winding)));
+      if (prepared?.fixedPoints ?? false) {
+        prepared!._frames = frames;
+        prepared._lengths = sideLength;
+      }
     }
-    if (area.abs() < 1e-12)
-      throw ArgumentError('A contour must enclose a nonzero area.');
-    final winding = area > 0 ? 1.0 : -1.0;
-    sideLength = List.unmodifiable(lengths);
-    frames = List.unmodifiable(List.generate(
-        count,
-        (i) => AnyCornerFrame(
-            vertex: points[i].point,
-            previousRay: -directions[wrap(i - 1)],
-            nextRay: directions[i],
-            previousNormal: geometryLeft(directions[wrap(i - 1)]) * winding,
-            nextNormal: geometryLeft(directions[i]) * winding,
-            winding: winding)));
-    final source = _normalizeSettings(
-        points.map((p) => p.shape).toList(), frames, lengths);
-    var resolved = List.generate(
-        count, (i) => source[i].geometry.resolve(source[i], frames[i]));
-    if (!_simpleBoxBand(resolved) && _sourceCrosses(resolved)) {
+    final source = prepared?.fixedPoints ?? false
+        ? prepared!.normalizeSources(frames, sideLength, _progress)
+        : _normalizeSettings(
+            points.map((p) => p.shape).toList(), frames, sideLength);
+    var resolved = prepared?._sourceCorners ??
+        List.generate(
+            count, (i) => source[i].geometry.resolve(source[i], frames[i]));
+    if (prepared?._sourceCorners == null &&
+        !_simpleBoxBand(resolved) &&
+        _sourceCrosses(resolved)) {
       // Source corners must fit together, including diagonally opposed scoops.
       final sharp = List.generate(count, (i) {
         final c = source[i].copyWith(p: 0, n: 0);
@@ -88,17 +102,25 @@ extension _ContourGeometry on AnyContour {
         }
       }
     }
-    shapeCorners = List.unmodifiable(resolved);
-    _explicitOuter = List.unmodifiable(List.generate(
-        count, (i) => points[i].outer != null && !frames[i].backtracking));
-    _explicitInner = List.unmodifiable(List.generate(
-        count, (i) => points[i].inner != null && !frames[i].backtracking));
+    shapeCorners = prepared?._sourceCorners ?? List.unmodifiable(resolved);
+    if (prepared?.fixedSource ?? false) prepared!._sourceCorners = shapeCorners;
     _outerSettings = List.unmodifiable(points.map((p) => p.outer));
     _innerSettings = List.unmodifiable(points.map((p) => p.inner));
   }
 
+  List<bool> _explicitSettings(List<AnyCorner?> settings, AnyShapeBase base) =>
+      List.unmodifiable(List.generate(
+          count,
+          (i) =>
+              !frames[i].backtracking &&
+              (settings[i] != null ||
+                  (_transition?.morphs(i, base) ?? false))));
+
   List<AnyResolvedCorner> _resolveZeroBand() =>
       List.unmodifiable(List.generate(count, (i) {
+        final transition = _transition?.corner(
+            i, AnyShapeBase.zeroBorder, frames[i], _progress);
+        if (transition != null) return transition;
         final outer = outerCorners[i];
         return outer.source.geometry.resolveZeroBoundary(outer,
             previousDistance: sideOutsideOffset[wrap(i - 1)],
@@ -108,9 +130,23 @@ extension _ContourGeometry on AnyContour {
   List<AnyResolvedCorner> _resolveBand(
       List<AnyCorner?> overrides, AnyShapeBase base) {
     if (overrides.every((c) => c == null)) {
-      if (List.generate(count, (i) => offsetForBase(i, base))
-          .every((d) => d == 0)) return shapeCorners;
+      if (List.generate(
+          count,
+          (i) =>
+              offsetForBase(i, base) == 0 &&
+              !(_transition?.morphs(i, base) ?? false)).every((v) => v)) {
+        return shapeCorners;
+      }
       return List.unmodifiable(List.generate(count, (i) {
+        if (_transition?.morphs(i, base) ?? false) {
+          final transition = _transition!.corner(
+              i,
+              base,
+              frames[i].shifted(
+                  offsetForBase(wrap(i - 1), base), offsetForBase(i, base)),
+              _progress);
+          if (transition != null) return transition;
+        }
         final source = shapeCorners[i];
         return source.source.geometry.resolveBoundary(source,
             previousDistance: offsetForBase(wrap(i - 1), base),
@@ -121,17 +157,19 @@ extension _ContourGeometry on AnyContour {
         count,
         (i) => frames[i]
             .shifted(offsetForBase(wrap(i - 1), base), offsetForBase(i, base)));
-    final lengths = List.generate(
+    late final lengths = List.generate(
         count,
         (i) => math.max(
             0.0,
             geometryDot(shifted[wrap(i + 1)].vertex - shifted[i].vertex,
                 frames[i].nextRay)));
-    final explicit = _normalizeSettings(
+    late final explicit = _normalizeSettings(
         List.generate(count, (i) => overrides[i] ?? shapeCorners[i].source),
         shifted,
         lengths);
     return List.unmodifiable(List.generate(count, (i) {
+      final transition = _transition?.corner(i, base, shifted[i], _progress);
+      if (transition != null) return transition;
       // Reversing helpers retain two shifted contacts. An explicitly authored
       // straight vertex instead uses its single averaged boundary anchor.
       if (overrides[i] != null && !frames[i].backtracking)

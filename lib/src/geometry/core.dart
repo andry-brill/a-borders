@@ -10,6 +10,7 @@ import 'math.dart';
 part 'corner_contract.dart';
 part 'corner_curves.dart';
 part 'contour_engine.dart';
+part 'contour_transition.dart';
 
 enum AnyShapeBase {
   /// Legacy zero-offset boundary derived from the outer border corners.
@@ -234,13 +235,31 @@ class AnyContour {
   final AnyShapeBase clipBase;
   final AnyShapeBase backgroundBase;
   final AnyFill? background;
+  final AnyContourTransition? _transition;
+  final double _progress;
   AnyContour(
       {required this.background,
       required this.backgroundBase,
       required this.clipBase,
       required this.shadowBase,
-      required List<AnyPoint> points}) {
+      required List<AnyPoint> points})
+      : _transition = null,
+        _progress = 0 {
     _prepareGeometry(points.where((p) => !p.skip).toList());
+  }
+
+  AnyContour._animated(AnyContourTransition transition, double progress,
+      {required this.background,
+      required this.backgroundBase,
+      required this.clipBase,
+      required this.shadowBase})
+      : _transition = transition.compatible &&
+                (transition.reusePointContext || transition.changesBoundaries)
+            ? transition
+            : null,
+        _progress = progress {
+    _prepareGeometry(
+        transition.points(progress).where((p) => !p.skip).toList());
   }
 
   late final int count;
@@ -257,8 +276,10 @@ class AnyContour {
   late final List<double> sideInsideOffset;
   late final List<double> sideOutsideOffset;
   late final List<double> sideLength;
-  late final List<bool> _explicitOuter;
-  late final List<bool> _explicitInner;
+  late final List<bool> _explicitOuter =
+      _explicitSettings(_outerSettings, AnyShapeBase.outerBorder);
+  late final List<bool> _explicitInner =
+      _explicitSettings(_innerSettings, AnyShapeBase.innerBorder);
   final Map<AnyShapeBase, Path> _paths = {};
   final Map<AnyShapeBase, bool> _directBands = {};
   final Map<List<AnyResolvedCorner>, bool> _simpleBands = Map.identity();

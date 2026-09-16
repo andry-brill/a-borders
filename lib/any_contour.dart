@@ -12,7 +12,7 @@ import 'src/point_offset.dart';
 
 import 'src/geometry/core.dart';
 import 'src/corners/rounded_corner.dart';
-export 'src/geometry/core.dart';
+export 'src/geometry/core.dart' hide AnyContourTransition;
 export 'src/corners/corner_converter.dart';
 export 'src/corners/rounded_corner.dart';
 export 'src/corners/bevel_corner.dart';
@@ -337,6 +337,19 @@ abstract class AnyDecoration extends Decoration {
   Rect boundsForBorder(Size size, int borderIndex) =>
       fitRatio(size, borders[borderIndex].ratio);
 
+  /// Construct one fitted layer. Tweens specialize this to evaluate prepared
+  /// boundary transitions; ordinary decorations only need [buildPoints].
+  @protected
+  AnyContour buildContourForBorder(
+          Rect bounds, TextDirection? textDirection, int index) =>
+      AnyContour(
+        points: points(bounds, textDirection, borderIndex: index),
+        background: index == primaryBorderIndex ? background : null,
+        backgroundBase: background?.shapeBase ?? AnyShapeBase.shapeBorder,
+        clipBase: clipBase,
+        shadowBase: shadowBase,
+      );
+
   /// Builds all contours in paint order, sharing one cache entry.
   List<AnyContour> buildContours(Size size, TextDirection? textDirection) {
     _validateBorders();
@@ -352,15 +365,8 @@ abstract class AnyDecoration extends Decoration {
     final contours = List<AnyContour>.unmodifiable(
       List<AnyContour>.generate(
           borders.length,
-          (index) => AnyContour(
-                points: points(boundsForBorder(size, index), textDirection,
-                    borderIndex: index),
-                background: index == primaryBorderIndex ? background : null,
-                backgroundBase:
-                    background?.shapeBase ?? AnyShapeBase.shapeBorder,
-                clipBase: clipBase,
-                shadowBase: shadowBase,
-              )),
+          (index) => buildContourForBorder(
+              boundsForBorder(size, index), textDirection, index)),
     );
 
     if (enableCache) {

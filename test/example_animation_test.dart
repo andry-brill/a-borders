@@ -25,8 +25,8 @@ void main() {
     await tester.pumpWidget(
         DefaultAssetBundle(bundle: _Images(), child: const example.MyApp()));
     await tester.pumpAndSettle();
-    final first = find.byWidgetPredicate(
-        (w) => w is example.E && w.title == 'Add a border layer');
+    final first = find
+        .byWidgetPredicate((w) => w is example.E && w.title == 'No horizontal');
     AnyDecoration decoration(Finder e) => tester
         .widget<DecoratedBox>(
             find.descendant(of: e, matching: find.byType(DecoratedBox)).first)
@@ -34,7 +34,7 @@ void main() {
     final widget = tester.widget<example.E>(first);
     expect(decoration(first), widget.begin);
     expect(find.byType(example.E).evaluate().length, lessThan(21));
-    await tester.tap(find.text('Add a border layer'));
+    await tester.tap(find.text('No horizontal'));
     await tester.pump();
     final widths = <double>[];
     for (var frame = 0; frame < 4; frame++) {
@@ -45,13 +45,13 @@ void main() {
           .buildContours(const Size(200, 100), TextDirection.ltr)
           .last
           .sides
-          .first
+          .last
           .width);
     }
-    expect(widths.first, greaterThan(0));
-    expect(widths.last, lessThan(4));
+    expect(widths.first, lessThan(30));
+    expect(widths.last, greaterThan(10));
     for (var i = 1; i < widths.length; i++) {
-      expect(widths[i], greaterThan(widths[i - 1]));
+      expect(widths[i], lessThan(widths[i - 1]));
     }
     await tester.pumpAndSettle();
     expect(decoration(first), widget.end);

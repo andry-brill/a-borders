@@ -1,0 +1,2167 @@
+{
+  "date": "2026-09-16",
+  "baselineCommit": "0e232d47b33dbb631c6277b069b806dfbb01c9bc",
+  "environment": {
+    "os": "Windows",
+    "cpu": "Intel Core i7-10870H @ 2.20GHz",
+    "flutter": "3.47.3",
+    "dart": "3.13.3",
+    "frameworkRevision": "e8113bf456",
+    "engineRevision": "06a2e2a110",
+    "nativeBackend": "flutter_tester, debug JIT",
+    "browserBackend": "CanvasKit, dart2js profile",
+    "dependencyLockSha256": "aa6cf7cda8d69ec5b72982652d09da1b121b9b64aebaf5a79170a88cd6516c2d"
+  },
+  "protocol": {
+    "native": "Five warmed runs per version. Final comparison alternates before/after order by pair. Identical SDK, dependency lock, harness and gallery. Baseline runs use an isolated archive of the baseline commit.",
+    "staticFixtures": "1000 warm cycles; final 300 samples per fixture. Ordinary/fallback totals are sums of per-fixture means.",
+    "shortGallery": "100 warm gallery cycles; final five t samples per example, a new tween per example.",
+    "persistentGallery": "One reusable tween per indexed example; 60 t values per cycle, five warm cycles and five measured cycles. Totals sum the 18 per-example averages.",
+    "browser": "Three interleaved pairs of visible Chrome runs, eight-second warmup and eight-second trace per build. Fixed gallery subset [0,1,2,3,6,11], 200x120 widgets. Identical prebuilt before/after scene. Display events are compositor cadence, not an inference from CPU timings; GPU command metrics measure CPU trace work, not GPU elapsed time.",
+    "statistics": "Median and min/max of run averages, except browser callback percentiles calculated within each run. Negative changes mean less time."
+  },
+  "initialBeforeRuns": [
+    {
+      "rows": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "microsecondsPerFrame": 147.83666666666667
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "microsecondsPerFrame": 174.43333333333334
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "microsecondsPerFrame": 161.17666666666668
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "microsecondsPerFrame": 226.43
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "microsecondsPerFrame": 90.94
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "microsecondsPerFrame": 121.43333333333334
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "microsecondsPerFrame": 63.83
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "microsecondsPerFrame": 616.7633333333333
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "microsecondsPerFrame": 78.93333333333334
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "microsecondsPerFrame": 67.73
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "microsecondsPerFrame": 73.81
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "microsecondsPerFrame": 64.01
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "microsecondsPerFrame": 21.413333333333334
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "microsecondsPerFrame": 23.863333333333333
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "microsecondsPerFrame": 20.036666666666665
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "microsecondsPerFrame": 43.78666666666667
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "microsecondsPerFrame": 30.876666666666665
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "microsecondsPerFrame": 3361.53
+        }
+      ],
+      "galleryMicrosecondsPerFrame": 5388.833333333333,
+      "ordinaryFixturesMs": 0.778,
+      "fallbackFixturesMs": 9.768,
+      "shortGalleryMs": 5.315,
+      "run": 1
+    },
+    {
+      "rows": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "microsecondsPerFrame": 127.42
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "microsecondsPerFrame": 168.78
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "microsecondsPerFrame": 162.66333333333333
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "microsecondsPerFrame": 219.12
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "microsecondsPerFrame": 88.38666666666667
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "microsecondsPerFrame": 108.32666666666667
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "microsecondsPerFrame": 57.193333333333335
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "microsecondsPerFrame": 564.0766666666667
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "microsecondsPerFrame": 57.46666666666667
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "microsecondsPerFrame": 61.19
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "microsecondsPerFrame": 69.62666666666667
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "microsecondsPerFrame": 53.656666666666666
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "microsecondsPerFrame": 20.376666666666665
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "microsecondsPerFrame": 23.22
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "microsecondsPerFrame": 20.946666666666665
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "microsecondsPerFrame": 35.13333333333333
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "microsecondsPerFrame": 36.803333333333335
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "microsecondsPerFrame": 3208.77
+        }
+      ],
+      "galleryMicrosecondsPerFrame": 5083.156666666667,
+      "ordinaryFixturesMs": 0.791,
+      "fallbackFixturesMs": 8.75,
+      "shortGalleryMs": 5.027,
+      "run": 2
+    },
+    {
+      "rows": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "microsecondsPerFrame": 114.07
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "microsecondsPerFrame": 160.14
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "microsecondsPerFrame": 155.28666666666666
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "microsecondsPerFrame": 182.00333333333333
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "microsecondsPerFrame": 100.65333333333334
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "microsecondsPerFrame": 106.19333333333333
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "microsecondsPerFrame": 63.78666666666667
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "microsecondsPerFrame": 540.71
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "microsecondsPerFrame": 67.41333333333333
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "microsecondsPerFrame": 56.21666666666667
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "microsecondsPerFrame": 62.17333333333333
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "microsecondsPerFrame": 61.04
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "microsecondsPerFrame": 25.803333333333335
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "microsecondsPerFrame": 37.516666666666666
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "microsecondsPerFrame": 34.83
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "microsecondsPerFrame": 21.6
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "microsecondsPerFrame": 41.84
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "microsecondsPerFrame": 3135.07
+        }
+      ],
+      "galleryMicrosecondsPerFrame": 4966.346666666666,
+      "ordinaryFixturesMs": 0.734,
+      "fallbackFixturesMs": 8.722,
+      "shortGalleryMs": 4.289,
+      "run": 3
+    },
+    {
+      "rows": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "microsecondsPerFrame": 142.44666666666666
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "microsecondsPerFrame": 168.34
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "microsecondsPerFrame": 151.77333333333334
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "microsecondsPerFrame": 204.30333333333334
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "microsecondsPerFrame": 102.15
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "microsecondsPerFrame": 117.12
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "microsecondsPerFrame": 50.77
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "microsecondsPerFrame": 610.04
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "microsecondsPerFrame": 87.59333333333333
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "microsecondsPerFrame": 66.51333333333334
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "microsecondsPerFrame": 51.41
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "microsecondsPerFrame": 63.59
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "microsecondsPerFrame": 30.41
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "microsecondsPerFrame": 21.596666666666668
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "microsecondsPerFrame": 20.436666666666667
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "microsecondsPerFrame": 21.64666666666667
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "microsecondsPerFrame": 32.95333333333333
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "microsecondsPerFrame": 2972.4866666666667
+        }
+      ],
+      "galleryMicrosecondsPerFrame": 4915.58,
+      "ordinaryFixturesMs": 0.722,
+      "fallbackFixturesMs": 9.874,
+      "shortGalleryMs": 4.842,
+      "run": 4
+    },
+    {
+      "rows": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "microsecondsPerFrame": 119.86333333333333
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "microsecondsPerFrame": 158.51333333333332
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "microsecondsPerFrame": 131.01666666666668
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "microsecondsPerFrame": 204.58333333333334
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "microsecondsPerFrame": 89.51
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "microsecondsPerFrame": 112.23666666666666
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "microsecondsPerFrame": 52.556666666666665
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "microsecondsPerFrame": 553.7766666666666
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "microsecondsPerFrame": 67.08333333333333
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "microsecondsPerFrame": 64.87
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "microsecondsPerFrame": 64.15333333333334
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "microsecondsPerFrame": 65.07
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "microsecondsPerFrame": 26.273333333333333
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "microsecondsPerFrame": 20.98
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "microsecondsPerFrame": 24.676666666666666
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "microsecondsPerFrame": 25.2
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "microsecondsPerFrame": 41.96
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "microsecondsPerFrame": 2939.09
+        }
+      ],
+      "galleryMicrosecondsPerFrame": 4761.413333333333,
+      "ordinaryFixturesMs": 0.773,
+      "fallbackFixturesMs": 9.467,
+      "shortGalleryMs": 4.016,
+      "run": 5
+    }
+  ],
+  "initialBeforeBrowser": {
+    "version": {
+      "protocolVersion": "1.3",
+      "product": "Chrome/152.0.7977.83",
+      "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "jsVersion": "15.2.124.21"
+    },
+    "runs": [
+      {
+        "variant": "before",
+        "run": 1,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "windowSeconds": 8.009699999995064,
+        "taskMs": 3642.6949999999997,
+        "scriptMs": 3338.5170000000003,
+        "animationCallbacks": 480,
+        "callbackMs": 3407.952,
+        "callbackMedianMs": 6.72,
+        "callbackP95Ms": 10.898,
+        "displayFrameEvents": 480,
+        "gpuCommandMs": 988.1119999999999,
+        "compositorPaintMs": 92.84400000000001
+      },
+      {
+        "variant": "before",
+        "run": 2,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "windowSeconds": 8.014627999975346,
+        "taskMs": 3419.6299999999997,
+        "scriptMs": 3076.259,
+        "animationCallbacks": 481,
+        "callbackMs": 3143.248,
+        "callbackMedianMs": 6.12,
+        "callbackP95Ms": 10.076,
+        "displayFrameEvents": 481,
+        "gpuCommandMs": 788.8410000000003,
+        "compositorPaintMs": 146.31800000000013
+      },
+      {
+        "variant": "before",
+        "run": 3,
+        "viewport": {
+          "width": 1087,
+          "height": 727,
+          "dpr": 1.25
+        },
+        "windowSeconds": 8.013248000002932,
+        "taskMs": 3520.6790000000005,
+        "scriptMs": 3182.4539999999997,
+        "animationCallbacks": 477,
+        "callbackMs": 3235.523000000001,
+        "callbackMedianMs": 6.324,
+        "callbackP95Ms": 10.052,
+        "displayFrameEvents": 476,
+        "gpuCommandMs": 1372.0259999999994,
+        "compositorPaintMs": 58.756000000000036
+      }
+    ],
+    "errors": [],
+    "checkResult": "PASS: 90 border-hole checks, 254400 multi-fill coverage checks, and 96 path-offset checks. Solid, gradient, image, and shadow fills preserve holes; side seams and varying gradient alpha retain coverage at DPR 1, 2, 3."
+  },
+  "finalNative": {
+    "beforeRuns": [
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 104.57666666666667
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 144.94
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 124.63
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 158.98
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 85.19
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 93.45666666666666
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 47.23
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 521.42
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 57.92666666666667
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 54.54666666666667
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 55.14666666666667
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 53.63
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 21.456666666666667
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 23.25
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 22.956666666666667
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 24.073333333333334
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 32.91
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 3110.62
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4736.94,
+        "ordinaryFixturesMs": 0.633,
+        "fallbackFixturesMs": 7.949,
+        "shortGalleryMs": 3.977,
+        "run": 1
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 103.58666666666667
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 137.92333333333335
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 134.77
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 173.57333333333332
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 86.1
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 94.58666666666667
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 45.20333333333333
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 499.20666666666665
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 61.93666666666667
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 61.24
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 60.18
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 55.93
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 20.91
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 20.463333333333335
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 23.14
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 20.833333333333332
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 32.04666666666667
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2593.5666666666666
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4225.196666666667,
+        "ordinaryFixturesMs": 0.664,
+        "fallbackFixturesMs": 7.652,
+        "shortGalleryMs": 3.749,
+        "run": 2
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 107.13
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 140.63666666666666
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 123.52333333333333
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 164.86
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 94.06666666666666
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 101.50666666666666
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 55.46333333333333
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 504.43666666666667
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 58.593333333333334
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 58.64
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 56.083333333333336
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 57.086666666666666
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 22.94
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 20.45
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 21.233333333333334
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 25.543333333333333
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 34.77333333333333
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2581.3966666666665
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4228.363333333334,
+        "ordinaryFixturesMs": 0.684,
+        "fallbackFixturesMs": 9.421,
+        "shortGalleryMs": 4.192,
+        "run": 3
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 103.43
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 140.92
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 119.18666666666667
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 166.85
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 91.01666666666667
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 91.97333333333333
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 48.513333333333335
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 552.08
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 56.446666666666665
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 61.59
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 60.84
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 61.913333333333334
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 39.07
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 26.483333333333334
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 24.86
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 24.783333333333335
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 33.38666666666666
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2670.463333333333
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4373.806666666666,
+        "ordinaryFixturesMs": 0.647,
+        "fallbackFixturesMs": 8.092,
+        "shortGalleryMs": 3.787,
+        "run": 4
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 108.54666666666667
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 147.07333333333332
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 125.9
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 164.54
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 86.18666666666667
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 102.40333333333334
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 46.473333333333336
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 481.3666666666667
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 55.65
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 54.39333333333333
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 54.123333333333335
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 55.61
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 20.663333333333334
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 24.716666666666665
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 21.003333333333334
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 24.64666666666667
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 30.86
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2575.2833333333333
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4179.44,
+        "ordinaryFixturesMs": 0.597,
+        "fallbackFixturesMs": 7.418,
+        "shortGalleryMs": 3.717,
+        "run": 5
+      }
+    ],
+    "afterRuns": [
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 98.24666666666667
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 141.28666666666666
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 111.95333333333333
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 154.32
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 86.03
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 91.85
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 61.263333333333335
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 540.2366666666667
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 56.97
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 59.96333333333333
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 52.01
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 43.95
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 21.203333333333333
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 21.15
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 20.33
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 22.72
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 33.09
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2610.0633333333335
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4226.636666666666,
+        "ordinaryFixturesMs": 0.653,
+        "fallbackFixturesMs": 7.438,
+        "shortGalleryMs": 4.098,
+        "run": 1
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 100.23
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 139.18333333333334
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 102.68333333333334
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 165.71333333333334
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 80.42
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 90.00666666666666
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 56.916666666666664
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 493.1166666666667
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 49.413333333333334
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 42.163333333333334
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 42.913333333333334
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 43.29
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 19.216666666666665
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 17.87
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 17.21
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 17.526666666666667
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 28.173333333333332
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 3558.5
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 5064.546666666667,
+        "ordinaryFixturesMs": 0.699,
+        "fallbackFixturesMs": 8.075,
+        "shortGalleryMs": 4.175,
+        "run": 2
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 97.75
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 145.17
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 105.82
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 152.27666666666667
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 83.73
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 91.84666666666666
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 55.02
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 496.5733333333333
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 44.333333333333336
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 44.50666666666667
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 50.736666666666665
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 45.48
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 20.013333333333332
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 17.866666666666667
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 15.956666666666667
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 19.1
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 26.74
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2588.07
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4100.99,
+        "ordinaryFixturesMs": 0.656,
+        "fallbackFixturesMs": 7.65,
+        "shortGalleryMs": 4.036,
+        "run": 3
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 112.12666666666667
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 152.40666666666667
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 113.34333333333333
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 166.99
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 87.40333333333334
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 94.04
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 60.20333333333333
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 547.77
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 54.016666666666666
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 49.836666666666666
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 48.86666666666667
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 49.406666666666666
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 20.956666666666667
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 17.68
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 17.75
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 21.07
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 25.763333333333332
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2594.7533333333336
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4234.383333333333,
+        "ordinaryFixturesMs": 0.676,
+        "fallbackFixturesMs": 7.528,
+        "shortGalleryMs": 3.831,
+        "run": 4
+      },
+      {
+        "rows": [
+          {
+            "index": 0,
+            "title": "Any align/width\nLTRB(in:center:out:center)",
+            "microsecondsPerFrame": 165.79666666666665
+          },
+          {
+            "index": 1,
+            "title": "No horizontal",
+            "microsecondsPerFrame": 178.61666666666667
+          },
+          {
+            "index": 2,
+            "title": "Any corner",
+            "microsecondsPerFrame": 127.64
+          },
+          {
+            "index": 3,
+            "title": "Back+T+B",
+            "microsecondsPerFrame": 178.73666666666668
+          },
+          {
+            "index": 4,
+            "title": "Gradient",
+            "microsecondsPerFrame": 88.42333333333333
+          },
+          {
+            "index": 5,
+            "title": "Gradient HV",
+            "microsecondsPerFrame": 97.55666666666667
+          },
+          {
+            "index": 6,
+            "title": "Images",
+            "microsecondsPerFrame": 58.70666666666666
+          },
+          {
+            "index": 7,
+            "title": "Multi",
+            "microsecondsPerFrame": 524.6033333333334
+          },
+          {
+            "index": 8,
+            "title": "Normal",
+            "microsecondsPerFrame": 46.07333333333333
+          },
+          {
+            "index": 9,
+            "title": "Inner",
+            "microsecondsPerFrame": 44.66
+          },
+          {
+            "index": 10,
+            "title": "Outer",
+            "microsecondsPerFrame": 49.266666666666666
+          },
+          {
+            "index": 11,
+            "title": "Solid",
+            "microsecondsPerFrame": 46.50666666666667
+          },
+          {
+            "index": 12,
+            "title": "Normal",
+            "microsecondsPerFrame": 21.283333333333335
+          },
+          {
+            "index": 13,
+            "title": "Inner",
+            "microsecondsPerFrame": 22.883333333333333
+          },
+          {
+            "index": 14,
+            "title": "Outer",
+            "microsecondsPerFrame": 19.156666666666666
+          },
+          {
+            "index": 15,
+            "title": "Solid",
+            "microsecondsPerFrame": 22.286666666666665
+          },
+          {
+            "index": 16,
+            "title": "Tab",
+            "microsecondsPerFrame": 30.373333333333335
+          },
+          {
+            "index": 17,
+            "title": "Crown",
+            "microsecondsPerFrame": 2957.03
+          }
+        ],
+        "galleryMicrosecondsPerFrame": 4679.6,
+        "ordinaryFixturesMs": 0.626,
+        "fallbackFixturesMs": 7.437,
+        "shortGalleryMs": 4.306,
+        "run": 5
+      }
+    ],
+    "summary": {
+      "ordinaryFixturesMs": {
+        "before": {
+          "median": 0.647,
+          "minimum": 0.597,
+          "maximum": 0.684
+        },
+        "after": {
+          "median": 0.656,
+          "minimum": 0.626,
+          "maximum": 0.699
+        },
+        "medianChangePercent": 1.391035548686248
+      },
+      "fallbackFixturesMs": {
+        "before": {
+          "median": 7.949,
+          "minimum": 7.418,
+          "maximum": 9.421
+        },
+        "after": {
+          "median": 7.528,
+          "minimum": 7.437,
+          "maximum": 8.075
+        },
+        "medianChangePercent": -5.296263680966162
+      },
+      "shortGalleryMs": {
+        "before": {
+          "median": 3.787,
+          "minimum": 3.717,
+          "maximum": 4.192
+        },
+        "after": {
+          "median": 4.098,
+          "minimum": 3.831,
+          "maximum": 4.306
+        },
+        "medianChangePercent": 8.212305254819107
+      },
+      "galleryMicrosecondsPerFrame": {
+        "before": {
+          "median": 4228.363333333334,
+          "minimum": 4179.44,
+          "maximum": 4736.94
+        },
+        "after": {
+          "median": 4234.383333333333,
+          "minimum": 4100.99,
+          "maximum": 5064.546666666667
+        },
+        "medianChangePercent": 0.14237187122834172
+      },
+      "indexedGalleryMicrosecondsPerFrame": [
+        {
+          "index": 0,
+          "title": "Any align/width\nLTRB(in:center:out:center)",
+          "before": {
+            "median": 104.57666666666667,
+            "minimum": 103.43,
+            "maximum": 108.54666666666667
+          },
+          "after": {
+            "median": 100.23,
+            "minimum": 97.75,
+            "maximum": 165.79666666666665
+          },
+          "medianChangePercent": -4.156440251171389
+        },
+        {
+          "index": 1,
+          "title": "No horizontal",
+          "before": {
+            "median": 140.92,
+            "minimum": 137.92333333333335,
+            "maximum": 147.07333333333332
+          },
+          "after": {
+            "median": 145.17,
+            "minimum": 139.18333333333334,
+            "maximum": 178.61666666666667
+          },
+          "medianChangePercent": 3.0158955435708235
+        },
+        {
+          "index": 2,
+          "title": "Any corner",
+          "before": {
+            "median": 124.63,
+            "minimum": 119.18666666666667,
+            "maximum": 134.77
+          },
+          "after": {
+            "median": 111.95333333333333,
+            "minimum": 102.68333333333334,
+            "maximum": 127.64
+          },
+          "medianChangePercent": -10.171440798095698
+        },
+        {
+          "index": 3,
+          "title": "Back+T+B",
+          "before": {
+            "median": 164.86,
+            "minimum": 158.98,
+            "maximum": 173.57333333333332
+          },
+          "after": {
+            "median": 165.71333333333334,
+            "minimum": 152.27666666666667,
+            "maximum": 178.73666666666668
+          },
+          "medianChangePercent": 0.5176109021796327
+        },
+        {
+          "index": 4,
+          "title": "Gradient",
+          "before": {
+            "median": 86.18666666666667,
+            "minimum": 85.19,
+            "maximum": 94.06666666666666
+          },
+          "after": {
+            "median": 86.03,
+            "minimum": 80.42,
+            "maximum": 88.42333333333333
+          },
+          "medianChangePercent": -0.18177599009900902
+        },
+        {
+          "index": 5,
+          "title": "Gradient HV",
+          "before": {
+            "median": 94.58666666666667,
+            "minimum": 91.97333333333333,
+            "maximum": 102.40333333333334
+          },
+          "after": {
+            "median": 91.85,
+            "minimum": 90.00666666666666,
+            "maximum": 97.55666666666667
+          },
+          "medianChangePercent": -2.8932901043135173
+        },
+        {
+          "index": 6,
+          "title": "Images",
+          "before": {
+            "median": 47.23,
+            "minimum": 45.20333333333333,
+            "maximum": 55.46333333333333
+          },
+          "after": {
+            "median": 58.70666666666666,
+            "minimum": 55.02,
+            "maximum": 61.263333333333335
+          },
+          "medianChangePercent": 24.29952713670689
+        },
+        {
+          "index": 7,
+          "title": "Multi",
+          "before": {
+            "median": 504.43666666666667,
+            "minimum": 481.3666666666667,
+            "maximum": 552.08
+          },
+          "after": {
+            "median": 524.6033333333334,
+            "minimum": 493.1166666666667,
+            "maximum": 547.77
+          },
+          "medianChangePercent": 3.997858997825965
+        },
+        {
+          "index": 8,
+          "title": "Normal",
+          "before": {
+            "median": 57.92666666666667,
+            "minimum": 55.65,
+            "maximum": 61.93666666666667
+          },
+          "after": {
+            "median": 49.413333333333334,
+            "minimum": 44.333333333333336,
+            "maximum": 56.97
+          },
+          "medianChangePercent": -14.696743008401425
+        },
+        {
+          "index": 9,
+          "title": "Inner",
+          "before": {
+            "median": 58.64,
+            "minimum": 54.39333333333333,
+            "maximum": 61.59
+          },
+          "after": {
+            "median": 44.66,
+            "minimum": 42.163333333333334,
+            "maximum": 59.96333333333333
+          },
+          "medianChangePercent": -23.840381991814464
+        },
+        {
+          "index": 10,
+          "title": "Outer",
+          "before": {
+            "median": 56.083333333333336,
+            "minimum": 54.123333333333335,
+            "maximum": 60.84
+          },
+          "after": {
+            "median": 49.266666666666666,
+            "minimum": 42.913333333333334,
+            "maximum": 52.01
+          },
+          "medianChangePercent": -12.154531946508174
+        },
+        {
+          "index": 11,
+          "title": "Solid",
+          "before": {
+            "median": 55.93,
+            "minimum": 53.63,
+            "maximum": 61.913333333333334
+          },
+          "after": {
+            "median": 45.48,
+            "minimum": 43.29,
+            "maximum": 49.406666666666666
+          },
+          "medianChangePercent": -18.684069372429825
+        },
+        {
+          "index": 12,
+          "title": "Normal",
+          "before": {
+            "median": 21.456666666666667,
+            "minimum": 20.663333333333334,
+            "maximum": 39.07
+          },
+          "after": {
+            "median": 20.956666666666667,
+            "minimum": 19.216666666666665,
+            "maximum": 21.283333333333335
+          },
+          "medianChangePercent": -2.330278079850867
+        },
+        {
+          "index": 13,
+          "title": "Inner",
+          "before": {
+            "median": 23.25,
+            "minimum": 20.45,
+            "maximum": 26.483333333333334
+          },
+          "after": {
+            "median": 17.87,
+            "minimum": 17.68,
+            "maximum": 22.883333333333333
+          },
+          "medianChangePercent": -23.139784946236553
+        },
+        {
+          "index": 14,
+          "title": "Outer",
+          "before": {
+            "median": 22.956666666666667,
+            "minimum": 21.003333333333334,
+            "maximum": 24.86
+          },
+          "after": {
+            "median": 17.75,
+            "minimum": 15.956666666666667,
+            "maximum": 20.33
+          },
+          "medianChangePercent": -22.680412371134018
+        },
+        {
+          "index": 15,
+          "title": "Solid",
+          "before": {
+            "median": 24.64666666666667,
+            "minimum": 20.833333333333332,
+            "maximum": 25.543333333333333
+          },
+          "after": {
+            "median": 21.07,
+            "minimum": 17.526666666666667,
+            "maximum": 22.72
+          },
+          "medianChangePercent": -14.511766296997575
+        },
+        {
+          "index": 16,
+          "title": "Tab",
+          "before": {
+            "median": 32.91,
+            "minimum": 30.86,
+            "maximum": 34.77333333333333
+          },
+          "after": {
+            "median": 28.173333333333332,
+            "minimum": 25.763333333333332,
+            "maximum": 33.09
+          },
+          "medianChangePercent": -14.392788412843105
+        },
+        {
+          "index": 17,
+          "title": "Crown",
+          "before": {
+            "median": 2593.5666666666666,
+            "minimum": 2575.2833333333333,
+            "maximum": 3110.62
+          },
+          "after": {
+            "median": 2610.0633333333335,
+            "minimum": 2588.07,
+            "maximum": 3558.5
+          },
+          "medianChangePercent": 0.636061022787171
+        }
+      ]
+    }
+  },
+  "browser": {
+    "raw": {
+      "version": {
+        "protocolVersion": "1.3",
+        "product": "Chrome/152.0.7977.83",
+        "revision": "@79460ebecaa5625e57a5fb679a735659e73dc687",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+        "jsVersion": "15.2.124.21"
+      },
+      "runs": [
+        {
+          "variant": "before",
+          "run": 1,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.003114999970421,
+          "taskMs": 2766.885,
+          "scriptMs": 2514.7850000000008,
+          "animationCallbacks": 480,
+          "callbackMs": 2569.577,
+          "callbackMedianMs": 5.112,
+          "callbackP95Ms": 7.167,
+          "displayFrameEvents": 480,
+          "gpuCommandMs": 807.3240000000003,
+          "compositorPaintMs": 77.77299999999997
+        },
+        {
+          "variant": "after",
+          "run": 1,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.00393400003668,
+          "taskMs": 2551.221,
+          "scriptMs": 2273.5869999999995,
+          "animationCallbacks": 480,
+          "callbackMs": 2321.464999999999,
+          "callbackMedianMs": 4.706,
+          "callbackP95Ms": 5.999,
+          "displayFrameEvents": 480,
+          "gpuCommandMs": 787.4929999999972,
+          "compositorPaintMs": 86.627
+        },
+        {
+          "variant": "before",
+          "run": 2,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.008351999975275,
+          "taskMs": 2490.7610000000004,
+          "scriptMs": 2207.362,
+          "animationCallbacks": 479,
+          "callbackMs": 2253.6920000000014,
+          "callbackMedianMs": 4.587,
+          "callbackP95Ms": 5.687,
+          "displayFrameEvents": 478,
+          "gpuCommandMs": 748.9709999999995,
+          "compositorPaintMs": 121.96199999999997
+        },
+        {
+          "variant": "after",
+          "run": 2,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.008373999968171,
+          "taskMs": 2575.5890000000004,
+          "scriptMs": 2284.7599999999998,
+          "animationCallbacks": 481,
+          "callbackMs": 2335.9740000000006,
+          "callbackMedianMs": 4.766,
+          "callbackP95Ms": 5.921,
+          "displayFrameEvents": 481,
+          "gpuCommandMs": 768.6569999999979,
+          "compositorPaintMs": 79.48100000000001
+        },
+        {
+          "variant": "before",
+          "run": 3,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.00187499995809,
+          "taskMs": 2534.783,
+          "scriptMs": 2239.5660000000003,
+          "animationCallbacks": 477,
+          "callbackMs": 2281.3500000000013,
+          "callbackMedianMs": 4.621,
+          "callbackP95Ms": 6.057,
+          "displayFrameEvents": 477,
+          "gpuCommandMs": 834.6179999999998,
+          "compositorPaintMs": 87.54600000000003
+        },
+        {
+          "variant": "after",
+          "run": 3,
+          "viewport": {
+            "width": 1087,
+            "height": 727,
+            "dpr": 1.25
+          },
+          "windowSeconds": 8.015985000005458,
+          "taskMs": 2532.2559999999994,
+          "scriptMs": 2247.087,
+          "animationCallbacks": 481,
+          "callbackMs": 2299.137999999996,
+          "callbackMedianMs": 4.658,
+          "callbackP95Ms": 5.906,
+          "displayFrameEvents": 481,
+          "gpuCommandMs": 755.2489999999992,
+          "compositorPaintMs": 82.69000000000008
+        }
+      ],
+      "errors": [],
+      "checkResult": "PASS: 90 border-hole checks, 254400 multi-fill coverage checks, 96 path-offset checks, and 58812 transition checks. Solid, gradient, image, and shadow fills preserve holes; side seams and varying gradient alpha retain coverage at DPR 1, 2, 3."
+    },
+    "summary": {
+      "callbackMedianMs": {
+        "before": {
+          "median": 4.621,
+          "minimum": 4.587,
+          "maximum": 5.112
+        },
+        "after": {
+          "median": 4.706,
+          "minimum": 4.658,
+          "maximum": 4.766
+        },
+        "medianChangePercent": 1.8394286950876415
+      },
+      "callbackP95Ms": {
+        "before": {
+          "median": 6.057,
+          "minimum": 5.687,
+          "maximum": 7.167
+        },
+        "after": {
+          "median": 5.921,
+          "minimum": 5.906,
+          "maximum": 5.999
+        },
+        "medianChangePercent": -2.2453359749050716
+      },
+      "taskMs": {
+        "before": {
+          "median": 2534.783,
+          "minimum": 2490.7610000000004,
+          "maximum": 2766.885
+        },
+        "after": {
+          "median": 2551.221,
+          "minimum": 2532.2559999999994,
+          "maximum": 2575.5890000000004
+        },
+        "medianChangePercent": 0.6484973269901273
+      },
+      "scriptMs": {
+        "before": {
+          "median": 2239.5660000000003,
+          "minimum": 2207.362,
+          "maximum": 2514.7850000000008
+        },
+        "after": {
+          "median": 2273.5869999999995,
+          "minimum": 2247.087,
+          "maximum": 2284.7599999999998
+        },
+        "medianChangePercent": 1.5190889663443397
+      },
+      "gpuCommandMs": {
+        "before": {
+          "median": 807.3240000000003,
+          "minimum": 748.9709999999995,
+          "maximum": 834.6179999999998
+        },
+        "after": {
+          "median": 768.6569999999979,
+          "minimum": 755.2489999999992,
+          "maximum": 787.4929999999972
+        },
+        "medianChangePercent": -4.789526881401073
+      },
+      "compositorPaintMs": {
+        "before": {
+          "median": 87.54600000000003,
+          "minimum": 77.77299999999997,
+          "maximum": 121.96199999999997
+        },
+        "after": {
+          "median": 82.69000000000008,
+          "minimum": 79.48100000000001,
+          "maximum": 86.627
+        },
+        "medianChangePercent": -5.54679825463179
+      },
+      "displayedEventsPerSecond": {
+        "before": {
+          "median": 59.687686055942066,
+          "minimum": 59.611028665468815,
+          "maximum": 59.976646593454426
+        },
+        "after": {
+          "median": 60.00510230491606,
+          "minimum": 59.97050950167759,
+          "maximum": 60.06212996569737
+        },
+        "medianChangePercent": 0.5317951992249936
+      }
+    }
+  },
+  "validation": {
+    "flutterTests": 234,
+    "analyzer": "No issues found",
+    "canonicalRecords": 131,
+    "unchangedCanonicalRecords": 128,
+    "intentionalChanges": "[1] No horizontal at t=0.1,0.5,0.9; analytic and independent pixel checks cover the continuous boundary.",
+    "rasterGoldenChanges": 0,
+    "canvasKit": "PASS: 90 border-hole checks, 254400 multi-fill coverage checks, 96 path-offset checks, and 58812 transition checks. Solid, gradient, image, and shadow fills preserve holes; side seams and varying gradient alpha retain coverage at DPR 1, 2, 3."
+  },
+  "implementationSha256": {
+    "lib/any_borders.dart": "10c688460ff95b5ce228f213b483c8a77cf09c20ff799c9ba2918370c1d35dcd",
+    "lib/any_box_decoration.dart": "086d34c6e406d5aaf5edaf8795a3a731608f96c7fb51fdb17db74999caf9e343",
+    "lib/any_contour.dart": "c407c36dd018d209b31b65e334a055f276f1a2657d03fc9df6f8f6ac84374968",
+    "lib/any_decoration_cache.dart": "328e8e1dd6b1742b21c22a67486b8c4962a59455856958bbe9e32973593b1707",
+    "lib/any_decoration_tween.dart": "f8ac345e143a01d1f244300b3a84948ecf68e55b7cbd7b2962e6d5ea3b5b9439",
+    "lib/any_extras.dart": "571c30d3e9c9b42b1357fe798850dc2df3e936385084fa6e80f8a19ad09f0c60",
+    "lib/any_fill.dart": "321cb3eaf5a2ee9ebc1a23a0a2d06f786c855dcf247018d921dfc0b1e06f7d23",
+    "lib/any_shadow.dart": "7c3e766d54ad1569bfc0131c32df303e9c7934dd43b124b7677bdd0d34478cac",
+    "lib/any_utils.dart": "550694fa4192f597e38bab348ae47ac937cec6c0e76c3b1bebaa2f28c5606dd5",
+    "lib/extras/any_tab_decoration.dart": "c1b55cdfc0e37f8cfcb9cfdaab775407b21e984e67f70d3d40527d5622cd4bbc",
+    "lib/src/corners/bevel_corner.dart": "e67b61a7a641676ce7b1857a7a66bba75db2c3361bf2e3f68b6456efd10b82cb",
+    "lib/src/corners/corner_converter.dart": "e9224a07f170c93c75afd3fe1182dd63b7e5953998fe0171e81820d2b248d43c",
+    "lib/src/corners/inverse_rounded_corner.dart": "38d9ddee56ecab676a9e34805587f83fac75cc82faccfe3e08b0fa87e34068f6",
+    "lib/src/corners/rounded_corner.dart": "eaa8bc8cc07c205d65d2b6ecbd0a041d176f23d65ec91e9126f4099425e9c8e7",
+    "lib/src/geometry/contour_engine.dart": "752a4853cb9f9a758bc364dc26117186522d8f7931878e844e2dcf478558abd9",
+    "lib/src/geometry/contour_transition.dart": "cf9a1e59e8d6bca28ad91291f54f40715af83b2ec5ea9b04e82b0021edc58991",
+    "lib/src/geometry/core.dart": "1b0e9bf9c6026b1f80ffa896a9fa4120c7cc95bbe4336b6f90897fd80e7e86b9",
+    "lib/src/geometry/corner_contract.dart": "c27181e75a0f346af2c0fd2f0a6e82cc7936e099aa00f92b60760a5be9a01c22",
+    "lib/src/geometry/corner_curves.dart": "db1b48ab6642601aeb457c56c8e497856ffb96aa0cf7f6439e8ddb0dd2cfd694",
+    "lib/src/geometry/math.dart": "06e67a27eae825965b8c3fc0c255e4477e6238656a43876e26868dc2853ca7f5",
+    "lib/src/geometry_diagnostics.dart": "066ace91765246b7df15c8058d8b743751cabd968217138362f7984d2ef5b950",
+    "lib/src/point_offset.dart": "5b8112e4a3bf197582e8f0a0592a6640acbfc84015e306b3546e8ccd27364c13"
+  }
+}

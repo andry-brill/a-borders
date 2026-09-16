@@ -6,8 +6,10 @@ import 'package:flutter/animation.dart';
 import 'any_contour.dart';
 import 'any_shadow.dart';
 import 'any_utils.dart';
+import 'src/geometry/core.dart' show AnyContourTransition;
 
 class AnyDecorationTween extends Tween<AnyDecoration> {
+  _DecorationTransition? _prepared;
   AnyDecorationTween({
     required AnyDecoration super.begin,
     required AnyDecoration super.end,
@@ -18,7 +20,12 @@ class AnyDecorationTween extends Tween<AnyDecoration> {
     if (t <= 0.0) return begin!;
     if (t >= 1.0) return end!;
 
+    var prepared = _prepared;
+    if (prepared == null || prepared.begin != begin || prepared.end != end) {
+      prepared = _prepared = _DecorationTransition(begin!, end!);
+    }
     return _TweenDecoration(
+      prepared: prepared,
       beginDecoration: begin!,
       endDecoration: end!,
       t: t,
@@ -30,8 +37,10 @@ class _TweenDecoration extends AnyDecoration {
   final AnyDecoration beginDecoration;
   final AnyDecoration endDecoration;
   final double t;
+  final _DecorationTransition prepared;
 
   _TweenDecoration({
+    required this.prepared,
     required this.beginDecoration,
     required this.endDecoration,
     required this.t,
@@ -117,33 +126,28 @@ class _TweenDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      int borderIndex, double offset) {
-    final hasBegin = borderIndex < beginDecoration.borders.length;
-    final hasEnd = borderIndex < endDecoration.borders.length;
-    // Both builders use the current offset. Using their endpoint offsets would
-    // interpolate already exhausted point lists and switch them at the midpoint
-    // instead of letting the current outline reach its actual collapse point.
-    var a = (hasBegin ? beginDecoration : endDecoration)
-        .buildPoints(bounds, textDirection, borderIndex, offset);
-    var b = (hasEnd ? endDecoration : beginDecoration)
-        .buildPoints(bounds, textDirection, borderIndex, offset);
-    List<AnyPoint> withoutWidths(List<AnyPoint> points) => points
-        .map((p) => AnyPoint(
-            shape: p.shape,
-            outer: p.outer,
-            inner: p.inner,
-            point: p.point,
-            side: p.side.copyWith(width: 0),
-            skip: p.skip))
-        .toList(growable: false);
-    if (!hasBegin) {
-      a = withoutWidths(a);
-    }
-    if (!hasEnd) {
-      b = withoutWidths(b);
-    }
-    return AnyPoint.lerp(a, b, t)!;
-  }
+          int borderIndex, double offset) =>
+      _layer(bounds, textDirection, borderIndex, offset).points(t);
+
+  @override
+  AnyContour buildContourForBorder(
+          Rect bounds, TextDirection? textDirection, int index) =>
+      _layer(bounds, textDirection, index, offset + borders[index].offset)
+          .build(t,
+              background: index == primaryBorderIndex ? background : null,
+              backgroundBase: background?.shapeBase ?? AnyShapeBase.shapeBorder,
+              clipBase: clipBase,
+              shadowBase: shadowBase);
+
+  AnyContourTransition _layer(
+          Rect bounds, TextDirection? direction, int index, double offset) =>
+      prepared.layer(
+          bounds,
+          direction,
+          index,
+          offset,
+          (decoration) =>
+              decoration.buildPoints(bounds, direction, index, offset));
 
   @override
   bool operator ==(Object other) {
@@ -163,4 +167,44 @@ class _TweenDecoration extends AnyDecoration {
         endDecoration,
         t,
       );
+}
+
+// Per-tween, bounded preparation: at most one current point context per layer.
+// Sampled decorations keep their original plan when the Tween is retargeted.
+class _DecorationTransition {
+  final AnyDecoration begin, end;
+  final _layers =
+      <int, ((Rect, TextDirection?, double), AnyContourTransition)>{};
+  _DecorationTransition(this.begin, this.end);
+
+  AnyContourTransition layer(Rect bounds, TextDirection? direction, int index,
+      double offset, List<AnyPoint> Function(AnyDecoration) build) {
+    final key = (bounds, direction, offset);
+    final cached = _layers[index];
+    if (cached != null && cached.$1 == key) {
+      cached.$2.reusePointContext = true;
+      return cached.$2;
+    }
+    final hasBegin = index < begin.borders.length;
+    final hasEnd = index < end.borders.length;
+    // Current displacement reaches both builders before corner construction.
+    var a = build(hasBegin ? begin : end);
+    var b = build(hasEnd ? end : begin);
+    List<AnyPoint> withoutWidths(List<AnyPoint> points) => [
+          for (final p in points)
+            AnyPoint(
+                point: p.point,
+                shape: p.shape,
+                outer: p.outer,
+                inner: p.inner,
+                side: p.side.copyWith(width: 0),
+                skip: p.skip)
+        ];
+    if (!hasBegin) a = withoutWidths(a);
+    if (!hasEnd) b = withoutWidths(b);
+    final result =
+        AnyContourTransition(a, b, reusePointContext: cached == null);
+    _layers[index] = (key, result);
+    return result;
+  }
 }

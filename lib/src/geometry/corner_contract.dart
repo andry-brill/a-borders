@@ -32,6 +32,19 @@ abstract class AnyCornerGeometry {
   bool get retainsSingleZeroExtent => false;
   AnyResolvedCorner resolve(AnyCorner corner, AnyCornerFrame frame);
 
+  /// Optional specialization for a transition between resolved boundaries.
+  /// Return null to use shared, exactly subdivided canonical curve interpolation.
+  /// Preparation is lazy and reused while the endpoint point context is stable.
+  AnyCornerTransition? prepareTransition(
+          AnyResolvedCorner from, AnyResolvedCorner to) =>
+      null;
+
+  /// Use only when these descriptors fully represent the resolved endpoints.
+  /// They are already fitted; evaluation must not allocate their contacts again.
+  @protected
+  AnyCornerTransition parameterTransition(AnyCorner from, AnyCorner to) =>
+      _ParameterCornerTransition(from, to);
+
   /// Common zero-distance and parallel-frame behavior, with signed distances.
   AnyResolvedCorner resolveBoundary(AnyResolvedCorner source,
       {required double previousDistance, required double nextDistance}) {
@@ -120,6 +133,23 @@ abstract class AnyCornerGeometry {
   List<AnyCornerSegment> fitCurve(AnyCornerCurve curve, double tolerance,
           {double from = 0, double to = 1}) =>
       _fit(curve, tolerance, from: from, to: to);
+}
+
+/// Prepared local interpolation selected by a geometry provider. Implementations
+/// must preserve endpoint geometry and return valid curves in the current frame.
+abstract class AnyCornerTransition {
+  const AnyCornerTransition();
+  AnyResolvedCorner resolve(AnyCornerFrame frame, double t);
+}
+
+class _ParameterCornerTransition extends AnyCornerTransition {
+  final AnyCorner from, to;
+  const _ParameterCornerTransition(this.from, this.to);
+  @override
+  AnyResolvedCorner resolve(AnyCornerFrame frame, double t) {
+    final corner = AnyCorner.lerpResolved(from, to, t);
+    return corner.geometry.resolve(corner, frame);
+  }
 }
 
 /// Immutable corner settings. Geometry is available through [resolve] and

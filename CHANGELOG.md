@@ -2,6 +2,12 @@
 
 ### New
 
+- Lazy, reusable animation preparation owned by `AnyDecorationTween`. Retain one
+  point context per layer and reuse fixed frames, normalized source settings,
+  and unchanged source curves. Prepare requested explicit/automatic boundary
+  transitions through provider parameter shortcuts or matched canonical cubics.
+- Optional `AnyCornerGeometry.prepareTransition` and `AnyCornerTransition`
+  contracts let custom providers specialize interpolation without engine edits.
 - Add finite `double offset = 0.0` to decorations and borders, including box and
   tab constructors. Negative values inset and positive values outset; each
   layer passes `decoration.offset + border.offset` to `buildPoints`. Builders
@@ -39,6 +45,25 @@
 
 ### Changed
 
+- Remove the midpoint jump when compatible inner/outer corner overrides appear
+  or disappear. The first “No horizontal” outer corner now moves from `p/n`
+  radii 30/30 to 20/30 continuously. Zero boundaries retain independently prepared endpoint
+  semantics; incompatible filled-area topology keeps the existing fallback.
+- Refresh gallery characterization for the current 18 examples and update the
+  animation widget test to use an existing row. Against the captured baseline,
+  only the three “No horizontal” animation records change; the other 128 records
+  retain identical geometry, ownership, and deterministic work counts. No raster
+  golden files change.
+- Record five interleaved warmed native runs with identical SDK, dependencies,
+  and indexed gallery inputs. Persistent-gallery median CPU geometry time is
+  4.228 ms before and 4.234 ms after preparation, within timing variation.
+  Reusable cases improve; the changing-aspect-ratio Images case adds 0.012 ms.
+  Fresh five-sample tweens add 8.2% in the short gallery benchmark. Visible
+  CanvasKit animation remains approximately 60 displayed frames/second; callback
+  timings overlap across three runs. Pass 234 Flutter tests, analysis, and
+  CanvasKit coverage including 58,812 transition pixel checks at DPR 1/2/3.
+  Publish raw runs, spreads, and separate visible Chrome measurements in the
+  [benchmark record](test/benchmarks/prepared_transition_results.json).
 - **Source semantics:** `AnyBorder.corners` and unprefixed box corner fields
   describe the source shape instead of the outer boundary. Background, clip,
   and shadow selectors default to `shapeBorder`; outer-derived `zeroBorder`

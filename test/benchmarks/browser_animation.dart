@@ -19,7 +19,7 @@ class _AnimationSceneState extends State<_AnimationScene>
         ..repeat(reverse: true);
   late final examples = demo.examples().whereType<demo.E>().toList();
   late final selected = [
-    for (final i in [0, 2, 3, 4, 6, 11]) examples[i]
+    for (final i in [0, 1, 2, 3, 6, 11]) examples[i]
   ];
   late final tweens = [
     for (final e in selected) AnyDecorationTween(begin: e.begin, end: e.end)

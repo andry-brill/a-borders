@@ -176,22 +176,22 @@ List<Widget> examples() {
       E(
         title: 'Multi',
         begin: AnyBoxDecoration.multi(
-          offset: 10,
+          offset: 20,
             borders: [
           AnyBoxBorder(
               corners: InverseRoundedCorner(radius: 20),
-              sides: AnySide(width: 10, align: AnySide.alignInside, color: greenD)),
+              sides: AnySide(width: 20, align: AnySide.alignInside, color: greenD)),
           AnyBoxBorder(
               corners: InverseRoundedCorner(radius: 20),
-              sides: AnySide(width: 5, align: AnySide.alignInside, color: greenL)),
+              sides: AnySide(width: 10, align: AnySide.alignInside, color: greenL)),
         ]),
         end: AnyBoxDecoration.multi(borders: [
           AnyBoxBorder(
               corners: InverseRoundedCorner(radius: 28),
-              sides: AnySide(width: 16, align: AnySide.alignOutside, color: greenD)),
+              sides: AnySide(width: 30, align: AnySide.alignOutside, color: greenD)),
           AnyBoxBorder(
               corners: InverseRoundedCorner(radius: 28),
-              sides: AnySide(width: 8, align: AnySide.alignOutside, color: greenL)),
+              sides: AnySide(width: 15, align: AnySide.alignOutside, color: greenL)),
         ]),
       ),
   ];
