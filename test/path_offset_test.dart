@@ -1,13 +1,12 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:any_borders/any_borders.dart';
 import 'package:any_borders/any_extras.dart';
 import 'package:any_borders/src/geometry_diagnostics.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../example/lib/custom_corner.dart';
+import '../example/lib/main.dart' as example;
 import 'support/path_offset_regressions.dart';
 
 const _size = Size(100, 60);
@@ -37,23 +36,36 @@ void _sameArea(Path actual, Path expected,
   }
 }
 
-class _Polygon extends AnyDecoration {
-  final List<Offset> vertices;
-  const _Polygon(this.vertices, {super.offset, super.border});
+// A custom builder owns its shape-specific displacement. A diamond has an
+// analytic construction and needs no general polygon-offset helper.
+class _Diamond extends AnyDecoration {
+  final bool reverse;
+  const _Diamond({super.offset, super.border, this.reverse = false});
+
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
-          int borderIndex, double offset) =>
-      offsetPoints([
-        for (final vertex in vertices) point(vertex, borderIndex: borderIndex)
-      ], offset);
+  List<AnyPoint> buildPoints(
+      Rect bounds, TextDirection? direction, int borderIndex, double offset) {
+    if (bounds.isEmpty) return const [];
+    final half = Offset(bounds.width / 2, bounds.height / 2);
+    final scale = 1 + offset * half.distance / (half.dx * half.dy);
+    if (scale <= 0) return const [];
+    final vertices = [
+      bounds.center + Offset(0, -half.dy * scale),
+      bounds.center + Offset(half.dx * scale, 0),
+      bounds.center + Offset(0, half.dy * scale),
+      bounds.center + Offset(-half.dx * scale, 0),
+    ];
+    return [
+      for (final vertex in reverse ? vertices.reversed : vertices)
+        point(vertex, borderIndex: borderIndex),
+    ];
+  }
 
   @override
   bool operator ==(Object other) =>
-      other is _Polygon &&
-      listEquals(other.vertices, vertices) &&
-      super == other;
+      other is _Diamond && other.reverse == reverse && super == other;
   @override
-  int get hashCode => Object.hash(super.hashCode, Object.hashAll(vertices));
+  int get hashCode => Object.hash(super.hashCode, reverse);
 }
 
 // Independent convex half-plane clipping oracle, without corner/provider APIs.
@@ -329,60 +341,30 @@ void main() {
     });
   });
 
-  test('nonrectangular offsets follow edge normals in both windings', () {
-    const vertices = [
-      Offset(50, 0),
-      Offset(100, 50),
-      Offset(50, 100),
-      Offset(0, 50)
-    ];
-    for (final offset in [-8.0, 9.0]) {
-      for (final points in [vertices, vertices.reversed.toList()]) {
-        final c = _Polygon(points, offset: offset).buildContour(_size, null);
-        final radius = 50 + math.sqrt(2) * offset;
-        final expected = Path()
-          ..moveTo(50, 50 - radius)
-          ..lineTo(50 + radius, 50)
-          ..lineTo(50, 50 + radius)
-          ..lineTo(50 - radius, 50)
-          ..close();
-        _sameArea(c.clipPath, expected);
-      }
-    }
-  });
-
-  test(
-      'polygon offsets preserve descriptors, winding and rotated edge distances',
+  test('custom builders receive the combined offset and retain corner settings',
       () {
-    final vertices = [
-      const Offset(20, 0),
-      const Offset(60, 0),
-      const Offset(110, 30),
-      const Offset(65, 85),
-      const Offset(0, 50)
-    ];
-    const angle = 0.37;
-    Offset transform(Offset p) => Offset(
-        p.dx * math.cos(angle) - p.dy * math.sin(angle) + 170,
-        p.dx * math.sin(angle) + p.dy * math.cos(angle) - 130);
-    const border = AnyBorder(
-        corners: BevelCorner(radius: 7),
-        outerCorners: RoundedCorner(radius: 3),
-        innerCorners: NotchCorner(p: 2, n: 4),
-        sides: AnySide(width: 2));
-    for (final outline in [vertices, vertices.reversed.toList()]) {
-      final polygon = outline.map(transform).toList();
-      for (final offset in [-3.0, 5.0]) {
-        final d = _Polygon(polygon, offset: offset, border: border);
-        final points = d.points(Offset.zero & _size, null);
-        final winding = identical(outline, vertices) ? 1.0 : -1.0;
+    const bounds = Rect.fromLTWH(13, 17, 100, 60);
+    for (final reverse in [false, true]) {
+      final original = _Diamond(reverse: reverse).points(bounds, null);
+      for (final offset in [-8.0, 9.0]) {
+        const border = AnyBorder(
+            offset: 2,
+            corners: BevelCorner(radius: 7),
+            outerCorners: RoundedCorner(radius: 3),
+            innerCorners: NotchCorner(p: 2, n: 4),
+            sides: AnySide(width: 2));
+        final points =
+            _Diamond(offset: offset, border: border, reverse: reverse)
+                .points(bounds, null);
         for (var i = 0; i < points.length; i++) {
-          final edge = polygon[(i + 1) % polygon.length] - polygon[i];
-          final normal = Offset(-edge.dy, edge.dx) * (winding / edge.distance);
-          for (final p in [points[i], points[(i + 1) % points.length]]) {
-            final delta = p.point - polygon[i];
+          final next = (i + 1) % points.length;
+          final edge = original[next].point - original[i].point;
+          final normal = Offset(-edge.dy, edge.dx) *
+              ((reverse ? -1.0 : 1.0) / edge.distance);
+          for (final p in [points[i], points[next]]) {
+            final delta = p.point - original[i].point;
             expect(delta.dx * normal.dx + delta.dy * normal.dy,
-                closeTo(-offset, 1e-10));
+                closeTo(-(offset + border.offset), 1e-10));
           }
           expect(points[i].shape, same(border.corners));
           expect(points[i].outer, same(border.outerCorners));
@@ -393,42 +375,44 @@ void main() {
     }
   });
 
-  test('polygon helper supports collinear vertices and rejects removed edges',
-      () {
-    const collinear = [
-      Offset.zero,
+  test('custom diamond paths match independent half-plane clipping', () {
+    const vertices = [
       Offset(50, 0),
-      Offset(100, 0),
-      Offset(100, 60),
-      Offset(0, 60)
+      Offset(100, 30),
+      Offset(50, 60),
+      Offset(0, 30)
     ];
-    final c = const _Polygon(collinear, offset: 5).buildContour(_size, null);
-    expect(c.frames[1].vertex, const Offset(50, -5));
-    expect(c.clipPath.getBounds(), const Rect.fromLTRB(-5, -5, 105, 65));
-    // The small diagonal disappears before the rectangle is exhausted.
-    const clippedCorner = [
-      Offset(5, 0),
-      Offset(100, 0),
-      Offset(100, 60),
-      Offset(0, 60),
-      Offset(0, 5)
-    ];
-    expect(
-        () => const _Polygon(clippedCorner, offset: -10)
-            .points(Offset.zero & _size, null),
-        throwsArgumentError);
-    // A custom builder owns the topology if its edges disappear or reverse.
-    const reversing = [
-      Offset(-10, 60),
-      Offset(0, 60),
-      Offset.zero,
-      Offset(100, 0),
-      Offset(100, 60)
-    ];
-    expect(
-        () => const _Polygon(reversing, offset: 5)
-            .points(Offset.zero & _size, null),
-        throwsArgumentError);
+    for (final reverse in [false, true]) {
+      for (final offset in [-80.0, -10.0, 0.0, 8.0, 50.0]) {
+        final c = _Diamond(offset: offset, reverse: reverse)
+            .buildContour(_size, null);
+        _sameArea(c.clipPath, _convexArea(vertices, List.filled(4, -offset)));
+      }
+    }
+  });
+
+  test('crown example rejects nonzero effective offsets', () {
+    for (final type in example.CrownType.values) {
+      final reference =
+          example.CrownDecoration(type: type).points(Offset.zero & _size, null);
+      for (final (decorationOffset, borderOffset) in [
+        (1.0, 0.0),
+        (-1.0, 0.0),
+        (0.0, 1.0),
+        (0.0, -1.0),
+        (2.0, -1.0)
+      ]) {
+        final crown = example.CrownDecoration(
+            type: type,
+            offset: decorationOffset,
+            border: AnyBorder(offset: borderOffset));
+        expect(() => crown.buildContour(_size, null), throwsUnsupportedError);
+      }
+      final cancelled = example.CrownDecoration(
+              type: type, offset: 2, border: const AnyBorder(offset: -2))
+          .points(Offset.zero & _size, null);
+      expect(cancelled.map((p) => p.point), reference.map((p) => p.point));
+    }
   });
 
   test('exhausted point outlines produce empty geometry for every band', () {
@@ -490,49 +474,6 @@ void main() {
                 a.where((r) => r.$2.contains(p)).length, lessThanOrEqualTo(1));
           }
         }
-      }
-    }
-  });
-
-  test('polygon construction matches independent half-plane clipping', () {
-    final vertices = List.generate(5, (i) {
-      final angle = i * 2 * math.pi / 5;
-      return Offset(70 + 60 * math.cos(angle), 60 + 50 * math.sin(angle));
-    });
-    for (final polygon in [vertices, vertices.reversed.toList()]) {
-      for (final offset in [-80.0, -10.0, 0.0, 8.0, 50.0]) {
-        final c = _Polygon(polygon, offset: offset).buildContour(_size, null);
-        _sameArea(c.clipPath, _convexArea(polygon, List.filled(5, -offset)));
-      }
-    }
-  });
-
-  test('concave polygon corners keep their reflex angles after displacement',
-      () {
-    const vertices = [
-      Offset.zero,
-      Offset(100, 0),
-      Offset(100, 30),
-      Offset(50, 30),
-      Offset(50, 60),
-      Offset(0, 60)
-    ];
-    const border = AnyBorder(corners: RoundedCorner(radius: 5));
-    for (final offset in [-4.0, 4.0]) {
-      final c = _Polygon(vertices, border: border, offset: offset)
-          .buildContour(_size, null);
-      final expected = [
-        Offset(-offset, -offset),
-        Offset(100 + offset, -offset),
-        Offset(100 + offset, 30 + offset),
-        Offset(50 + offset, 30 + offset),
-        Offset(50 + offset, 60 + offset),
-        Offset(-offset, 60 + offset)
-      ];
-      expect(c.frames.map((f) => f.vertex), expected);
-      expect(c.frames[3].convexity, -1);
-      for (final corner in c.shapeCorners) {
-        expect(corner.parameters!.p, 5);
       }
     }
   });

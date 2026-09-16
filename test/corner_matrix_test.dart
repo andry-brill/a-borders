@@ -34,7 +34,8 @@ void main() {
           'circular construction and signed distances angle=$angle reflex=$reflex',
           () {
         final f = frame(angle, reflex: reflex), sign = reflex ? -1 : 1;
-        final source = const RoundedCorner(radius: 20).resolve(f);
+        final sourceSettings = const RoundedCorner(radius: 20);
+        final source = sourceSettings.geometry.resolve(sourceSettings, f);
         final center =
             Offset(20 / math.tan(angle * math.pi / 360), sign * 20.0);
         closePoint(source.center!, center, 1e-8);
@@ -45,7 +46,7 @@ void main() {
               (source.pointAt(i / 40) - center).distance, closeTo(20, 0.001));
         }
         for (final d in [-4.0, 4.0]) {
-          final b = source.source
+          final b = source.source.geometry
               .resolveBoundary(source, previousDistance: d, nextDistance: d);
           closePoint(b.center!, center, 1e-8);
           expect(b.circleRadius, 20 - sign * d);
@@ -57,11 +58,12 @@ void main() {
       });
       test('bevel world-space offsets angle=$angle reflex=$reflex', () {
         final f = frame(angle, reflex: reflex);
-        final source = const BevelCorner.elliptical(p: 30, n: 20).resolve(f);
+        final sourceSettings = const BevelCorner.elliptical(p: 30, n: 20);
+        final source = sourceSettings.geometry.resolve(sourceSettings, f);
         final edge = source.end - source.start;
         final normal = Offset(-edge.dy, edge.dx) / edge.distance;
         for (final sign in [-1.0, 1.0]) {
-          final b = source.source.resolveBoundary(source,
+          final b = source.source.geometry.resolveBoundary(source,
               previousDistance: sign * 2, nextDistance: sign * 4);
           expect(dot(normal, b.start - source.start), closeTo(sign * 2, 1e-8));
           expect(dot(normal, b.end - source.start), closeTo(sign * 4, 1e-8));
@@ -74,8 +76,9 @@ void main() {
   test('rounded sharp limit is continuous and has the specified taper', () {
     final f = frame(90);
     for (final r in [0.0, 1e-8, 0.001, 0.1, 1.0, 3.9999, 4.0, 4.0001, 20.0]) {
-      final source = RoundedCorner(radius: r).resolve(f);
-      final b = source.source
+      final sourceSettings = RoundedCorner(radius: r);
+      final source = sourceSettings.geometry.resolve(sourceSettings, f);
+      final b = source.source.geometry
           .resolveBoundary(source, previousDistance: -4, nextDistance: -4);
       final q = r / 4 - 1;
       final expected = r >= 4 ? r + 4 : r + 4 * (1 + q * q * q);

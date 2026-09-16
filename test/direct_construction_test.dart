@@ -75,7 +75,7 @@ void main() {
               final AnyCorner descriptor = rounded
                   ? RoundedCorner.elliptical(p: radii.$1, n: radii.$2)
                   : InverseRoundedCorner.elliptical(p: radii.$1, n: radii.$2);
-              final c = descriptor.resolve(f);
+              final c = descriptor.geometry.resolve(descriptor, f);
               final center = rounded ? (u + v) / u.dy.abs() : Offset.zero;
               final a = rounded ? u * f.cotangentHalfAngle - center : u;
               final b = rounded ? v * f.cotangentHalfAngle - center : v;

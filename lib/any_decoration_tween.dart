@@ -5,7 +5,7 @@ import 'package:flutter/animation.dart';
 
 import 'any_contour.dart';
 import 'any_shadow.dart';
-import 'any_utils.dart';
+import 'src/utils.dart';
 import 'src/geometry/core.dart' show AnyContourTransition;
 
 class AnyDecorationTween extends Tween<AnyDecoration> {
@@ -121,7 +121,7 @@ class _TweenDecoration extends AnyDecoration {
     final beginRatio = _effectiveRatio(size, a.ratio);
     final endRatio = _effectiveRatio(size, b.ratio);
     final lRatio = lerpDouble(beginRatio, endRatio, t)!;
-    return super.fitRatio(size, lRatio);
+    return AnyUtils.fitRatio(size, lRatio);
   }
 
   @override

@@ -135,7 +135,7 @@ void main() {
           const InverseRoundedCorner(),
           const BevelCorner.elliptical(p: 0, n: 20),
         ].indexed) {
-          final source = c.$2.resolve(frame);
+          final source = c.$2.geometry.resolve(c.$2, frame);
           actual['corner $sign $angle ${c.$1}'] = signature([
             cornerData(source),
             for (final d in [
@@ -144,7 +144,7 @@ void main() {
               (3.0, 3.0),
               (30.0, 30.0)
             ])
-              cornerData(c.$2.resolveBoundary(source,
+              cornerData(c.$2.geometry.resolveBoundary(source,
                   previousDistance: d.$1, nextDistance: d.$2)),
           ]);
         }

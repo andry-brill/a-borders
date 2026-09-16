@@ -72,7 +72,7 @@ class AnyContourTransition {
     return _normalizeSettings(
         List.generate(
             _from.length,
-            (i) => AnyCorner.lerpResolved(
+            (i) => AnyCorner._lerpResolved(
                 _normalizedFrom![i], _normalizedTo![i], t)),
         frames,
         lengths);

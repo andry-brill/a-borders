@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import '../../any_fill.dart';
-import '../../any_utils.dart';
+import '../utils.dart';
 import '../geometry_diagnostics.dart' as diagnostics;
 import 'math.dart';
 
@@ -290,8 +290,8 @@ class AnyContour {
   AnyRegions? _regionsMerged;
   AnyRegions? _regionsSeparate;
 
-  int wrap(int index) => index % count;
-  double offsetForBase(int side, AnyShapeBase base) => switch (base) {
+  int _wrap(int index) => index % count;
+  double _offsetForBase(int side, AnyShapeBase base) => switch (base) {
         AnyShapeBase.innerBorder => sideInsideOffset[side],
         AnyShapeBase.outerBorder => -sideOutsideOffset[side],
         _ => 0,

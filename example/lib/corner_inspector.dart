@@ -135,8 +135,10 @@ class _InspectorPainter extends CustomPainter {
   }
 
   void drawCorner(Canvas canvas, AnyResolvedCorner c, Color color) {
+    final path = Path();
+    c.appendTo(path, moveTo: true);
     canvas.drawPath(
-        c.path,
+        path,
         Paint()
           ..color = color
           ..style = PaintingStyle.stroke
@@ -203,11 +205,11 @@ class _InspectorPainter extends CustomPainter {
           previousNormal: Offset(u.dy, -u.dx),
           nextNormal: const Offset(0, 1),
           winding: 1);
-      final source = corner.resolve(f),
-          outer = corner.resolveBoundary(source,
+      final source = corner.geometry.resolve(corner, f),
+          outer = corner.geometry.resolveBoundary(source,
               previousDistance: -width * (1 + align) / 2,
               nextDistance: -nextWidth * (1 + align) / 2),
-          inner = corner.resolveBoundary(source,
+          inner = corner.geometry.resolveBoundary(source,
               previousDistance: width * (1 - align) / 2,
               nextDistance: nextWidth * (1 - align) / 2);
       canvas.drawLine(Offset.zero, u * 210, Paint()..color = Colors.black26);

@@ -70,11 +70,14 @@ class _TestDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-          int borderIndex, double offset) =>
-      offsetPoints([
-        point(bounds.topLeft, borderIndex: borderIndex),
-        point(bounds.topRight, borderIndex: borderIndex),
-        point(bounds.bottomRight, borderIndex: borderIndex),
-        point(bounds.bottomLeft, borderIndex: borderIndex),
-      ], offset);
+      int borderIndex, double offset) {
+    bounds = bounds.inflate(offset);
+    if (bounds.isEmpty) return const [];
+    return [
+      point(bounds.topLeft, borderIndex: borderIndex),
+      point(bounds.topRight, borderIndex: borderIndex),
+      point(bounds.bottomRight, borderIndex: borderIndex),
+      point(bounds.bottomLeft, borderIndex: borderIndex),
+    ];
+  }
 }

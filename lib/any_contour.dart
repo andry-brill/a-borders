@@ -6,9 +6,8 @@ import 'package:flutter/painting.dart';
 import 'any_decoration_cache.dart';
 import 'any_fill.dart';
 import 'any_shadow.dart';
-import 'any_utils.dart';
+import 'src/utils.dart';
 import 'src/geometry_diagnostics.dart' as diagnostics;
-import 'src/point_offset.dart';
 
 import 'src/geometry/core.dart';
 import 'src/corners/rounded_corner.dart';
@@ -301,41 +300,10 @@ abstract class AnyDecoration extends Decoration {
     );
   }
 
-  /// Move a polygon's straight edges by [offset] and intersect adjacent lines.
-  /// Corner and side settings are retained; resolution happens afterwards.
-  /// Supports either winding and straight helper vertices. The offset must
-  /// preserve the polygon's edges, or completely exhaust a convex polygon.
-  /// For disappearing edges, split outlines or reversing helpers, implement
-  /// the shape's construction rules directly in [buildPoints].
-  @protected
-  List<AnyPoint> offsetPoints(List<AnyPoint> points, double offset) =>
-      offsetContourPoints(points, offset);
-
-  Rect fitRatio(Size size, double? ratio) {
-    if (ratio == null || ratio <= 0.0) {
-      return Offset.zero & size;
-    }
-
-    var width = size.width;
-    var height = width / ratio;
-
-    if (height > size.height) {
-      height = size.height;
-      width = height * ratio;
-    }
-
-    return Rect.fromLTWH(
-      (size.width - width) / 2.0,
-      (size.height - height) / 2.0,
-      width,
-      height,
-    );
-  }
-
   /// Bounds for a layer, fitted independently using that border's ratio.
   @protected
   Rect boundsForBorder(Size size, int borderIndex) =>
-      fitRatio(size, borders[borderIndex].ratio);
+      AnyUtils.fitRatio(size, borders[borderIndex].ratio);
 
   /// Construct one fitted layer. Tweens specialize this to evaluate prepared
   /// boundary transitions; ordinary decorations only need [buildPoints].

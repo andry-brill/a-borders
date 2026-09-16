@@ -200,14 +200,15 @@ void main() {
   test('inward circular trimming retains tiny arcs until the exact side limit',
       () {
     for (final angle in [30.0, 60.0, 90.0, 120.0, 150.0]) {
+      final sourceSettings = const InverseRoundedCorner(radius: 20);
       final source =
-          const InverseRoundedCorner(radius: 20).resolve(frame(angle));
+          sourceSettings.geometry.resolve(sourceSettings, frame(angle));
       final sine = math.sin(angle * math.pi / 360);
       final limit = 20 * sine / (1 - sine);
-      final before = source.source.resolveBoundary(source,
+      final before = source.source.geometry.resolveBoundary(source,
           previousDistance: limit * (1 - 1e-8),
           nextDistance: limit * (1 - 1e-8));
-      final after = source.source.resolveBoundary(source,
+      final after = source.source.geometry.resolveBoundary(source,
           previousDistance: limit * (1 + 1e-8),
           nextDistance: limit * (1 + 1e-8));
       expect(before.segments.any((s) => !s.isLine), isTrue,
@@ -247,12 +248,12 @@ void main() {
       final angle = (lo + hi) / 2;
       final limit =
           ellipse(p, n, angle).dx / (1 - ellipseNormal(p, n, angle).dx);
-      final source =
-          InverseRoundedCorner.elliptical(p: p, n: n).resolve(frame(90));
-      final before = source.source.resolveBoundary(source,
+      final sourceSettings = InverseRoundedCorner.elliptical(p: p, n: n);
+      final source = sourceSettings.geometry.resolve(sourceSettings, frame(90));
+      final before = source.source.geometry.resolveBoundary(source,
           previousDistance: limit * (1 - 1e-8),
           nextDistance: limit * (1 - 1e-8));
-      final after = source.source.resolveBoundary(source,
+      final after = source.source.geometry.resolveBoundary(source,
           previousDistance: limit * (1 + 1e-8),
           nextDistance: limit * (1 + 1e-8));
       expect(before.segments.any((s) => !s.isLine), isTrue,

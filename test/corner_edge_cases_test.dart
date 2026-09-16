@@ -13,7 +13,8 @@ void main() {
             f = frame(degrees, reflex: reflex);
         for (final dims in [(20.0, 20.0), (30.0, 20.0)]) {
           final p = dims.$1, n = dims.$2;
-          final source = InverseRoundedCorner.elliptical(p: p, n: n).resolve(f);
+          final sourceSettings = InverseRoundedCorner.elliptical(p: p, n: n);
+          final source = sourceSettings.geometry.resolve(sourceSettings, f);
           // Independent ray-basis coordinates of a unit sector, and its
           // derivative. No production conversion or normalization is used.
           Offset at(double phi) {
@@ -32,7 +33,7 @@ void main() {
           }
 
           for (final d in [-1.0, 1.0]) {
-            final boundary = source.source
+            final boundary = source.source.geometry
                 .resolveBoundary(source, previousDistance: d, nextDistance: d);
             for (final t in [0.3, 0.5, 0.7]) {
               final phi = theta * (1 - t);
@@ -51,10 +52,10 @@ void main() {
   test('converter policies retain their documented geometric constraints', () {
     final f = frame(90);
     for (final converter in CornerConverter.values) {
-      final rounded =
-          RoundedCorner.elliptical(p: 40, n: 20, converter: converter)
-              .resolve(f);
-      final a = rounded.source
+      final roundedSettings =
+          RoundedCorner.elliptical(p: 40, n: 20, converter: converter);
+      final rounded = roundedSettings.geometry.resolve(roundedSettings, f);
+      final a = rounded.source.geometry
           .resolveBoundary(rounded, previousDistance: -3, nextDistance: -7);
       if (converter == CornerConverter.equal) {
         expect(a.parameters!.p, 40);
@@ -65,9 +66,10 @@ void main() {
         expect(a.parameters!.p, 47);
         expect(a.parameters!.n, 23);
       }
-      final bevel =
-          BevelCorner.elliptical(p: 30, n: 10, converter: converter).resolve(f);
-      final b = bevel.source
+      final bevelSettings =
+          BevelCorner.elliptical(p: 30, n: 10, converter: converter);
+      final bevel = bevelSettings.geometry.resolve(bevelSettings, f);
+      final b = bevel.source.geometry
           .resolveBoundary(bevel, previousDistance: -4, nextDistance: -8);
       if (converter == CornerConverter.equal) {
         expect(b.parameters!.p, 30);
@@ -101,10 +103,10 @@ void main() {
           InverseRoundedCorner.elliptical(p: dims.$1, n: dims.$2),
           BevelCorner.elliptical(p: dims.$1, n: dims.$2)
         ]) {
-          final a = c.resolve(frame(angle));
+          final a = c.geometry.resolve(c, frame(angle));
           for (final d in [-3.0, 3.0]) {
-            final b =
-                c.resolveBoundary(a, previousDistance: d, nextDistance: d / 2);
+            final b = c.geometry
+                .resolveBoundary(a, previousDistance: d, nextDistance: d / 2);
             expect(
                 b.segments.every((s) => [s.start, s.control1, s.control2, s.end]
                     .every((p) => p.dx.isFinite && p.dy.isFinite)),
@@ -115,19 +117,21 @@ void main() {
     }
   });
   test('one-zero bevel retains its authored ray endpoints', () {
-    final c = const BevelCorner.elliptical(p: 0, n: 20).resolve(frame(90));
+    final cSettings = const BevelCorner.elliptical(p: 0, n: 20);
+    final c = cSettings.geometry.resolve(cSettings, frame(90));
     closePoint(c.start, Offset.zero);
     closePoint(c.end, const Offset(20, 0));
     expect(c.previousExtent, 0);
     expect(c.nextExtent, 20);
   });
   test('zero scoop stays sharp at the shifted side intersection', () {
-    final source = const InverseRoundedCorner().resolve(frame(90));
-    final equal = source.source
+    final sourceSettings = const InverseRoundedCorner();
+    final source = sourceSettings.geometry.resolve(sourceSettings, frame(90));
+    final equal = source.source.geometry
         .resolveBoundary(source, previousDistance: -4, nextDistance: -4);
     for (var i = 0; i <= 20; i++)
       closePoint(equal.pointAt(i / 20), const Offset(-4, -4));
-    final unequal = source.source
+    final unequal = source.source.geometry
         .resolveBoundary(source, previousDistance: -3, nextDistance: -7);
     closePoint(unequal.start, const Offset(-3, -7));
     closePoint(unequal.end, const Offset(-3, -7));

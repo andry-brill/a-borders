@@ -170,8 +170,8 @@ For a box, moving its four straight edges is equivalent to inflating its fitted
 rectangle. Other outlines need their own point construction: for example,
 a diamond's sloping edges move perpendicularly and meet at new vertices.
 Inflating a diamond's bounding rectangle by the same amount is not equivalent.
-[Custom decorations](#custom-decorations) can use `offsetPoints` for polygonal
-outlines or implement their own construction rules.
+[Custom decorations](#custom-decorations) define their own offset construction
+or reject nonzero offsets when unsupported.
 
 Border widths and alignment are measured from the newly constructed source.
 Only border distances reach corner providers; the path offset is not added to
@@ -486,8 +486,9 @@ frames, the scale must be finite, positive, and compatible with proportional
 scaling. `retainsSingleZeroExtent` defaults to false; set it to true if one
 nonzero component still consumes its edge when the other is zero, as for bevels.
 
-`AnyCorner.resolve()` and `resolveBoundary()` are nonvirtual forwarding
-conveniences. Construction hooks belong on the provider:
+Resolve a descriptor through `corner.geometry.resolve(corner, frame)` and derive
+boundaries through `corner.geometry.resolveBoundary(source, ...)`.
+Construction hooks belong on the provider:
 
 | Provider hook | Responsibility |
 | --- | --- |
@@ -565,6 +566,9 @@ Extend `AnyDecoration` and return contour points from `buildPoints`. Forward
 `borderIndex` to `point(...)` so each layer receives its own defaults. The fourth
 argument is the effective offset, already summed for that layer:
 
+This minimal diamond example supports zero offset and reports unsupported
+offsets explicitly.
+
 ```dart
 class DiamondDecoration extends AnyDecoration {
   const DiamondDecoration({super.border, super.background, super.offset});
@@ -579,12 +583,17 @@ class DiamondDecoration extends AnyDecoration {
   @override
   List<AnyPoint> buildPoints(
       Rect bounds, TextDirection? textDirection, int borderIndex,
-      double offset) => offsetPoints([
-    point(bounds.topCenter, borderIndex: borderIndex),
-    point(bounds.centerRight, borderIndex: borderIndex),
-    point(bounds.bottomCenter, borderIndex: borderIndex),
-    point(bounds.centerLeft, borderIndex: borderIndex),
-  ], offset);
+      double offset) {
+    if (offset != 0) {
+      throw UnsupportedError('DiamondDecoration does not support path offsets.');
+    }
+    return [
+      point(bounds.topCenter, borderIndex: borderIndex),
+      point(bounds.centerRight, borderIndex: borderIndex),
+      point(bounds.bottomCenter, borderIndex: borderIndex),
+      point(bounds.centerLeft, borderIndex: borderIndex),
+    ];
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -601,16 +610,12 @@ to `point(...)` take precedence over border defaults. When constructing
 `points(bounds, direction, borderIndex: i)` selects one point list; omitting the
 index selects the primary border. This exposes point settings; use `buildContour`
 or `buildContours` to inspect prepared animation geometry. `point(...)` assigns
-settings without moving coordinates. `offsetPoints` moves each active polygon edge along its normal and
-intersects adjacent lines, keeping side and corner descriptors unchanged. It
-supports either winding and straight helper vertices; zero offset reuses the
-point list. A completely exhausted convex inset returns an empty list.
+settings without moving coordinates.
 
-The polygon helper requires surviving edges and a simple resulting outline.
-Disappearing edges, split outlines, and reversing helpers need shape-specific
-construction in `buildPoints`; they are not repaired by resizing corner settings.
-Return an empty point list for an exhausted outline. Include every added setting
-in decoration equality and hashing.
+To support offsets, construct displaced vertices in `buildPoints` using the
+shape's geometry, keeping corner descriptors unchanged. Return an empty point
+list for an exhausted outline. Include every added setting in decoration
+equality and hashing.
 
 ## Animation and caching
 

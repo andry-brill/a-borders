@@ -45,7 +45,9 @@ abstract class AnyCornerGeometry {
   AnyCornerTransition parameterTransition(AnyCorner from, AnyCorner to) =>
       _ParameterCornerTransition(from, to);
 
-  /// Common zero-distance and parallel-frame behavior, with signed distances.
+  /// Derive a boundary from normalized source geometry. Distances are signed
+  /// along the material-facing normal (positive inward).
+  /// Handles shared zero-distance and parallel-frame behavior.
   AnyResolvedCorner resolveBoundary(AnyResolvedCorner source,
       {required double previousDistance, required double nextDistance}) {
     final dp = previousDistance, dn = nextDistance;
@@ -147,12 +149,12 @@ class _ParameterCornerTransition extends AnyCornerTransition {
   const _ParameterCornerTransition(this.from, this.to);
   @override
   AnyResolvedCorner resolve(AnyCornerFrame frame, double t) {
-    final corner = AnyCorner.lerpResolved(from, to, t);
+    final corner = AnyCorner._lerpResolved(from, to, t);
     return corner.geometry.resolve(corner, frame);
   }
 }
 
-/// Immutable corner settings. Geometry is available through [resolve] and
+/// Immutable corner settings. Geometry is available through [geometry] and
 /// [AnyResolvedCorner], never by interpreting these settings as path extents.
 abstract class AnyCorner {
   /// Previous-ray radius for rounded/scoop corners; ray cut length for bevels.
@@ -165,26 +167,9 @@ abstract class AnyCorner {
   /// Required geometry implementation; custom corners select their provider here.
   AnyCornerGeometry get geometry;
 
-  bool get isCircular => p == n || (p - n).abs() <= AnyUtils.epsilon;
   AnyCorner copyWith({double? p, double? n});
   AnyCorner operator *(double factor) => copyWith(p: p * factor, n: n * factor);
   AnyCorner lerpTo(AnyCorner other, double t);
-
-  /// Resolve this descriptor on a vertex with physical edge directions.
-  @nonVirtual
-  AnyResolvedCorner resolve(AnyCornerFrame frame) =>
-      geometry.resolve(this, frame);
-
-  /// Derive a boundary from already normalized source geometry. Distances are
-  /// signed along the material-facing normal (positive inward).
-  @nonVirtual
-  AnyResolvedCorner resolveBoundary(
-    AnyResolvedCorner source, {
-    required double previousDistance,
-    required double nextDistance,
-  }) =>
-      geometry.resolveBoundary(source,
-          previousDistance: previousDistance, nextDistance: nextDistance);
 
   static AnyCorner lerp(AnyCorner a, AnyCorner b, double t) {
     if (a == b || t <= 0) return a;
@@ -192,7 +177,7 @@ abstract class AnyCorner {
     return _LerpCorner(t: t, from: a, to: b);
   }
 
-  static AnyCorner lerpResolved(AnyCorner a, AnyCorner b, double t) {
+  static AnyCorner _lerpResolved(AnyCorner a, AnyCorner b, double t) {
     if (a == b || t <= 0) return a;
     if (t >= 1) return b;
     if (a.runtimeType == b.runtimeType) return a.lerpTo(b, t);

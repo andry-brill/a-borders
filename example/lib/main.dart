@@ -432,6 +432,9 @@ class CrownDecoration extends AnyDecoration {
   @override
   List<AnyPoint> buildPoints(
       Rect bounds, TextDirection? textDirection, int borderIndex, double offset) {
+    if (offset != 0) {
+      throw UnsupportedError('CrownDecoration does not support path offsets.');
+    }
     final w4 = bounds.width / 4.0;
     final w2 = bounds.width / 2.0;
 
@@ -472,7 +475,7 @@ class CrownDecoration extends AnyDecoration {
       outer
     ];
     final border = borders[borderIndex];
-    return offsetPoints(List.generate(vertices.length, (i) {
+    return List.generate(vertices.length, (i) {
       // This showcase authors both boundaries. Its valley, tip and lower
       // corners are distinct design choices, independent of the shape band.
       final AnyCorner innerCorner;
@@ -505,7 +508,7 @@ class CrownDecoration extends AnyDecoration {
           side: sideSettings[i],
           outer: contacts(border.outerCorners ?? border.corners),
           inner: contacts(innerCorner));
-    }), offset);
+    });
   }
 }
 

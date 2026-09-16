@@ -270,12 +270,6 @@ class AnyResolvedCorner {
     }
   }
 
-  Path get path {
-    final p = Path();
-    appendTo(p, moveTo: true);
-    return p;
-  }
-
   List<(double, Offset)> _flatten({double? error}) {
     final precision = error ?? tolerance;
     final cached = _flattened[precision];

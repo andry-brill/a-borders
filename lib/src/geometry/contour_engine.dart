@@ -42,7 +42,7 @@ extension _ContourGeometry on AnyContour {
       var area = 0.0;
       final origin = points.first.point;
       for (var i = 0; i < count; i++) {
-        final a = points[i].point, b = points[wrap(i + 1)].point;
+        final a = points[i].point, b = points[_wrap(i + 1)].point;
         final delta = b - a, length = delta.distance;
         if (length <= 1e-12)
           throw ArgumentError(
@@ -59,9 +59,9 @@ extension _ContourGeometry on AnyContour {
           count,
           (i) => AnyCornerFrame(
               vertex: points[i].point,
-              previousRay: -directions[wrap(i - 1)],
+              previousRay: -directions[_wrap(i - 1)],
               nextRay: directions[i],
-              previousNormal: geometryLeft(directions[wrap(i - 1)]) * winding,
+              previousNormal: geometryLeft(directions[_wrap(i - 1)]) * winding,
               nextNormal: geometryLeft(directions[i]) * winding,
               winding: winding)));
       if (prepared?.fixedPoints ?? false) {
@@ -123,7 +123,7 @@ extension _ContourGeometry on AnyContour {
         if (transition != null) return transition;
         final outer = outerCorners[i];
         return outer.source.geometry.resolveZeroBoundary(outer,
-            previousDistance: sideOutsideOffset[wrap(i - 1)],
+            previousDistance: sideOutsideOffset[_wrap(i - 1)],
             nextDistance: sideOutsideOffset[i]);
       }));
 
@@ -133,7 +133,7 @@ extension _ContourGeometry on AnyContour {
       if (List.generate(
           count,
           (i) =>
-              offsetForBase(i, base) == 0 &&
+              _offsetForBase(i, base) == 0 &&
               !(_transition?.morphs(i, base) ?? false)).every((v) => v)) {
         return shapeCorners;
       }
@@ -143,25 +143,25 @@ extension _ContourGeometry on AnyContour {
               i,
               base,
               frames[i].shifted(
-                  offsetForBase(wrap(i - 1), base), offsetForBase(i, base)),
+                  _offsetForBase(_wrap(i - 1), base), _offsetForBase(i, base)),
               _progress);
           if (transition != null) return transition;
         }
         final source = shapeCorners[i];
         return source.source.geometry.resolveBoundary(source,
-            previousDistance: offsetForBase(wrap(i - 1), base),
-            nextDistance: offsetForBase(i, base));
+            previousDistance: _offsetForBase(_wrap(i - 1), base),
+            nextDistance: _offsetForBase(i, base));
       }));
     }
     final shifted = List.generate(
         count,
         (i) => frames[i]
-            .shifted(offsetForBase(wrap(i - 1), base), offsetForBase(i, base)));
+            .shifted(_offsetForBase(_wrap(i - 1), base), _offsetForBase(i, base)));
     late final lengths = List.generate(
         count,
         (i) => math.max(
             0.0,
-            geometryDot(shifted[wrap(i + 1)].vertex - shifted[i].vertex,
+            geometryDot(shifted[_wrap(i + 1)].vertex - shifted[i].vertex,
                 frames[i].nextRay)));
     late final explicit = _normalizeSettings(
         List.generate(count, (i) => overrides[i] ?? shapeCorners[i].source),
@@ -176,8 +176,8 @@ extension _ContourGeometry on AnyContour {
         return explicit[i].geometry.resolve(explicit[i], shifted[i]);
       final source = shapeCorners[i];
       return source.source.geometry.resolveBoundary(source,
-          previousDistance: offsetForBase(wrap(i - 1), base),
-          nextDistance: offsetForBase(i, base));
+          previousDistance: _offsetForBase(_wrap(i - 1), base),
+          nextDistance: _offsetForBase(i, base));
     }));
   }
 
@@ -245,7 +245,7 @@ extension _ContourGeometry on AnyContour {
           !boundary[i].traits.rectangularBand) {
         return false;
       }
-      final a = boundary[i], b = boundary[wrap(i + 1)];
+      final a = boundary[i], b = boundary[_wrap(i + 1)];
       if (geometryDot(b.frame.vertex - a.frame.vertex, f.nextRay) <= 0 ||
           geometryDot(b.start - a.end, f.nextRay) < -1e-9) return false;
     }
@@ -266,11 +266,11 @@ extension _ContourGeometry on AnyContour {
     final shifted = List.generate(
         count,
         (i) => frames[i]
-            .shiftedVertex(sideInsideOffset[wrap(i - 1)], sideInsideOffset[i]));
+            .shiftedVertex(sideInsideOffset[_wrap(i - 1)], sideInsideOffset[i]));
     return List.generate(
             count,
             (i) => geometryDot(
-                shifted[wrap(i + 1)] - shifted[i], frames[i].nextRay))
+                shifted[_wrap(i + 1)] - shifted[i], frames[i].nextRay))
         .any((span) => span <= 0);
   }
 
@@ -278,7 +278,7 @@ extension _ContourGeometry on AnyContour {
       _simpleBands.putIfAbsent(band, () {
         if (!band.every(_directCorner)) return false;
         for (var i = 0; i < count; i++) {
-          final a = band[i], b = band[wrap(i + 1)], f = frames[i];
+          final a = band[i], b = band[_wrap(i + 1)], f = frames[i];
           if (f.parallel ||
               geometryDot(b.frame.vertex - a.frame.vertex, f.nextRay) <= 0 ||
               geometryDot(b.start - a.end, f.nextRay) < -1e-9) return false;
@@ -315,7 +315,7 @@ extension _ContourGeometry on AnyContour {
         ];
         final connectors = <AnyCornerSegment>[];
         for (var i = 0; i < count; i++) {
-          final prev = sides[wrap(i - 1)].width > 0, next = sides[i].width > 0;
+          final prev = sides[_wrap(i - 1)].width > 0, next = sides[i].width > 0;
           final t = prev == next
               ? 0.5
               : prev
@@ -379,7 +379,7 @@ extension _ContourGeometry on AnyContour {
   Path _sideSweep(
       List<AnyResolvedCorner> a, List<AnyResolvedCorner> b, int side,
       {bool simple = false}) {
-    final next = wrap(side + 1), prev = wrap(side - 1);
+    final next = _wrap(side + 1), prev = _wrap(side - 1);
     final from = sides[prev].width > 0 ? 0.5 : 0.0;
     final to = sides[next].width > 0 ? 0.5 : 1.0;
     Path strip(List<AnyResolvedCorner> a, List<AnyResolvedCorner> b) {
@@ -590,7 +590,7 @@ List<AnyCorner> _normalizeSettings(
         List.generate(
             count,
             (i) => input[i] is _LerpCorner
-                ? AnyCorner.lerpResolved(
+                ? AnyCorner._lerpResolved(
                     from[i], to[i], (input[i] as _LerpCorner).t)
                 : from[i]),
         frames,
