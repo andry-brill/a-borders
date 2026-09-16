@@ -1,8 +1,8 @@
 part of 'core.dart';
 
 /// Local guarantees for one resolved curve. Global contour checks still apply.
-/// These guarantees are described in CUSTOM_CORNERS.md; arbitrary geometry
-/// defaults to [none], including geometry returned by a custom provider.
+/// See README.md, Custom corners. Arbitrary geometry defaults to [none],
+/// including geometry returned by a custom provider.
 class AnyCornerTraits {
   final bool directCandidate;
   final bool rectangularBand;
