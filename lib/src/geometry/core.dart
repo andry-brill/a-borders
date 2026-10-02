@@ -46,6 +46,13 @@ class AnySide with MAnyFill {
   /// Align means align relative to the corresponding side, not the whole shape.
   final double align;
 
+  /// Signed outline displacement added to decoration and border offsets.
+  ///
+  /// Positive values move outward; negative values move inward. Decoration
+  /// point builders apply this before corner construction. An [AnyContour]
+  /// constructed directly from points does not apply it again.
+  final double offset;
+
   /// Solid color used as the side base fill.
   @override
   final Color? color;
@@ -69,6 +76,7 @@ class AnySide with MAnyFill {
   const AnySide({
     this.width = 0.0,
     this.align = alignInside,
+    this.offset = 0.0,
     this.color,
     this.gradient,
     this.image,
@@ -80,6 +88,7 @@ class AnySide with MAnyFill {
   AnySide copyWith({
     double? width,
     double? align,
+    double? offset,
     Color? color,
     Gradient? gradient,
     DecorationImage? image,
@@ -89,6 +98,7 @@ class AnySide with MAnyFill {
     return AnySide(
       width: width ?? this.width,
       align: align ?? this.align,
+      offset: offset ?? this.offset,
       color: color ?? this.color,
       gradient: gradient ?? this.gradient,
       image: image ?? this.image,
@@ -102,6 +112,7 @@ class AnySide with MAnyFill {
     return other is AnySide &&
         other.width == width &&
         other.align == align &&
+        other.offset == offset &&
         other.color == color &&
         other.gradient == gradient &&
         other.image == image &&
@@ -113,6 +124,7 @@ class AnySide with MAnyFill {
   int get hashCode => Object.hash(
         width,
         align,
+        offset,
         color,
         gradient,
         image,
@@ -124,6 +136,7 @@ class AnySide with MAnyFill {
     return AnySide(
       width: lerpDouble(a.width, b.width, t)!,
       align: lerpDouble(a.align, b.align, t)!,
+      offset: lerpDouble(a.offset, b.offset, t)!,
       color: Color.lerp(a.color, b.color, t),
       gradient: Gradient.lerp(a.gradient, b.gradient, t),
       image: AnyUtils.pickLerpNullable(a.image, b.image, t),

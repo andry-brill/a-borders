@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/animation.dart';
+import 'package:flutter/foundation.dart';
 
 import 'any_contour.dart';
 import 'any_shadow.dart';
@@ -55,17 +56,7 @@ class _TweenDecoration extends AnyDecoration {
               final b = index < endDecoration.borders.length
                   ? endDecoration.borders[index]
                   : a;
-              if (a.offset == b.offset) return a;
-              // Actual point/corner settings interpolate in buildPoints. Keep
-              // the generic layer metadata's offset in sync with those points.
-              return AnyBorder(
-                sides: a.sides,
-                corners: a.corners,
-                outerCorners: a.outerCorners,
-                innerCorners: a.innerCorners,
-                ratio: a.ratio,
-                offset: lerpDouble(a.offset, b.offset, t)!,
-              );
+              return _TweenBorder(index, a, lerpDouble(a.offset, b.offset, t)!);
             },
             growable: false,
           ),
@@ -125,29 +116,72 @@ class _TweenDecoration extends AnyDecoration {
   }
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-          int borderIndex, double offset) =>
-      _layer(bounds, textDirection, borderIndex, offset).points(t);
+  List<AnyPoint> buildPoints(
+          Rect bounds,
+          TextDirection? textDirection,
+          covariant _TweenBorder border,
+          double offset,
+          List<double> sideOffsets) =>
+      _layer(bounds, textDirection, border.index, offset, sideOffsets)
+          .points(t);
+
+  @override
+  List<double> sideOffsetsForBorder(Rect bounds, TextDirection? textDirection,
+      covariant _TweenBorder border) {
+    final (from, to) =
+        _endpointSideOffsets(bounds, textDirection, border.index);
+    return List<double>.unmodifiable(from.length == to.length
+        ? [
+            for (var i = 0; i < from.length; i++)
+              lerpDouble(from[i], to[i], t)!,
+          ]
+        // Different shapes retain separate construction slots. Keeping both
+        // layouts also lets a saved tween sample be another tween's endpoint.
+        : [...from, ...to]);
+  }
 
   @override
   AnyContour buildContourForBorder(
           Rect bounds, TextDirection? textDirection, int index) =>
-      _layer(bounds, textDirection, index, offset + borders[index].offset)
+      _layer(
+              bounds,
+              textDirection,
+              index,
+              offset + borders[index].offset,
+              sideOffsetsForBorder(
+                  bounds, textDirection, borders[index] as _TweenBorder))
           .build(t,
               background: index == primaryBorderIndex ? background : null,
               backgroundBase: background?.shapeBase ?? AnyShapeBase.shapeBorder,
               clipBase: clipBase,
               shadowBase: shadowBase);
 
-  AnyContourTransition _layer(
-          Rect bounds, TextDirection? direction, int index, double offset) =>
-      prepared.layer(
-          bounds,
-          direction,
-          index,
-          offset,
-          (decoration) =>
-              decoration.buildPoints(bounds, direction, index, offset));
+  (List<double>, List<double>) _endpointSideOffsets(
+      Rect bounds, TextDirection? direction, int index) {
+    final a = index < beginDecoration.borders.length
+        ? beginDecoration
+        : endDecoration;
+    final b = index < endDecoration.borders.length ? endDecoration : a;
+    return (
+      a.sideOffsetsForBorder(bounds, direction, a.borders[index]),
+      b.sideOffsetsForBorder(bounds, direction, b.borders[index]),
+    );
+  }
+
+  AnyContourTransition _layer(Rect bounds, TextDirection? direction, int index,
+      double offset, List<double> sideOffsets) {
+    final (from, to) = _endpointSideOffsets(bounds, direction, index);
+    final matching = from.length == to.length;
+    return prepared.layer(
+        bounds,
+        direction,
+        index,
+        offset,
+        matching ? sideOffsets : sideOffsets.sublist(0, from.length),
+        matching ? sideOffsets : sideOffsets.sublist(from.length),
+        (decoration, offsets) => decoration.buildPoints(
+            bounds, direction, decoration.borders[index], offset, offsets));
+  }
 
   @override
   bool operator ==(Object other) {
@@ -169,27 +203,75 @@ class _TweenDecoration extends AnyDecoration {
       );
 }
 
+// A sampled tween carries explicit layer identity even when endpoint borders
+// are equal or shared instances. Endpoint builders receive their original
+// borders, including custom subclasses, rather than this internal metadata.
+class _TweenBorder extends AnyBorder {
+  final int index;
+  final AnyBorder source;
+
+  _TweenBorder(this.index, this.source, double offset)
+      : super(
+          sides: source.sides,
+          corners: source.corners,
+          outerCorners: source.outerCorners,
+          innerCorners: source.innerCorners,
+          ratio: source.ratio,
+          offset: offset,
+        );
+
+  @override
+  List<AnySide> get resolvedSides => source.resolvedSides;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _TweenBorder &&
+      other.index == index &&
+      other.source == source &&
+      super == other;
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, index, source);
+}
+
 // Per-tween, bounded preparation: at most one current point context per layer.
 // Sampled decorations keep their original plan when the Tween is retargeted.
 class _DecorationTransition {
   final AnyDecoration begin, end;
-  final _layers =
-      <int, ((Rect, TextDirection?, double), AnyContourTransition)>{};
+  final _layers = <int,
+      (
+    (Rect, TextDirection?, double, List<double>, List<double>),
+    AnyContourTransition
+  )>{};
   _DecorationTransition(this.begin, this.end);
 
-  AnyContourTransition layer(Rect bounds, TextDirection? direction, int index,
-      double offset, List<AnyPoint> Function(AnyDecoration) build) {
-    final key = (bounds, direction, offset);
+  AnyContourTransition layer(
+      Rect bounds,
+      TextDirection? direction,
+      int index,
+      double offset,
+      List<double> fromSideOffsets,
+      List<double> toSideOffsets,
+      List<AnyPoint> Function(AnyDecoration, List<double>) build) {
     final cached = _layers[index];
-    if (cached != null && cached.$1 == key) {
+    if (cached != null &&
+        cached.$1.$1 == bounds &&
+        cached.$1.$2 == direction &&
+        cached.$1.$3 == offset &&
+        listEquals(cached.$1.$4, fromSideOffsets) &&
+        listEquals(cached.$1.$5, toSideOffsets)) {
       cached.$2.reusePointContext = true;
       return cached.$2;
     }
     final hasBegin = index < begin.borders.length;
     final hasEnd = index < end.borders.length;
-    // Current displacement reaches both builders before corner construction.
-    var a = build(hasBegin ? begin : end);
-    var b = build(hasEnd ? end : begin);
+    final from = List<double>.unmodifiable(fromSideOffsets);
+    final to = List<double>.unmodifiable(toSideOffsets);
+    final key = (bounds, direction, offset, from, to);
+    // Current uniform and side displacements reach both endpoint builders
+    // before corner construction and exhausted-outline checks.
+    var a = build(hasBegin ? begin : end, from);
+    var b = build(hasEnd ? end : begin, to);
     List<AnyPoint> withoutWidths(List<AnyPoint> points) => [
           for (final p in points)
             AnyPoint(

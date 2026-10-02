@@ -70,14 +70,15 @@ class _TestDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      int borderIndex, double offset) {
-    bounds = bounds.inflate(offset);
+      AnyBorder border, double offset, List<double> sideOffsets) {
+    bounds = bounds.inflate(offset + sideOffsets.single);
     if (bounds.isEmpty) return const [];
+    final side = border.sides.copyWith(offset: sideOffsets.single);
     return [
-      point(bounds.topLeft, borderIndex: borderIndex),
-      point(bounds.topRight, borderIndex: borderIndex),
-      point(bounds.bottomRight, borderIndex: borderIndex),
-      point(bounds.bottomLeft, borderIndex: borderIndex),
+      point(bounds.topLeft, border: border, side: side),
+      point(bounds.topRight, border: border, side: side),
+      point(bounds.bottomRight, border: border, side: side),
+      point(bounds.bottomLeft, border: border, side: side),
     ];
   }
 }

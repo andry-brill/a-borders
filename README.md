@@ -120,7 +120,7 @@ per-edge and per-corner settings for rectangular outlines.
 
 | Setting | Meaning | Box-specific overrides |
 | --- | --- | --- |
-| `sides` | Default edge width, alignment, and fill | `left`, `top`, `right`, `bottom`; `horizontal` falls back for top/bottom, `vertical` for left/right |
+| `sides` | Default edge width, alignment, offset, and fill | `left`, `top`, `right`, `bottom`; `horizontal` falls back for top/bottom, `vertical` for left/right |
 | `corners` | Source shape corners | `topLeft`, `topRight`, `bottomRight`, `bottomLeft` |
 | `outerCorners` | Optional independently authored outer boundary | `outerTopLeft`, `outerTopRight`, `outerBottomRight`, `outerBottomLeft` |
 | `innerCorners` | Optional independently authored inner boundary | `innerTopLeft`, `innerTopRight`, `innerBottomRight`, `innerBottomLeft` |
@@ -151,24 +151,28 @@ const AnyBoxDecoration(
 
 ### Path offsets
 
-`AnyDecoration.offset` and `AnyBorder.offset` are finite doubles in logical
-units, both defaulting to `0.0`. Each layer uses their sum:
+`AnyDecoration.offset`, `AnyBorder.offset`, and `AnySide.offset` are signed
+displacements in logical units, defaulting to `0.0`. Consumed effective offsets
+must be finite. Each selected side adds its displacement to the layer's sum:
 
 ```text
-effective offset = decoration.offset + border.offset
+layer offset = decoration.offset + border.offset
+effective side offset = layer offset + selectedSide.offset
 negative = inset       zero = unchanged       positive = outset
 ```
 
-Each layer fits its ratio, then passes the effective offset to `buildPoints`.
-The builder moves the outline's vertices before corners are normalized and
-resolved. Corner settings keep their meaning: a rounded radius of 20 remains
-20 after an outset or inset, unless normal fitting must reduce it to fit the
+Each layer fits its ratio, then passes the layer offset and ordered side offsets
+to `buildPoints`. The builder adds these displacements and moves the vertices
+before corners are normalized and resolved. Corner settings keep their meaning:
+a rounded radius of 20 remains 20 after an outset or inset, unless normal
+fitting must reduce it to fit the
 available edges. Offset does not change layout size; an outset can extend
 beyond the widget's bounds.
 
-For a box, moving its four straight edges is equivalent to inflating its fitted
-rectangle. Other outlines need their own point construction: for example,
-a diamond's sloping edges move perpendicularly and meet at new vertices.
+For a box, left and top offsets subtract from the corresponding coordinates;
+right and bottom offsets add to them. Equal effective offsets are equivalent to
+inflating the fitted rectangle. Other outlines need their own point construction:
+for example, a diamond's sloping edges move perpendicularly and meet at new vertices.
 Inflating a diamond's bounding rectangle by the same amount is not equivalent.
 [Custom decorations](#custom-decorations) define their own offset construction
 or reject nonzero offsets when unsupported.
@@ -177,7 +181,31 @@ Border widths and alignment are measured from the newly constructed source.
 Only border distances reach corner providers; the path offset is not added to
 those distances. Explicit inner/outer settings and `zeroBorder` keep their
 usual policies. A box inset that exhausts its width or height returns no points,
-so all its paths and painted regions are empty.
+so all its paths and painted regions are empty. This check happens after all
+scalar and side contributions; a side outset can rescue a uniform inset.
+
+Side selection uses whole objects: `top`/`bottom` fall back to `horizontal`,
+`left`/`right` fall back to `vertical`, and both fall back to `sides`. Individual
+fields do not merge. An explicit `AnySide(width: 2)` has offset `0`, even when
+`sides.offset` is nonzero.
+
+```dart
+const AnyBoxDecoration(
+  offset: 2,
+  border: AnyBoxBorder(
+    offset: -1,
+    sides: AnySide(offset: 4, width: 2, color: Color(0xFF1565C0)),
+    top: AnySide(offset: 8, width: 2, color: Color(0xFF1565C0)),
+    right: AnySide(offset: -6, width: 2, color: Color(0xFF1565C0)),
+  ),
+)
+// Effective displacements: top +9, right -5, bottom +5, left +5.
+```
+
+These offsets also move the primary layer's background, clipping, and shadow
+source paths. Width and alignment are still measured from the displaced outline.
+Direct `AnyContour` construction consumes coordinates as supplied; side-offset
+metadata does not move those points again.
 
 Use different layer offsets to separate strokes. A zero-width primary layer
 can give the background, clip, and shadows a path independent of painted borders:
@@ -563,8 +591,11 @@ state from either endpoint.
 ## Custom decorations
 
 Extend `AnyDecoration` and return contour points from `buildPoints`. Forward
-`borderIndex` to `point(...)` so each layer receives its own defaults. The fourth
-argument is the effective offset, already summed for that layer:
+the supplied `AnyBorder border` to `point(..., border: border)` so each layer
+receives its own defaults. The fourth argument is
+`decoration.offset + border.offset`. The required fifth argument,
+`List<double> sideOffsets`, supplies the current side-offset slots. All builders,
+including overrides of box or tab geometry, use this single signature in 2.1.0.
 
 This minimal diamond example supports zero offset and reports unsupported
 offsets explicitly.
@@ -582,16 +613,18 @@ class DiamondDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? textDirection, int borderIndex,
-      double offset) {
-    if (offset != 0) {
+      Rect bounds, TextDirection? textDirection, AnyBorder border,
+      double offset, List<double> sideOffsets) {
+    final side = border.sides.copyWith(offset: sideOffsets.single);
+    final effectiveOffset = offset + side.offset;
+    if (effectiveOffset != 0) {
       throw UnsupportedError('DiamondDecoration does not support path offsets.');
     }
     return [
-      point(bounds.topCenter, borderIndex: borderIndex),
-      point(bounds.centerRight, borderIndex: borderIndex),
-      point(bounds.bottomCenter, borderIndex: borderIndex),
-      point(bounds.centerLeft, borderIndex: borderIndex),
+      point(bounds.topCenter, border: border, side: side),
+      point(bounds.centerRight, border: border, side: side),
+      point(bounds.bottomCenter, border: border, side: side),
+      point(bounds.centerLeft, border: border, side: side),
     ];
   }
 
@@ -604,8 +637,10 @@ class DiamondDecoration extends AnyDecoration {
 }
 ```
 
-Use `borders[borderIndex]` for custom per-layer settings. Explicit values passed
-to `point(...)` take precedence over border defaults. When constructing
+Use the supplied border for custom per-layer settings. Put layer-specific
+geometry settings on custom border types and include them in equality and hashing.
+Box/tab overrides can declare `covariant AnyBoxBorder border`, as the built-ins do.
+Explicit values passed to `point(...)` take precedence over border defaults. When constructing
 `AnyPoint` directly, supply its required `shape` descriptor. The public
 `points(bounds, direction, borderIndex: i)` selects one point list; omitting the
 index selects the primary border. This exposes point settings; use `buildContour`
@@ -613,17 +648,57 @@ or `buildContours` to inspect prepared animation geometry. `point(...)` assigns
 settings without moving coordinates.
 
 To support offsets, construct displaced vertices in `buildPoints` using the
-shape's geometry, keeping corner descriptors unchanged. Return an empty point
-list for an exhausted outline. Include every added setting in decoration
-equality and hashing.
+shape's geometry, adding each supplied side-offset slot to the supplied layer
+offset and keeping corner descriptors unchanged. During animation these slots
+contain current interpolated values, so do not reread authored side offsets.
+Carry each supplied offset in its corresponding returned `AnySide` settings.
+Return an empty point list for an exhausted outline. Include every added setting
+in decoration equality and hashing.
+
+Offset discovery is provided centrally through the selected border's
+`resolvedSides`. Override the protected `sideOffsetsForBorder` only when the
+decoration needs different construction sides or ordering:
+
+```dart
+List<double> sideOffsetsForBorder(
+  Rect bounds, TextDirection? textDirection, AnyBorder border);
+```
+
+`AnyBorder.resolvedSides` returns one shared side by default. `AnyBoxBorder`
+resolves its whole-side fallbacks once in top, right, bottom, left order, shared
+by both box and tab builders. Custom border types can override `resolvedSides`
+with their standard ordered list. These slots represent construction edges
+rather than contour point indices.
+
+The base `sideOffsetsForBorder` extracts `.offset` from that resolved list.
+Compatible endpoints must share a stable logical slot order. An empty list
+describes a shape with no side-offset slots. Discovery must be deterministic
+for the decoration's settings, bounds, direction, and supplied border.
+The [side-offset tests](test/side_offset_test.dart) include a custom implementation
+that inherits discovery of one uniform slot.
+
+Custom shapes own displacement, joins, and collapse handling. A subclass that
+customizes box/tab geometry overrides only `buildPoints`; its override receives
+ordinary and animated construction alike. When delegating to `super.buildPoints`,
+forward all five arguments. The 2.0 four-argument signature is no longer supported.
 
 ## Animation and caching
 
 `AnyDecorationTween` pairs borders by list index. Inserted and removed layers
 grow from or shrink to zero width, keeping their endpoint shape/fill settings.
 Ratios and path offsets interpolate independently. Both endpoint point builders
-receive the current interpolated offset; added or removed layers retain their
-endpoint border offset. Exact endpoint decorations are returned at zero and one.
+receive their original border objects, preserving custom border types and
+settings, alongside the current interpolated layer offset. Layer indices remain
+internal to tween matching and preparation, so equal borders and shared border
+instances can appear in multiple layers independently. For compatible side-offset
+slots, both builders also receive the current interpolated side offsets before creating
+their outlines. This preserves collapse at the geometric threshold, even when
+one endpoint is empty, rather than switching point counts at halfway. Added or
+removed layers retain their endpoint border and side offsets while widths fade.
+When slot counts differ, each endpoint builder receives its own layout and
+authored offsets; point and corner interpolation then proceeds normally.
+Both endpoints always use the same five-argument builder contract.
+Exact endpoint decorations are returned at zero and one.
 
 When an inner or outer corner changes between an explicit override and automatic
 construction, the tween lazily prepares both effective boundaries. Built-in
@@ -638,8 +713,10 @@ never interpolated as arbitrary data.
 Preparation belongs to the tween and is reused by its sampled decorations.
 Keep the same tween for an animation; creating a new tween discards preparation.
 It retains at most one point context per layer, keyed by fitted bounds, direction,
-and effective offset. Fixed point frames, source normalization, and unchanged
-source curves are reused. Changing the tween endpoints creates a new plan;
+and effective layer/side offsets. Side-offset lists are snapshotted immutably and
+compared by component value. Fixed point frames,
+source normalization, and unchanged source curves are reused. Changing the tween
+endpoints creates a new plan;
 previously sampled decorations retain their own endpoint definitions. A changed
 point context replaces that layer's preparation. Custom point builders must be
 deterministic for their settings and arguments. When contexts keep changing and
@@ -656,8 +733,8 @@ than morphing into an incorrect area. Whole-contour checks still select direct
 or general assembly for each sampled frame; painting is unchanged.
 
 `AnyDecorationCache` stores read-only contour lists by decoration equality,
-size, and text direction. Equality and hashing include both decoration and border
-offsets. Cache lookup precedes point construction, so a hit also reuses the
+size, and text direction. Equality and hashing include decoration, border, and
+side offsets. Cache lookup precedes point construction, so a hit also reuses the
 offset outline. It uses a least-recently-used limit (1000 by default), configurable
 through `limit`, and exposes `clear()`. Intermediate tween contours
 bypass this shared cache; decorations can disable caching with `enableCache`.
@@ -677,8 +754,11 @@ import 'package:any_borders/any_extras.dart';
 ```
 
 `AnyTabDecoration` uses `AnyBoxBorder`. Each layer derives its tab offsets from
-its bottom source corners. Path `offset` moves the tab's construction rectangle
-before these corner-derived helpers are built, preserving their corner settings.
+its bottom source corners. Scalar and selected side path offsets move the tab's
+construction rectangle before these corner-derived helpers are built, preserving
+their corner settings. Top offsets move the upper edge, bottom offsets move the
+shared baseline, and left/right offsets move the corresponding construction edges.
+The corner-derived helper extents are separate from `AnySide.offset`.
 `offsetOutward` defaults to true, expanding the lower
 tab beyond the supplied bounds; false keeps the tab inset. Its `.multi(...)`
 constructor accepts independently configured layers.

@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:any_borders/any_contour.dart';
 
+import 'src/utils.dart';
+
 enum AnyBoxShape {
   rectangle,
   square,
@@ -94,6 +96,15 @@ class AnyBoxBorder extends AnyBorder {
               : ratio,
         );
 
+  /// Whole-side fallbacks in top, right, bottom, left construction order.
+  @override
+  List<AnySide> get resolvedSides => List<AnySide>.unmodifiable([
+        top ?? horizontal ?? sides,
+        right ?? vertical ?? sides,
+        bottom ?? horizontal ?? sides,
+        left ?? vertical ?? sides,
+      ]);
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -175,44 +186,52 @@ class AnyBoxDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      int borderIndex, double offset) {
-    // For these four axis-aligned edges, line displacement is Rect.inflate.
-    // Corner descriptors are assigned below, after the vertices have moved.
-    bounds = bounds.inflate(offset);
+      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+    final resolved = border.resolvedSides;
+    final sides = [
+      for (var i = 0; i < resolved.length; i++)
+        resolved[i].offset == sideOffsets[i]
+            ? resolved[i]
+            : resolved[i].copyWith(offset: sideOffsets[i]),
+    ];
+    bounds = AnyUtils.displaceBox(bounds, offset,
+        top: sides[0].offset,
+        right: sides[1].offset,
+        bottom: sides[2].offset,
+        left: sides[3].offset);
     if (bounds.isEmpty) return const [];
-    final border = borders[borderIndex];
     return [
       point(
         bounds.topLeft,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.topLeft,
         outer: border.outerTopLeft,
         inner: border.innerTopLeft,
-        side: border.top ?? border.horizontal,
+        side: sides[0],
       ),
       point(
         bounds.topRight,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.topRight,
         outer: border.outerTopRight,
         inner: border.innerTopRight,
-        side: border.right ?? border.vertical,
+        side: sides[1],
       ),
       point(
         bounds.bottomRight,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.bottomRight,
         outer: border.outerBottomRight,
         inner: border.innerBottomRight,
-        side: border.bottom ?? border.horizontal,
+        side: sides[2],
       ),
       point(
         bounds.bottomLeft,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.bottomLeft,
         outer: border.outerBottomLeft,
         inner: border.innerBottomLeft,
-        side: border.left ?? border.vertical,
+        side: sides[3],
       ),
     ];
   }

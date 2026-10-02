@@ -99,7 +99,7 @@ void main() {
     expect(points[1].outer, const RoundedCorner(radius: 28));
     expect(points[1].inner, const BevelCorner(radius: 5));
     final explicit = decoration.point(Offset.zero,
-        borderIndex: 0,
+        border: decoration.border,
         shape: const RoundedCorner(radius: 7),
         outer: const RoundedCorner(radius: 9),
         inner: const RoundedCorner(radius: 1),

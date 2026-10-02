@@ -1,3 +1,50 @@
+## 2.1.0
+
+- Added signed `AnySide.offset`, defaulting to `0.0`, with copying, equality,
+  hashing, and interpolation. Selected side offsets add to decoration and
+  border offsets; positive values outset and negative values inset the outline.
+- Box and tab builders support independent side displacements before corner
+  construction. Existing whole-side fallback rules are preserved, and outline
+  collapse is checked after all offset contributions are combined.
+- Tweens interpolate side offsets before endpoint point construction, preserving
+  the geometric collapse threshold and endpoint offsets on added/removed layers.
+  Preparation includes the current side-offset context and reuses unchanged values.
+- Added `AnyBorder.resolvedSides` as the standard ordered side list, with box
+  fallback resolution shared by box and tab builders. `sideOffsetsForBorder`
+  derives offsets centrally and can be overridden for custom construction layouts.
+- **Breaking:** consolidated ordinary and animated point construction into
+  `buildPoints(bounds, textDirection, border, offset, sideOffsets)`.
+  The third argument is the selected `AnyBorder`; the fifth `List<double>`
+  argument is required. `point` and `sideOffsetsForBorder` also accept the
+  border directly. There are no compatibility aliases or dispatch paths for
+  the previous builder signature.
+- Migrated built-in shapes and the crown example to the single builder contract.
+  Custom decorations remain responsible for their displacement geometry.
+
+### Custom-decoration migration from 2.0.0
+
+Replace the third `int borderIndex` argument with `AnyBorder border` and add the
+required fifth positional `List<double> sideOffsets` argument to every
+`buildPoints` override. Forward all five arguments when calling `super.buildPoints`.
+Use `point(..., border: border)` and read per-layer settings directly from the
+supplied border. Box/tab overrides can use `covariant AnyBoxBorder border`.
+`points(..., borderIndex: i)` still selects a layer by index; tween matching and
+preparation retain indices internally, including for repeated equal borders.
+Each endpoint builder receives its original border object during animation.
+Use the supplied current side-offset slots when constructing vertices, rather
+than reading authored side offsets again. Add each slot to the supplied scalar
+offset before corner fitting and collapse checks; carry that slot in the returned
+point's `AnySide.offset`.
+
+`AnyBorder.resolvedSides` provides one shared-side slot. `AnyBoxBorder` resolves
+top, right, bottom, left slots for both boxes and tabs. Custom borders can
+override `resolvedSides`; decorations with different construction layouts can
+override `sideOffsetsForBorder`. Matching slot layouts interpolate before either
+endpoint builder runs. Unequal layouts keep their endpoint offsets through the
+same builder contract and retain normal point-topology interpolation.
+
+See the updated [custom decoration example](README.md#custom-decorations).
+
 ## 2.0.0
 
 Internally, geometry construction, painting, and animation preparation have been

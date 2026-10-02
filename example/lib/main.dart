@@ -431,19 +431,25 @@ class CrownDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? textDirection, int borderIndex, double offset) {
-    if (offset != 0) {
+      Rect bounds, TextDirection? textDirection, AnyBorder border,
+      double offset, List<double> sideOffsets) {
+    // This shape uses the shared-side slot and supports only zero combined
+    // displacement. Consume the supplied value so animation obeys the same rule.
+    final sideOffset = sideOffsets.single;
+    if (offset + sideOffset != 0) {
       throw UnsupportedError('CrownDecoration does not support path offsets.');
     }
     final w4 = bounds.width / 4.0;
     final w2 = bounds.width / 2.0;
 
     final outer = AnySide(
+      offset: sideOffset,
       width: 20,
       align: AnySide.alignOutside,
       color: type.light,
     );
     final inner = AnySide(
+      offset: sideOffset,
       width: 20,
       align: AnySide.alignInside,
       color: type.dark,
@@ -474,7 +480,6 @@ class CrownDecoration extends AnyDecoration {
       outer,
       outer
     ];
-    final border = borders[borderIndex];
     return List.generate(vertices.length, (i) {
       // This showcase authors both boundaries. Its valley, tip and lower
       // corners are distinct design choices, independent of the shape band.
@@ -504,7 +509,7 @@ class CrownDecoration extends AnyDecoration {
       }
 
       return point(vertices[i],
-          borderIndex: borderIndex,
+          border: border,
           side: sideSettings[i],
           outer: contacts(border.outerCorners ?? border.corners),
           inner: contacts(innerCorner));

@@ -140,6 +140,13 @@ class AnyBorder {
   })  : sides = sides ?? const AnySide(),
         corners = corners ?? const RoundedCorner();
 
+  /// Selected sides in a stable logical construction order.
+  ///
+  /// The base border has one shared side. Shape-specific borders override this
+  /// to resolve their side defaults; box borders use top, right, bottom, left.
+  /// These slots need not correspond one-to-one with contour points.
+  List<AnySide> get resolvedSides => List<AnySide>.unmodifiable([sides]);
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -172,18 +179,39 @@ class AnyBorder {
 /// override [operator ==] and [hashCode] when they add fields, because contour
 /// caching is keyed by decoration equality.
 abstract class AnyDecoration extends Decoration {
-  /// Build contour points for [borderIndex] from the fitted [bounds].
+  /// Build contour points for the supplied [border] from the fitted [bounds].
   /// [offset] is the combined decoration and border displacement: positive
   /// outward, negative inward. Apply it to the outline before assigning corners.
-  /// Forward [borderIndex] to [point] for layer defaults. Return an empty list
+  /// [sideOffsets] contains the current construction slots, including tweened
+  /// values during animation. Add each slot to [offset] before corner
+  /// construction and empty-outline checks, and carry it in the corresponding
+  /// returned point's [AnySide.offset]. Do not reread authored offsets here.
+  /// Forward [border] to [point] for layer defaults. Return an empty list
   /// when the inset exhausts the outline.
   @protected
   List<AnyPoint> buildPoints(
     Rect bounds,
     TextDirection? textDirection,
-    int borderIndex,
+    AnyBorder border,
     double offset,
+    List<double> sideOffsets,
   );
+
+  /// Authored side-offset slots for construction-time tween interpolation.
+  ///
+  /// Defaults to offsets from the selected border's [AnyBorder.resolvedSides].
+  /// Box and tab builders therefore share top, right, bottom, left slots.
+  /// Override this when the decoration uses different construction sides or
+  /// ordering. Slots must have a stable logical order and are supplied to
+  /// [buildPoints] for both ordinary construction and animation. An empty list
+  /// describes a shape with no side-offset slots.
+  @protected
+  List<double> sideOffsetsForBorder(
+    Rect bounds,
+    TextDirection? textDirection,
+    AnyBorder border,
+  ) =>
+      border.resolvedSides.map((side) => side.offset).toList(growable: false);
 
   @nonVirtual
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection,
@@ -191,8 +219,13 @@ abstract class AnyDecoration extends Decoration {
     final index = borderIndex ?? primaryBorderIndex;
     _validateBorders();
     RangeError.checkValidIndex(index, borders, 'borderIndex');
+    final selectedBorder = borders[index];
     return buildPoints(
-        bounds, textDirection, index, offset + borders[index].offset);
+        bounds,
+        textDirection,
+        selectedBorder,
+        offset + selectedBorder.offset,
+        sideOffsetsForBorder(bounds, textDirection, selectedBorder));
   }
 
   /// Fill painted behind side regions.
@@ -279,23 +312,22 @@ abstract class AnyDecoration extends Decoration {
     }
   }
 
-  /// Builds an [AnyPoint] using decoration defaults for missing values.
+  /// Builds an [AnyPoint] using the supplied [border] for missing values.
   AnyPoint point(
     Offset point, {
-    required int borderIndex,
+    required AnyBorder border,
     AnyCorner? shape,
     AnyCorner? outer,
     AnyCorner? inner,
     AnySide? side,
     bool skip = false,
   }) {
-    final selectedBorder = borders[borderIndex];
     return AnyPoint(
       point: point,
-      shape: shape ?? selectedBorder.corners,
-      outer: outer ?? selectedBorder.outerCorners,
-      inner: inner ?? selectedBorder.innerCorners,
-      side: side ?? selectedBorder.sides,
+      shape: shape ?? border.corners,
+      outer: outer ?? border.outerCorners,
+      inner: inner ?? border.innerCorners,
+      side: side ?? border.sides,
       skip: skip,
     );
   }

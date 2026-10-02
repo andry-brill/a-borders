@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:any_borders/any_box_decoration.dart';
 import 'package:any_borders/any_contour.dart';
 
+import '../src/utils.dart';
+
 /// Tab-shaped [AnyDecoration] configured through an [AnyBoxBorder].
 ///
 /// The lower tab offsets are derived from [AnyBoxBorder.bottomLeft] and
@@ -49,13 +51,23 @@ class AnyTabDecoration extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      int borderIndex, double offset) {
+      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+    final resolved = border.resolvedSides;
+    final sides = [
+      for (var i = 0; i < resolved.length; i++)
+        resolved[i].offset == sideOffsets[i]
+            ? resolved[i]
+            : resolved[i].copyWith(offset: sideOffsets[i]),
+    ];
     // Offset the tab's construction rectangle, then rebuild its lower helpers
     // from the unchanged corner extents. The helpers are not polygon edges to
     // miter independently: the first/last vertices reverse along the baseline.
-    bounds = bounds.inflate(offset);
+    bounds = AnyUtils.displaceBox(bounds, offset,
+        top: sides[0].offset,
+        right: sides[1].offset,
+        bottom: sides[2].offset,
+        left: sides[3].offset);
     if (bounds.isEmpty) return const [];
-    final border = borders[borderIndex];
     final bottomLeftCorner = border.bottomLeft ?? border.corners;
     final bottomRightCorner = border.bottomRight ?? border.corners;
 
@@ -94,53 +106,53 @@ class AnyTabDecoration extends AnyDecoration {
     return [
       point(
         firstPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: zero,
         outer: zero,
         inner: zero,
         skip: firstPoint == leftBottomPoint,
-        side: border.bottom ?? border.horizontal,
+        side: sides[2],
       ),
       point(
         leftBottomPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.bottomLeft,
         outer: border.outerBottomLeft,
         inner: border.innerBottomLeft,
-        side: border.left ?? border.vertical,
+        side: sides[3],
       ),
       point(
         leftTopPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.topLeft,
         outer: border.outerTopLeft,
         inner: border.innerTopLeft,
-        side: border.top ?? border.horizontal,
+        side: sides[0],
       ),
       point(
         rightTopPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.topRight,
         outer: border.outerTopRight,
         inner: border.innerTopRight,
-        side: border.right ?? border.vertical,
+        side: sides[1],
       ),
       point(
         rightBottomPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: border.bottomRight,
         outer: border.outerBottomRight,
         inner: border.innerBottomRight,
-        side: border.bottom ?? border.horizontal,
+        side: sides[2],
       ),
       point(
         lastPoint,
-        borderIndex: borderIndex,
+        border: border,
         shape: zero,
         outer: zero,
         inner: zero,
         skip: rightBottomPoint == lastPoint,
-        side: border.bottom ?? border.horizontal,
+        side: sides[2],
       ),
     ];
   }

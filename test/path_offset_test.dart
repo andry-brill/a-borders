@@ -43,11 +43,12 @@ class _Diamond extends AnyDecoration {
   const _Diamond({super.offset, super.border, this.reverse = false});
 
   @override
-  List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? direction, int borderIndex, double offset) {
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+      AnyBorder border, double offset, List<double> sideOffsets) {
     if (bounds.isEmpty) return const [];
     final half = Offset(bounds.width / 2, bounds.height / 2);
-    final scale = 1 + offset * half.distance / (half.dx * half.dy);
+    final scale =
+        1 + (offset + sideOffsets.single) * half.distance / (half.dx * half.dy);
     if (scale <= 0) return const [];
     final vertices = [
       bounds.center + Offset(0, -half.dy * scale),
@@ -57,7 +58,9 @@ class _Diamond extends AnyDecoration {
     ];
     return [
       for (final vertex in reverse ? vertices.reversed : vertices)
-        point(vertex, borderIndex: borderIndex),
+        point(vertex,
+            border: border,
+            side: border.sides.copyWith(offset: sideOffsets.single)),
     ];
   }
 
@@ -125,13 +128,13 @@ class _CountGeometry extends RoundedCornerGeometry {
 }
 
 class _RecordingBox extends AnyBoxDecoration {
-  static final calls = <(Rect, TextDirection?, int, double)>[];
+  static final calls = <(Rect, TextDirection?, AnyBorder, double)>[];
   const _RecordingBox({super.offset, super.border});
   @override
-  List<AnyPoint> buildPoints(
-      Rect bounds, TextDirection? direction, int borderIndex, double offset) {
-    calls.add((bounds, direction, borderIndex, offset));
-    return super.buildPoints(bounds, direction, borderIndex, offset);
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+    calls.add((bounds, direction, border, offset));
+    return super.buildPoints(bounds, direction, border, offset, sideOffsets);
   }
 }
 
@@ -152,7 +155,7 @@ void main() {
     expect(multi.points(Offset.zero & _size, null, borderIndex: 1).first.point,
         const Offset(-9, -9));
     // Defaults choose settings; point() itself never changes coordinates.
-    expect(multi.point(const Offset(7, 8), borderIndex: 1).point,
+    expect(multi.point(const Offset(7, 8), border: multi.borders[1]).point,
         const Offset(7, 8));
     const bounds = Rect.fromLTWH(13, 17, 100, 60);
     expect(multi.points(bounds, null).first.point, const Offset(10, 14));
@@ -369,7 +372,7 @@ void main() {
           expect(points[i].shape, same(border.corners));
           expect(points[i].outer, same(border.outerCorners));
           expect(points[i].inner, same(border.innerCorners));
-          expect(points[i].side, same(border.sides));
+          expect(points[i].side, border.sides);
         }
       }
     }
@@ -395,23 +398,41 @@ void main() {
     for (final type in example.CrownType.values) {
       final reference =
           example.CrownDecoration(type: type).points(Offset.zero & _size, null);
-      for (final (decorationOffset, borderOffset) in [
-        (1.0, 0.0),
-        (-1.0, 0.0),
-        (0.0, 1.0),
-        (0.0, -1.0),
-        (2.0, -1.0)
+      for (final (decorationOffset, borderOffset, sideOffset) in [
+        (1.0, 0.0, 0.0),
+        (-1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, -1.0, 0.0),
+        (2.0, -1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (0.0, 0.0, -1.0)
       ]) {
         final crown = example.CrownDecoration(
             type: type,
             offset: decorationOffset,
-            border: AnyBorder(offset: borderOffset));
+            border: AnyBorder(
+                offset: borderOffset, sides: AnySide(offset: sideOffset)));
         expect(() => crown.buildContour(_size, null), throwsUnsupportedError);
       }
       final cancelled = example.CrownDecoration(
               type: type, offset: 2, border: const AnyBorder(offset: -2))
           .points(Offset.zero & _size, null);
       expect(cancelled.map((p) => p.point), reference.map((p) => p.point));
+      final sideCancelled = example.CrownDecoration(
+          type: type,
+          offset: 2,
+          border: const AnyBorder(sides: AnySide(offset: -2)));
+      final points = sideCancelled.points(Offset.zero & _size, null);
+      expect(points.map((p) => p.point), reference.map((p) => p.point));
+      expect(points.map((p) => p.side.offset), everyElement(-2));
+      final animated = AnyDecorationTween(
+          begin: example.CrownDecoration(type: type), end: sideCancelled);
+      expect(
+          animated
+              .lerp(.5)
+              .points(Offset.zero & _size, null)
+              .map((p) => p.point),
+          reference.map((p) => p.point));
     }
   });
 
@@ -582,8 +603,9 @@ void main() {
     const a =
         _RecordingBox(offset: 3, border: AnyBoxBorder(offset: 4, ratio: 1));
     final first = a.buildContours(_size, TextDirection.ltr);
-    expect(_RecordingBox.calls,
-        [(const Rect.fromLTWH(20, 0, 60, 60), TextDirection.ltr, 0, 7.0)]);
+    expect(_RecordingBox.calls, [
+      (const Rect.fromLTWH(20, 0, 60, 60), TextDirection.ltr, a.border, 7.0)
+    ]);
     expect(a.buildContours(_size, TextDirection.ltr), same(first));
     expect(_RecordingBox.calls, hasLength(1));
     const _RecordingBox(offset: 5, border: AnyBoxBorder(offset: 4, ratio: 1))
