@@ -46,10 +46,10 @@ class AnySide with MAnyFill {
   /// Align means align relative to the corresponding side, not the whole shape.
   final double align;
 
-  /// Signed outline displacement added to decoration and border offsets.
+  /// Signed construction-bounds adjustment added to decoration and border offsets.
   ///
   /// Positive values move outward; negative values move inward. Decoration
-  /// point builders apply this before corner construction. An [AnyContour]
+  /// bounds hooks apply this before ratio fitting and point construction. An [AnyContour]
   /// constructed directly from points does not apply it again.
   final double offset;
 

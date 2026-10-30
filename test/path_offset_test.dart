@@ -36,25 +36,20 @@ void _sameArea(Path actual, Path expected,
   }
 }
 
-// A custom builder owns its shape-specific displacement. A diamond has an
-// analytic construction and needs no general polygon-offset helper.
+// A custom shape builds its diamond from adjusted, fitted bounds.
 class _Diamond extends AnyDecoration {
   final bool reverse;
   const _Diamond({super.offset, super.border, this.reverse = false});
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
-      AnyBorder border, double offset, List<double> sideOffsets) {
+      AnyBorder border, List<double> sideOffsets) {
     if (bounds.isEmpty) return const [];
-    final half = Offset(bounds.width / 2, bounds.height / 2);
-    final scale =
-        1 + (offset + sideOffsets.single) * half.distance / (half.dx * half.dy);
-    if (scale <= 0) return const [];
     final vertices = [
-      bounds.center + Offset(0, -half.dy * scale),
-      bounds.center + Offset(half.dx * scale, 0),
-      bounds.center + Offset(0, half.dy * scale),
-      bounds.center + Offset(-half.dx * scale, 0),
+      bounds.topCenter,
+      bounds.centerRight,
+      bounds.bottomCenter,
+      bounds.centerLeft
     ];
     return [
       for (final vertex in reverse ? vertices.reversed : vertices)
@@ -69,41 +64,6 @@ class _Diamond extends AnyDecoration {
       other is _Diamond && other.reverse == reverse && super == other;
   @override
   int get hashCode => Object.hash(super.hashCode, reverse);
-}
-
-// Independent convex half-plane clipping oracle, without corner/provider APIs.
-Path _convexArea(List<Offset> vertices, List<double> inwardDistances) {
-  var area = <Offset>[
-    const Offset(-1000, -1000),
-    const Offset(1000, -1000),
-    const Offset(1000, 1000),
-    const Offset(-1000, 1000)
-  ];
-  var winding = 0.0;
-  for (var i = 0; i < vertices.length; i++) {
-    final a = vertices[i], b = vertices[(i + 1) % vertices.length];
-    winding += a.dx * b.dy - a.dy * b.dx;
-  }
-  for (var i = 0; i < vertices.length && area.isNotEmpty; i++) {
-    final edge = vertices[(i + 1) % vertices.length] - vertices[i];
-    final normal = Offset(-edge.dy, edge.dx) * (winding.sign / edge.distance);
-    double distance(Offset p) {
-      final delta = p - vertices[i];
-      return delta.dx * normal.dx + delta.dy * normal.dy - inwardDistances[i];
-    }
-
-    final clipped = <Offset>[];
-    for (var j = 0; j < area.length; j++) {
-      final a = area[j], b = area[(j + 1) % area.length];
-      final da = distance(a), db = distance(b);
-      if (da >= 0) clipped.add(a);
-      if ((da >= 0) != (db >= 0)) clipped.add(a + (b - a) * (da / (da - db)));
-    }
-    area = clipped;
-  }
-  final path = Path();
-  if (area.length >= 3) path.addPolygon(area, true);
-  return path;
 }
 
 class _CountCorner extends RoundedCorner {
@@ -131,10 +91,10 @@ class _RecordingBox extends AnyBoxDecoration {
   static final calls = <(Rect, TextDirection?, AnyBorder, double)>[];
   const _RecordingBox({super.offset, super.border});
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+  Rect adjustBounds(Rect bounds, TextDirection? direction,
       covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
     calls.add((bounds, direction, border, offset));
-    return super.buildPoints(bounds, direction, border, offset, sideOffsets);
+    return super.adjustBounds(bounds, direction, border, offset, sideOffsets);
   }
 }
 
@@ -344,11 +304,10 @@ void main() {
     });
   });
 
-  test('custom builders receive the combined offset and retain corner settings',
+  test('custom builders receive adjusted bounds and retain corner settings',
       () {
     const bounds = Rect.fromLTWH(13, 17, 100, 60);
     for (final reverse in [false, true]) {
-      final original = _Diamond(reverse: reverse).points(bounds, null);
       for (final offset in [-8.0, 9.0]) {
         const border = AnyBorder(
             offset: 2,
@@ -360,15 +319,15 @@ void main() {
             _Diamond(offset: offset, border: border, reverse: reverse)
                 .points(bounds, null);
         for (var i = 0; i < points.length; i++) {
-          final next = (i + 1) % points.length;
-          final edge = original[next].point - original[i].point;
-          final normal = Offset(-edge.dy, edge.dx) *
-              ((reverse ? -1.0 : 1.0) / edge.distance);
-          for (final p in [points[i], points[next]]) {
-            final delta = p.point - original[i].point;
-            expect(delta.dx * normal.dx + delta.dy * normal.dy,
-                closeTo(-(offset + border.offset), 1e-10));
-          }
+          final adjusted = bounds.inflate(offset + border.offset);
+          final vertices = [
+            adjusted.topCenter,
+            adjusted.centerRight,
+            adjusted.bottomCenter,
+            adjusted.centerLeft
+          ];
+          expect(points[i].point,
+              (reverse ? vertices.reversed.toList() : vertices)[i]);
           expect(points[i].shape, same(border.corners));
           expect(points[i].outer, same(border.outerCorners));
           expect(points[i].inner, same(border.innerCorners));
@@ -378,23 +337,27 @@ void main() {
     }
   });
 
-  test('custom diamond paths match independent half-plane clipping', () {
-    const vertices = [
-      Offset(50, 0),
-      Offset(100, 30),
-      Offset(50, 60),
-      Offset(0, 30)
-    ];
+  test('custom diamond paths use adjusted rectangle midpoints', () {
     for (final reverse in [false, true]) {
       for (final offset in [-80.0, -10.0, 0.0, 8.0, 50.0]) {
         final c = _Diamond(offset: offset, reverse: reverse)
             .buildContour(_size, null);
-        _sameArea(c.clipPath, _convexArea(vertices, List.filled(4, -offset)));
+        final bounds = (Offset.zero & _size).inflate(offset);
+        final expected = Path();
+        if (!bounds.isEmpty) {
+          expected.addPolygon([
+            bounds.topCenter,
+            bounds.centerRight,
+            bounds.bottomCenter,
+            bounds.centerLeft
+          ], true);
+        }
+        _sameArea(c.clipPath, expected);
       }
     }
   });
 
-  test('crown example rejects nonzero effective offsets', () {
+  test('crown example uses shared pre-fit bounds offsets', () {
     for (final type in example.CrownType.values) {
       final reference =
           example.CrownDecoration(type: type).points(Offset.zero & _size, null);
@@ -412,7 +375,12 @@ void main() {
             offset: decorationOffset,
             border: AnyBorder(
                 offset: borderOffset, sides: AnySide(offset: sideOffset)));
-        expect(() => crown.buildContour(_size, null), throwsUnsupportedError);
+        final effective = decorationOffset + borderOffset + sideOffset;
+        final adjusted = (Offset.zero & _size).inflate(effective);
+        final actual = crown.points(Offset.zero & _size, null);
+        expect(actual.first.point, adjusted.topLeft);
+        expect(actual[4].point, adjusted.topRight);
+        expect(actual[5].point, adjusted.bottomRight);
       }
       final cancelled = example.CrownDecoration(
               type: type, offset: 2, border: const AnyBorder(offset: -2))
@@ -554,7 +522,7 @@ void main() {
     }
   });
 
-  test('ratio fitting precedes offsets and primary effects select the layer',
+  test('ratio fitting follows offsets and primary effects select the layer',
       () {
     const d = AnyBoxDecoration.multi(
         offset: 3,
@@ -603,9 +571,8 @@ void main() {
     const a =
         _RecordingBox(offset: 3, border: AnyBoxBorder(offset: 4, ratio: 1));
     final first = a.buildContours(_size, TextDirection.ltr);
-    expect(_RecordingBox.calls, [
-      (const Rect.fromLTWH(20, 0, 60, 60), TextDirection.ltr, a.border, 7.0)
-    ]);
+    expect(_RecordingBox.calls,
+        [(Offset.zero & _size, TextDirection.ltr, a.border, 7.0)]);
     expect(a.buildContours(_size, TextDirection.ltr), same(first));
     expect(_RecordingBox.calls, hasLength(1));
     const _RecordingBox(offset: 5, border: AnyBoxBorder(offset: 4, ratio: 1))

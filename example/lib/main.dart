@@ -253,6 +253,28 @@ List<Widget> examples() {
         ),
       ),
     ),
+    E(
+      title: 'Circle\noffsets',
+      beginSize: Size(100, 50),
+      endSize: Size(50, 100),
+      showLayoutBounds: true,
+      begin: AnyBoxDecoration(
+        background: AnyBackground(color: greenL),
+        border: AnyBoxBorder(
+          shape: AnyBoxShape.circle,
+          top: AnySide(offset: 25),
+          bottom: AnySide(offset: 25),
+        ),
+      ),
+      end: AnyBoxDecoration(
+        background: AnyBackground(color: blueL),
+        border: AnyBoxBorder(
+          shape: AnyBoxShape.circle,
+          left: AnySide(offset: 25),
+          right: AnySide(offset: 25),
+        ),
+      ),
+    ),
   ];
 
   return [...box, ...shadows, ...custom];
@@ -432,13 +454,8 @@ class CrownDecoration extends AnyDecoration {
   @override
   List<AnyPoint> buildPoints(
       Rect bounds, TextDirection? textDirection, AnyBorder border,
-      double offset, List<double> sideOffsets) {
-    // This shape uses the shared-side slot and supports only zero combined
-    // displacement. Consume the supplied value so animation obeys the same rule.
+      List<double> sideOffsets) {
     final sideOffset = sideOffsets.single;
-    if (offset + sideOffset != 0) {
-      throw UnsupportedError('CrownDecoration does not support path offsets.');
-    }
     final w4 = bounds.width / 4.0;
     final w2 = bounds.width / 2.0;
 
@@ -677,12 +694,18 @@ class E extends StatefulWidget {
   final String title;
   final AnyDecoration begin;
   final AnyDecoration end;
+  final Size beginSize;
+  final Size endSize;
+  final bool showLayoutBounds;
 
   const E({
     super.key,
     required this.title,
     required this.begin,
     required this.end,
+    this.beginSize = const Size(w, h),
+    this.endSize = const Size(w, h),
+    this.showLayoutBounds = false,
   });
 
   @override
@@ -745,12 +768,23 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
       animation: _animation,
       builder: (context, _) {
         final decoration = _tween.evaluate(_animation);
+        final size = Size.lerp(widget.beginSize, widget.endSize, _animation.value)!;
 
-        return Container(
+        return ConstrainedBox(
           constraints: constraints,
-          decoration: decoration,
           child: Center(
-            child: Text(widget.title, style: titleStyle),
+            child: Container(
+              width: size.width,
+              height: size.height,
+              decoration: decoration,
+              // The circle can overflow these layout bounds without stretching.
+              foregroundDecoration: widget.showLayoutBounds
+                  ? BoxDecoration(border: Border.all(color: Colors.black38))
+                  : null,
+              child: Center(
+                child: Text(widget.title, style: titleStyle),
+              ),
+            ),
           ),
         );
       },

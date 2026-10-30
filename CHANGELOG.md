@@ -1,3 +1,50 @@
+## 3.0.0
+
+- **Breaking:** decoration, border, and side offsets now adjust available
+  construction bounds **before** aspect-ratio fitting. No legacy mode or separate
+  expansion property is provided. With layout `24 x 14`, vertical offsets of `7`
+  produce available bounds `24 x 28` and a centered `24 x 24` circle.
+- Added protected `adjustBounds(layoutBounds, textDirection, border, offset,
+  sideOffsets)`. The base supports zero slots or one shared slot; box/tab hooks
+  map four slots to top/right/bottom/left. Custom multi-slot policies must override it.
+- **Breaking:** `buildPoints(bounds, textDirection, border, sideOffsets)` now
+  receives adjusted, fitted bounds. The scalar parameter is removed; builders
+  must not apply offsets again. Side slots remain current point metadata.
+- **Breaking:** `points(Rect, ...)` now accepts raw layout bounds and performs
+  the same adjustment/fitting pipeline as contour construction. Removed the
+  size-only `boundsForBorder` and separate contour-construction override hooks.
+- Combined adjustments are validated before fitting. Exhausted bounds skip
+  point construction; border width cannot revive them. Asymmetric adjustments
+  move the fitted center and may leave unused space after ratio fitting.
+- Tweens interpolate offsets and adjusted rectangles before fitting. Unconstrained
+  ratios use the current available aspect. Immutable construction recipes preserve
+  raw slot discovery and ratio state through saved samples and retargeting.
+- Nested samples retain effective inner/outer/zero boundary geometry and support
+  changing source corner expressions, avoiding retargeting assertions and jumps.
+- Topology fallbacks select complete samples or boundary curves and filled areas,
+  preserving nested endpoint geometry through midpoint selection and retargeting.
+- Identity tweens return their endpoint. Per-construction memoization shares sample
+  nodes by identity and input context; nested corner normalization shares expression
+  nodes. Repeated sample graphs no longer multiply bounds evaluation exponentially.
+- Prepared geometry reuses equal fitted builder contexts; bounds preparation runs
+  for each sample. Painting, clipping, shadows, and fills follow the resulting contour.
+- Migrated custom shapes, including the crown and diamond examples, to the bounds
+  contract. These fields no longer provide perpendicular polygon-edge displacement.
+
+### Migration from 2.x
+
+1. Move offset handling into `adjustBounds`, or inherit the uniform base/box/tab
+   policy. Use supplied current offsets; do not reread authored endpoint values.
+2. Remove the scalar argument and all bounds displacement from `buildPoints`.
+   Continue carrying the current side slots in each point's `AnySide.offset`.
+3. Pass raw layout rectangles to `points`; remove caller-side fitting. Discover
+   slots from raw bounds and keep their count/order stable across layouts.
+4. Move custom `boundsForBorder` policies to `adjustBounds`. Bounds offsets change
+   available space rather than promising an exact contour-edge displacement.
+   Custom geometry remains responsible for its own vertices and equality/hashing.
+
+See [Custom decorations](README.md#custom-decorations) for the complete contract.
+
 ## 2.1.0
 
 - Added signed `AnySide.offset`, defaulting to `0.0`, with copying, equality,

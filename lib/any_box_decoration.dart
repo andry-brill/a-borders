@@ -185,8 +185,21 @@ class AnyBoxDecoration extends AnyDecoration {
   AnyBoxBorder get border => super.border as AnyBoxBorder;
 
   @override
+  Rect adjustBounds(
+          Rect layoutBounds,
+          TextDirection? textDirection,
+          covariant AnyBoxBorder border,
+          double offset,
+          List<double> sideOffsets) =>
+      AnyUtils.displaceBox(layoutBounds, offset,
+          top: sideOffsets[0],
+          right: sideOffsets[1],
+          bottom: sideOffsets[2],
+          left: sideOffsets[3]);
+
+  @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+      covariant AnyBoxBorder border, List<double> sideOffsets) {
     final resolved = border.resolvedSides;
     final sides = [
       for (var i = 0; i < resolved.length; i++)
@@ -194,11 +207,6 @@ class AnyBoxDecoration extends AnyDecoration {
             ? resolved[i]
             : resolved[i].copyWith(offset: sideOffsets[i]),
     ];
-    bounds = AnyUtils.displaceBox(bounds, offset,
-        top: sides[0].offset,
-        right: sides[1].offset,
-        bottom: sides[2].offset,
-        left: sides[3].offset);
     if (bounds.isEmpty) return const [];
     return [
       point(

@@ -108,55 +108,55 @@ extension _ContourGeometry on AnyContour {
     _innerSettings = List.unmodifiable(points.map((p) => p.inner));
   }
 
-  List<bool> _explicitSettings(List<AnyCorner?> settings, AnyShapeBase base) =>
-      List.unmodifiable(List.generate(
-          count,
-          (i) =>
-              !frames[i].backtracking &&
-              (settings[i] != null ||
-                  (_transition?.morphs(i, base) ?? false))));
+  AnyContour? _boundaryFallback(AnyShapeBase base) =>
+      _transition?.boundaryFallback(base, _progress);
 
-  List<AnyResolvedCorner> _resolveZeroBand() =>
-      List.unmodifiable(List.generate(count, (i) {
-        final transition = _transition?.corner(
-            i, AnyShapeBase.zeroBorder, frames[i], _progress);
-        if (transition != null) return transition;
-        final outer = outerCorners[i];
-        return outer.source.geometry.resolveZeroBoundary(outer,
-            previousDistance: sideOutsideOffset[_wrap(i - 1)],
-            nextDistance: sideOutsideOffset[i]);
-      }));
+  List<bool> _explicitSettings(List<AnyCorner?> settings, AnyShapeBase base) {
+    final fallback = _boundaryFallback(base);
+    if (fallback != null) {
+      return base == AnyShapeBase.outerBorder
+          ? fallback._explicitOuter
+          : fallback._explicitInner;
+    }
+    return List.unmodifiable(List.generate(
+        count,
+        (i) =>
+            !frames[i].backtracking &&
+            (settings[i] != null ||
+                (_transition?.overridesCorner(i, base) ?? false))));
+  }
+
+  List<AnyResolvedCorner> _resolveZeroBand() {
+    final fallback = _boundaryFallback(AnyShapeBase.zeroBorder);
+    if (fallback != null) return fallback.zeroCorners;
+    return List.unmodifiable(List.generate(count, (i) {
+      final transition =
+          _transition?.corner(i, AnyShapeBase.zeroBorder, frames[i], _progress);
+      if (transition != null) return transition;
+      final outer = outerCorners[i];
+      return outer.source.geometry.resolveZeroBoundary(outer,
+          previousDistance: sideOutsideOffset[_wrap(i - 1)],
+          nextDistance: sideOutsideOffset[i]);
+    }));
+  }
 
   List<AnyResolvedCorner> _resolveBand(
       List<AnyCorner?> overrides, AnyShapeBase base) {
-    if (overrides.every((c) => c == null)) {
-      if (List.generate(
-          count,
-          (i) =>
-              _offsetForBase(i, base) == 0 &&
-              !(_transition?.morphs(i, base) ?? false)).every((v) => v)) {
-        return shapeCorners;
-      }
-      return List.unmodifiable(List.generate(count, (i) {
-        if (_transition?.morphs(i, base) ?? false) {
-          final transition = _transition!.corner(
-              i,
-              base,
-              frames[i].shifted(
-                  _offsetForBase(_wrap(i - 1), base), _offsetForBase(i, base)),
-              _progress);
-          if (transition != null) return transition;
-        }
-        final source = shapeCorners[i];
-        return source.source.geometry.resolveBoundary(source,
-            previousDistance: _offsetForBase(_wrap(i - 1), base),
-            nextDistance: _offsetForBase(i, base));
-      }));
+    final fallback = _boundaryFallback(base);
+    if (fallback != null) return fallback._corners(base);
+    if (overrides.every((c) => c == null) &&
+        List.generate(
+                count,
+                (i) =>
+                    _offsetForBase(i, base) == 0 &&
+                    !(_transition?.overridesCorner(i, base) ?? false))
+            .every((v) => v)) {
+      return shapeCorners;
     }
-    final shifted = List.generate(
+    late final shifted = List.generate(
         count,
-        (i) => frames[i]
-            .shifted(_offsetForBase(_wrap(i - 1), base), _offsetForBase(i, base)));
+        (i) => frames[i].shifted(
+            _offsetForBase(_wrap(i - 1), base), _offsetForBase(i, base)));
     late final lengths = List.generate(
         count,
         (i) => math.max(
@@ -168,8 +168,10 @@ extension _ContourGeometry on AnyContour {
         shifted,
         lengths);
     return List.unmodifiable(List.generate(count, (i) {
-      final transition = _transition?.corner(i, base, shifted[i], _progress);
-      if (transition != null) return transition;
+      if (_transition?.overridesCorner(i, base) ?? false) {
+        final transition = _transition!.corner(i, base, shifted[i], _progress);
+        if (transition != null) return transition;
+      }
       // Reversing helpers retain two shifted contacts. An explicitly authored
       // straight vertex instead uses its single averaged boundary anchor.
       if (overrides[i] != null && !frames[i].backtracking)
@@ -192,6 +194,8 @@ extension _ContourGeometry on AnyContour {
     final cached = _paths[base];
     if (cached != null) return cached;
     if (count == 0) return _paths[base] = Path();
+    final fallback = _boundaryFallback(base);
+    if (fallback != null) return _paths[base] = fallback._areaFor(base);
     if (base == AnyShapeBase.shapeBorder || base == AnyShapeBase.zeroBorder) {
       return _paths[base] = _outline(_corners(base));
     }
@@ -255,6 +259,7 @@ extension _ContourGeometry on AnyContour {
   bool _emptySharpInner() {
     if (diagnostics.forceGeneralRegions ||
         count != 4 ||
+        _boundaryFallback(AnyShapeBase.innerBorder) != null ||
         _explicitInner.any((e) => e)) return false;
     for (var i = 0; i < count; i++) {
       final c = shapeCorners[i], f = frames[i];
@@ -265,8 +270,8 @@ extension _ContourGeometry on AnyContour {
     }
     final shifted = List.generate(
         count,
-        (i) => frames[i]
-            .shiftedVertex(sideInsideOffset[_wrap(i - 1)], sideInsideOffset[i]));
+        (i) => frames[i].shiftedVertex(
+            sideInsideOffset[_wrap(i - 1)], sideInsideOffset[i]));
     return List.generate(
             count,
             (i) => geometryDot(
@@ -287,7 +292,11 @@ extension _ContourGeometry on AnyContour {
       });
 
   bool _directBand(AnyShapeBase base) {
-    if (diagnostics.forceGeneralRegions) return false;
+    // A selected boundary's filled area can be split or empty; its local
+    // outline alone cannot certify a direct ring in the current source frame.
+    if (diagnostics.forceGeneralRegions || _boundaryFallback(base) != null) {
+      return false;
+    }
     return _directBands.putIfAbsent(base, () {
       final band = _corners(base);
       if (!_simpleBand(band)) return false;
@@ -574,28 +583,56 @@ List<AnyCornerSegment> _outlineSegments(List<AnyResolvedCorner> corners) => [
       ],
     ];
 
+// Structural lists of expression identities avoid recursively hashing/equating
+// shared corner trees. The memo is scoped to one frame/length context.
+class _CornerInputs {
+  final List<AnyCorner> corners;
+  _CornerInputs(this.corners);
+  @override
+  bool operator ==(Object other) {
+    if (other is! _CornerInputs || corners.length != other.corners.length)
+      return false;
+    for (var i = 0; i < corners.length; i++) {
+      if (!identical(corners[i], other.corners[i])) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hashAll(corners.map(identityHashCode));
+}
+
 List<AnyCorner> _normalizeSettings(
     List<AnyCorner> input, List<AnyCornerFrame> frames, List<double> lengths) {
-  final count = input.length;
-  if (input.any((c) => c is _LerpCorner)) {
-    final from = _normalizeSettings(
-        input.map((c) => c is _LerpCorner ? c.from : c).toList(),
-        frames,
-        lengths);
-    final to = _normalizeSettings(
-        input.map((c) => c is _LerpCorner ? c.to : c).toList(),
-        frames,
-        lengths);
-    return _normalizeSettings(
-        List.generate(
-            count,
-            (i) => input[i] is _LerpCorner
-                ? AnyCorner._lerpResolved(
-                    from[i], to[i], (input[i] as _LerpCorner).t)
-                : from[i]),
-        frames,
-        lengths);
+  if (!input.any((c) => c is _LerpCorner)) {
+    return _normalizeConcreteSettings(input, frames, lengths);
   }
+  final memo = <_CornerInputs, List<AnyCorner>>{};
+  List<AnyCorner> resolve(List<AnyCorner> values) =>
+      memo.putIfAbsent(_CornerInputs(values), () {
+        if (!values.any((c) => c is _LerpCorner)) {
+          return _normalizeConcreteSettings(values, frames, lengths);
+        }
+        final from =
+            resolve(values.map((c) => c is _LerpCorner ? c.from : c).toList());
+        final to =
+            resolve(values.map((c) => c is _LerpCorner ? c.to : c).toList());
+        return _normalizeConcreteSettings(
+            List.generate(
+                values.length,
+                (i) => values[i] is _LerpCorner
+                    ? AnyCorner._lerpResolved(
+                        from[i], to[i], (values[i] as _LerpCorner).t)
+                    : from[i]),
+            frames,
+            lengths);
+      });
+  return resolve(input);
+}
+
+List<AnyCorner> _normalizeConcreteSettings(
+    List<AnyCorner> input, List<AnyCornerFrame> frames, List<double> lengths) {
+  final count = input.length;
   double factor(int i) => frames[i].parallel
       ? 0
       : input[i].geometry.contactScale(input[i], frames[i]);

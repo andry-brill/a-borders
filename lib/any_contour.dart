@@ -1,5 +1,8 @@
 import 'dart:collection';
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
+import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
@@ -11,11 +14,15 @@ import 'src/geometry_diagnostics.dart' as diagnostics;
 
 import 'src/geometry/core.dart';
 import 'src/corners/rounded_corner.dart';
-export 'src/geometry/core.dart' hide AnyContourTransition;
+
+export 'src/geometry/core.dart' hide AnyContourTransition, AnyContourSample;
 export 'src/corners/corner_converter.dart';
 export 'src/corners/rounded_corner.dart';
 export 'src/corners/bevel_corner.dart';
 export 'src/corners/inverse_rounded_corner.dart';
+
+part 'src/decoration_tween.dart';
+part 'src/decoration_construction.dart';
 
 /// Fill painted behind the side regions of an [AnyDecoration].
 class AnyBackground with MAnyFill {
@@ -123,10 +130,12 @@ class AnyBorder {
   /// Default explicit inner corner; null derives it from the shape.
   final AnyCorner? innerCorners;
 
-  /// Optional width / height ratio used to fit the contour inside the paint size.
+  /// Optional width / height ratio fitted inside offset-adjusted bounds.
+  /// Null/nonpositive values use all available bounds.
   final double? ratio;
 
-  /// Path displacement in logical units, added to [AnyDecoration.offset].
+  /// Construction-bounds adjustment before ratio fitting, added to
+  /// [AnyDecoration.offset], in logical units.
   /// Negative values inset; positive values outset. Must be finite.
   final double offset;
 
@@ -179,21 +188,33 @@ class AnyBorder {
 /// override [operator ==] and [hashCode] when they add fields, because contour
 /// caching is keyed by decoration equality.
 abstract class AnyDecoration extends Decoration {
-  /// Build contour points for the supplied [border] from the fitted [bounds].
-  /// [offset] is the combined decoration and border displacement: positive
-  /// outward, negative inward. Apply it to the outline before assigning corners.
-  /// [sideOffsets] contains the current construction slots, including tweened
-  /// values during animation. Add each slot to [offset] before corner
-  /// construction and empty-outline checks, and carry it in the corresponding
-  /// returned point's [AnySide.offset]. Do not reread authored offsets here.
-  /// Forward [border] to [point] for layer defaults. Return an empty list
-  /// when the inset exhausts the outline.
+  /// Adjust raw construction bounds before ratio fitting.
+  /// Positive offsets expand; negative offsets inset. The scalar [offset]
+  /// already combines decoration and border values. Use the supplied current
+  /// [sideOffsets], including during animation, rather than authored values.
+  /// The default supports zero slots or one shared slot. Other layouts must
+  /// override this hook. Return crossed/empty bounds when an inset exhausts
+  /// the available area; do not normalize them or fit corners here.
+  @protected
+  Rect adjustBounds(Rect layoutBounds, TextDirection? textDirection,
+      AnyBorder border, double offset, List<double> sideOffsets) {
+    if (sideOffsets.length > 1) {
+      throw UnsupportedError(
+          'Multiple side slots require an adjustBounds override.');
+    }
+    final side = sideOffsets.isEmpty ? 0.0 : sideOffsets.single;
+    return AnyUtils.displaceBox(layoutBounds, offset,
+        top: side, right: side, bottom: side, left: side);
+  }
+
+  /// Build points from already adjusted, ratio-fitted [bounds].
+  /// Never displace these bounds again. Carry current [sideOffsets] in the
+  /// corresponding AnySide metadata, and forward [border] to [point].
   @protected
   List<AnyPoint> buildPoints(
     Rect bounds,
     TextDirection? textDirection,
     AnyBorder border,
-    double offset,
     List<double> sideOffsets,
   );
 
@@ -204,7 +225,9 @@ abstract class AnyDecoration extends Decoration {
   /// Override this when the decoration uses different construction sides or
   /// ordering. Slots must have a stable logical order and are supplied to
   /// [buildPoints] for both ordinary construction and animation. An empty list
-  /// describes a shape with no side-offset slots.
+  /// describes a shape with no side-offset slots. Discovery receives raw layout
+  /// bounds, before adjustment and fitting. Slot count/order must remain stable
+  /// for a shape configuration across layouts.
   @protected
   List<double> sideOffsetsForBorder(
     Rect bounds,
@@ -213,19 +236,41 @@ abstract class AnyDecoration extends Decoration {
   ) =>
       border.resolvedSides.map((side) => side.offset).toList(growable: false);
 
+  /// Build a layer's points from raw layout [bounds], applying offsets and
+  /// ratio fitting exactly once. Nonzero rectangle origins are preserved.
   @nonVirtual
   List<AnyPoint> points(Rect bounds, TextDirection? textDirection,
       {int? borderIndex}) {
     final index = borderIndex ?? primaryBorderIndex;
     _validateBorders();
     RangeError.checkValidIndex(index, borders, 'borderIndex');
-    final selectedBorder = borders[index];
-    return buildPoints(
-        bounds,
-        textDirection,
-        selectedBorder,
-        offset + selectedBorder.offset,
-        sideOffsetsForBorder(bounds, textDirection, selectedBorder));
+    return _construct(bounds, textDirection, index).points;
+  }
+
+  _LayerRecipe _recipe(_ConstructionContext context) {
+    final selected = borders[context.index];
+    final layoutBounds = context.bounds, direction = context.direction;
+    return _LayerRecipe(
+      sideOffsetsForBorder(layoutBounds, direction, selected),
+      (offset, slots) =>
+          adjustBounds(layoutBounds, direction, selected, offset, slots),
+      (_) => selected.ratio,
+      (bounds, slots) =>
+          AnyContourSample(buildPoints(bounds, direction, selected, slots)),
+    );
+  }
+
+  AnyContourSample _construct(
+      Rect layoutBounds, TextDirection? direction, int index) {
+    AnyUtils.validateBounds(layoutBounds);
+    final recipe =
+        _ConstructionContext(layoutBounds, direction, index).recipe(this);
+    final available =
+        recipe.adjust(offset + borders[index].offset, recipe.slots);
+    if (available.isEmpty) return AnyContourSample(const []);
+    final fitted = AnyUtils.fitRatio(available, recipe.ratio(available));
+    if (fitted.isEmpty) return AnyContourSample(const []);
+    return recipe.build(fitted, recipe.slots);
   }
 
   /// Fill painted behind side regions.
@@ -260,7 +305,8 @@ abstract class AnyDecoration extends Decoration {
   /// Whether built contours should be cached by decoration, size, and text direction.
   final bool enableCache;
 
-  /// Path displacement added to each border's offset, in logical units.
+  /// Construction-bounds adjustment added to each border's offset before
+  /// ratio fitting, in logical units. This does not change widget layout.
   /// Negative values inset; positive values outset. Must be finite.
   final double offset;
 
@@ -332,18 +378,11 @@ abstract class AnyDecoration extends Decoration {
     );
   }
 
-  /// Bounds for a layer, fitted independently using that border's ratio.
-  @protected
-  Rect boundsForBorder(Size size, int borderIndex) =>
-      AnyUtils.fitRatio(size, borders[borderIndex].ratio);
-
-  /// Construct one fitted layer. Tweens specialize this to evaluate prepared
-  /// boundary transitions; ordinary decorations only need [buildPoints].
-  @protected
-  AnyContour buildContourForBorder(
+  // Every entry point constructs from raw layout bounds. Recipes preserve
+  // the original raw context through nested tween samples.
+  AnyContour _buildContourForBorder(
           Rect bounds, TextDirection? textDirection, int index) =>
-      AnyContour(
-        points: points(bounds, textDirection, borderIndex: index),
+      _construct(bounds, textDirection, index).contour(
         background: index == primaryBorderIndex ? background : null,
         backgroundBase: background?.shapeBase ?? AnyShapeBase.shapeBorder,
         clipBase: clipBase,
@@ -365,8 +404,8 @@ abstract class AnyDecoration extends Decoration {
     final contours = List<AnyContour>.unmodifiable(
       List<AnyContour>.generate(
           borders.length,
-          (index) => buildContourForBorder(
-              boundsForBorder(size, index), textDirection, index)),
+          (index) =>
+              _buildContourForBorder(Offset.zero & size, textDirection, index)),
     );
 
     if (enableCache) {

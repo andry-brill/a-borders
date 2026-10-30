@@ -192,9 +192,7 @@ class _LerpCorner extends AnyCorner {
   final double t;
   final AnyCorner from;
   final AnyCorner to;
-  const _LerpCorner({required this.t, required this.from, required this.to})
-      : assert(from is! _LerpCorner),
-        assert(to is! _LerpCorner);
+  const _LerpCorner({required this.t, required this.from, required this.to});
   @override
   AnyCorner copyWith({double? p, double? n}) =>
       throw StateError('Resolve interpolation before geometry.');
@@ -203,10 +201,11 @@ class _LerpCorner extends AnyCorner {
       throw StateError('Resolve interpolation before geometry.');
   @override
   bool operator ==(Object other) =>
-      other is _LerpCorner &&
-      t == other.t &&
-      from == other.from &&
-      to == other.to;
+      identical(this, other) ||
+      (other is _LerpCorner &&
+          t == other.t &&
+          from == other.from &&
+          to == other.to);
   @override
   int get hashCode => Object.hash(t, from, to);
 }

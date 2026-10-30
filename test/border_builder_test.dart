@@ -35,10 +35,15 @@ class _ShapeDecoration extends AnyDecoration {
   }
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+  Rect adjustBounds(Rect bounds, TextDirection? direction,
       covariant _ShapeBorder border, double offset, List<double> sideOffsets) {
     built.add((border, offset, List.unmodifiable(sideOffsets)));
-    bounds = bounds.inflate(offset + sideOffsets.single);
+    return super.adjustBounds(bounds, direction, border, offset, sideOffsets);
+  }
+
+  @override
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+      covariant _ShapeBorder border, List<double> sideOffsets) {
     if (bounds.isEmpty) return const [];
     bounds = bounds.shift(Offset(border.shift, 0));
     final side = border.sides.copyWith(offset: sideOffsets.single);
@@ -121,7 +126,7 @@ void main() {
     final points = middle.points(Offset.zero & _size, null);
     expect(points.first.side.offset, 4);
     expect(points.first.side.width, 6);
-    expect(_ShapeDecoration.built, hasLength(2));
+    expect(_ShapeDecoration.built, hasLength(4)); // Bounds are prepared again.
   });
 
   test('equal and shared borders keep separate tween layers and saved samples',

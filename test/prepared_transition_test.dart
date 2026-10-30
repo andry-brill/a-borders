@@ -14,9 +14,9 @@ class _CountingBox extends AnyBoxDecoration {
   const _CountingBox({super.border, super.offset});
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
-      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+      covariant AnyBoxBorder border, List<double> sideOffsets) {
     builds++;
-    return super.buildPoints(bounds, direction, border, offset, sideOffsets);
+    return super.buildPoints(bounds, direction, border, sideOffsets);
   }
 }
 

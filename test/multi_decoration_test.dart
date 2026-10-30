@@ -254,8 +254,7 @@ class _Polygon extends AnyDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? textDirection,
-      AnyBorder border, double offset, List<double> sideOffsets) {
-    bounds = bounds.inflate(offset + sideOffsets.single);
+      AnyBorder border, List<double> sideOffsets) {
     if (bounds.isEmpty) return const [];
     final side = border.sides.copyWith(offset: sideOffsets.single);
     return [

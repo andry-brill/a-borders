@@ -19,26 +19,42 @@ abstract class AnyUtils {
     if (!t.isFinite || !r.isFinite || !b.isFinite || !l.isFinite) {
       throw ArgumentError('Effective side offsets must be finite.');
     }
-    return Rect.fromLTRB(
+    final result = Rect.fromLTRB(
         bounds.left - l, bounds.top - t, bounds.right + r, bounds.bottom + b);
+    validateBounds(result);
+    return result;
   }
 
-  static Rect fitRatio(Size size, double? ratio) {
+  static void validateBounds(Rect bounds) {
+    if (!bounds.left.isFinite ||
+        !bounds.top.isFinite ||
+        !bounds.right.isFinite ||
+        !bounds.bottom.isFinite ||
+        !bounds.width.isFinite ||
+        !bounds.height.isFinite) {
+      throw ArgumentError('Construction bounds must be finite.');
+    }
+  }
+
+  static Rect fitRatio(Rect bounds, double? ratio) {
     if (ratio == null || ratio <= 0.0) {
-      return Offset.zero & size;
+      return bounds;
     }
 
-    var width = size.width;
+    if (!ratio.isFinite) {
+      throw ArgumentError.value(ratio, 'ratio', 'Must be finite');
+    }
+    var width = bounds.width;
     var height = width / ratio;
 
-    if (height > size.height) {
-      height = size.height;
+    if (height > bounds.height) {
+      height = bounds.height;
       width = height * ratio;
     }
 
     return Rect.fromLTWH(
-      (size.width - width) / 2.0,
-      (size.height - height) / 2.0,
+      bounds.left / 2.0 + bounds.right / 2.0 - width / 2.0,
+      bounds.top / 2.0 + bounds.bottom / 2.0 - height / 2.0,
       width,
       height,
     );

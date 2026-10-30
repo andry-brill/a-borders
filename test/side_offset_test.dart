@@ -43,9 +43,9 @@ class _CountingBox extends AnyBoxDecoration {
 
   @override
   List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
-      covariant AnyBoxBorder border, double offset, List<double> sideOffsets) {
+      covariant AnyBoxBorder border, List<double> sideOffsets) {
     calls++;
-    return super.buildPoints(bounds, direction, border, offset, sideOffsets);
+    return super.buildPoints(bounds, direction, border, sideOffsets);
   }
 }
 
@@ -55,16 +55,17 @@ class _CustomRect extends AnyDecoration {
   const _CustomRect({super.border, super.offset});
 
   @override
-  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
-      AnyBorder border, double offset, List<double> sideOffsets) {
+  Rect adjustBounds(Rect bounds, TextDirection? direction, AnyBorder border,
+      double offset, List<double> sideOffsets) {
     contexts.add((offset, List.unmodifiable(sideOffsets)));
-    return _build(bounds, border, offset,
-        sideOffsets.isEmpty ? 0 : sideOffsets.reduce((a, b) => a + b));
+    return bounds
+        .inflate(offset + sideOffsets.fold<double>(0, (a, b) => a + b));
   }
 
-  List<AnyPoint> _build(
-      Rect bounds, AnyBorder border, double offset, double sideOffset) {
-    bounds = bounds.inflate(offset + sideOffset);
+  @override
+  List<AnyPoint> buildPoints(Rect bounds, TextDirection? direction,
+      AnyBorder border, List<double> sideOffsets) {
+    final sideOffset = sideOffsets.fold<double>(0, (a, b) => a + b);
     if (bounds.isEmpty) return const [];
     final side = border.sides.copyWith(offset: sideOffset);
     return [
@@ -190,8 +191,7 @@ void main() {
         const Rect.fromLTRB(30, 10, 60, 50));
   });
 
-  test('ratios precede offsets and primary layer effects follow its outline',
-      () {
+  test('offset-adjusted ratios supply primary layer effects', () {
     const d = AnyBoxDecoration.multi(
         offset: 3,
         primaryBorderIndex: 1,
@@ -480,7 +480,7 @@ void main() {
         const Rect.fromLTRB(0, 0, 40, 60));
     expect(_CountingBox.calls, 3);
     expect(tween.lerp(.9).buildContour(_size, null).count, 0);
-    expect(_CountingBox.calls, 5);
+    expect(_CountingBox.calls, 3); // Exhaustion skips point construction.
   });
 
   test(
@@ -495,9 +495,10 @@ void main() {
     expect(_CustomRect.contexts.map((c) => c.$2.single), [-25, -25]);
     expect(_CustomRect.contexts.map((c) => c.$1), [1, 1]);
     saved.buildContour(_size, null);
-    expect(_CustomRect.contexts, hasLength(2));
+    expect(_CustomRect.contexts, hasLength(4)); // Bounds hooks run each sample.
     tween.lerp(.4).buildContour(_size, null);
-    expect(_CustomRect.contexts.map((c) => c.$2.single), [-25, -25, -20, -20]);
+    expect(_CustomRect.contexts.map((c) => c.$2.single),
+        [-25, -25, -25, -25, -20, -20]);
     expect(tween.lerp(.7).buildContour(_size, null).count, 0);
     tween.end =
         const _CustomRect(border: AnyBorder(sides: AnySide(offset: 10)));
@@ -524,7 +525,7 @@ void main() {
       expect(tween.lerp(t).buildContour(_size, null).clipPath.getBounds(),
           Offset.zero & _size);
     }
-    expect(_CustomRect.contexts.map((c) => c.$2), [[], []]);
+    expect(_CustomRect.contexts.map((c) => c.$2), [[], [], [], []]);
   });
 
   test('different slot layouts reach their respective endpoint builders', () {
@@ -534,8 +535,13 @@ void main() {
         end: const _CustomSlotRect(
             slotCount: 2, border: AnyBorder(sides: AnySide(offset: -25))));
     expect(tween.lerp(.49).buildContour(_size, null).count, 4);
-    expect(tween.lerp(.51).buildContour(_size, null).count, 0);
+    expect(tween.lerp(.51).buildContour(_size, null).count, 4);
+    expect(tween.lerp(.7).buildContour(_size, null).count, 0);
     expect(_CustomRect.contexts.map((c) => c.$2), [
+      [3],
+      [-25, -25],
+      [3],
+      [-25, -25],
       [3],
       [-25, -25]
     ]);
