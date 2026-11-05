@@ -1,3 +1,21 @@
+## 3.2.0
+
+- Added `AnyDecoration.resolveRenderer(configuration, onChanged: ...)` and
+  `AnyDecorationRenderer` for repeated canvas painting at a fixed configuration.
+  Resolution records backgrounds, border layers, and shadows once into a
+  `ui.Picture`; subsequent paints reuse the commands at different positions.
+- Renderers resolve synchronously and retain image painters. Image loading and
+  animation invalidate the recording, notify `onChanged`, and refresh it on the
+  next paint. Dispose the renderer to release its picture and image listeners;
+  resolve a replacement when the decoration or configuration changes.
+- Renderer painting preserves the caller's canvas state, overflow outside the
+  layout bounds, and normal compositing behavior. Caller-applied translations
+  and rotations reuse the same picture. This caches commands rather than pixels.
+- Added a full-width gallery example after Custom: 500 green wave rectangles
+  with blue fills, seeded random positions, and two random rotation sets animated
+  by the shared gallery toggle. Added coverage for recording reuse, image updates,
+  disposal, visual equivalence, and the shared rotation animation.
+
 ## 3.1.0
 
 - Added the extensible `AnyEdgeProfile` interface and separate `AnyStepsProfile`

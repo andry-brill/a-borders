@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'dart:math' as math;
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show lerpDouble, Picture, PictureRecorder;
 
 import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +23,7 @@ export 'src/corners/inverse_rounded_corner.dart';
 
 part 'src/decoration_tween.dart';
 part 'src/decoration_construction.dart';
+part 'src/decoration_renderer.dart';
 
 /// Fill painted behind the side regions of an [AnyDecoration].
 class AnyBackground with MAnyFill {
@@ -423,6 +424,22 @@ abstract class AnyDecoration extends Decoration {
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
     return _AnyDecorationPainter(this, onChanged);
   }
+
+  /// Records this decoration once for repeated painting at different positions.
+  ///
+  /// [configuration] must have a finite, nonnegative size. The returned renderer
+  /// owns a recorded picture and its image painters; dispose it when finished.
+  /// Resolve a new renderer when this decoration or the configuration changes.
+  ///
+  /// Resolution is synchronous, including the first recording. Images may load
+  /// later: [onChanged] requests a repaint, and the next renderer paint refreshes
+  /// its picture. Animated images use the same mechanism for subsequent frames.
+  /// A renderer therefore does not represent a promise that images have loaded.
+  AnyDecorationRenderer resolveRenderer(
+    ImageConfiguration configuration, {
+    VoidCallback? onChanged,
+  }) =>
+      AnyDecorationRenderer._(this, configuration, onChanged);
 
   @override
   Path getClipPath(Rect rect, TextDirection textDirection) {

@@ -39,6 +39,10 @@ Container(
 )
 ```
 
+For repeated canvas drawing, use
+[`resolveRenderer`](#repeated-painting) to record a decoration once and paint it
+at many positions, including under animated canvas rotations.
+
 ## How the core works
 
 `AnyDecoration` describes an outline as points and border settings. The generic
@@ -909,6 +913,40 @@ Inside each contour, boundary resolution, eligibility checks, and curve samples
 are lazy and memoized. A source-only clip request does not resolve unused inner,
 outer, or zero boundaries. Unpainted regions are not constructed, and local
 memoized data is released with its contour.
+
+### Repeated painting
+
+`AnyDecoration.resolveRenderer` creates an `AnyDecorationRenderer` that records
+the decoration once and reuses it at different canvas positions. Keep the
+renderer across frames when the decoration and configuration stay the same:
+
+```dart
+final renderer = decoration.resolveRenderer(
+  const ImageConfiguration(
+    size: Size(64, 40),
+    textDirection: TextDirection.ltr,
+  ),
+  onChanged: markNeedsPaint,
+);
+
+// In your paint method:
+for (final position in positions) {
+  renderer.paint(canvas, position);
+}
+
+// When finished:
+renderer.dispose();
+```
+
+Resolution is synchronous and caches drawing commands in a `ui.Picture`,
+including backgrounds, borders, and shadows. Rasterization still happens when
+painting. The configuration must include a finite, nonnegative `size`.
+
+Images can load or animate later: `onChanged` requests a repaint, and the next
+paint refreshes the recording. When the decoration or configuration changes,
+dispose the old renderer and resolve a new one.
+
+See the [reusable renderer example](example/lib/repeated_borders.dart).
 
 ## Extras
 

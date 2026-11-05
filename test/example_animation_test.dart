@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:any_borders/any_borders.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../example/lib/main.dart' as example;
+import '../example/lib/repeated_borders.dart';
 
 class _Images extends CachingAssetBundle {
   @override
@@ -17,7 +19,100 @@ class _Images extends CachingAssetBundle {
   }
 }
 
+class _RotationCanvas extends Fake implements Canvas {
+  final angles = <double>[];
+  final pictures = <ui.Picture>[];
+
+  @override
+  void save() {}
+  @override
+  void restore() {}
+  @override
+  void translate(double dx, double dy) {}
+  @override
+  void rotate(double radians) => angles.add(radians);
+  @override
+  void drawPicture(ui.Picture picture) => pictures.add(picture);
+}
+
 void main() {
+  testWidgets('repeated borders fill a row and join the shared animation',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+        DefaultAssetBundle(bundle: _Images(), child: const example.MyApp()));
+    await tester.pumpAndSettle();
+    final demo = find.byType(RepeatedBordersExample);
+    await tester.scrollUntilVisible(demo, 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    final expectedWidth =
+        example.rowLimit * example.w + (example.rowLimit - 1) * example.spacing;
+    expect(tester.getSize(demo).width, expectedWidth);
+    final canvas =
+        find.descendant(of: demo, matching: find.byType(CustomPaint));
+    expect(tester.getSize(canvas), Size(expectedWidth, 300));
+    expect(find.text('500 wave rectangles · green + blue at 5% opacity'),
+        findsOneWidget);
+
+    final painter = tester.widget<CustomPaint>(canvas).painter!;
+    _RotationCanvas sample() {
+      final recording = _RotationCanvas();
+      painter.paint(recording, tester.getSize(canvas));
+      return recording;
+    }
+
+    var repaints = 0;
+    void onRepaint() => repaints++;
+    painter.addListener(onRepaint);
+    final begin = sample();
+    expect(begin.angles, hasLength(500));
+    expect(begin.pictures.toSet(), hasLength(1));
+    await tester.ensureVisible(canvas);
+    await tester.tap(canvas);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    final quarter = sample();
+    await tester.pump(const Duration(milliseconds: 250));
+    final middle = sample();
+    await tester.pumpAndSettle();
+    final end = sample();
+    expect(repaints, greaterThan(0));
+    expect(end.angles, isNot(orderedEquals(begin.angles)));
+    for (var i = 0; i < 500; i++) {
+      final delta = end.angles[i] - begin.angles[i];
+      expect(
+          quarter.angles[i],
+          closeTo(
+              begin.angles[i] + delta * example.curve.transform(0.25), 1e-10));
+      expect(middle.angles[i], closeTo(begin.angles[i] + delta * 0.5, 1e-10));
+    }
+    expect(quarter.pictures.toSet().single, same(begin.pictures.first));
+    expect(end.pictures.toSet().single, same(begin.pictures.first));
+    // A second common toggle reverses the rotation animation as well.
+    await tester.tap(canvas);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    final reverse = sample();
+    for (var i = 0; i < 500; i++) {
+      expect(reverse.angles[i], closeTo(middle.angles[i], 1e-10));
+    }
+    await tester.pumpAndSettle();
+    expect(sample().angles, orderedEquals(begin.angles));
+    painter.removeListener(onRepaint);
+
+    // Isolate the demo when checking narrower layouts: the existing gallery's
+    // other rows intentionally retain their four fixed-width examples.
+    await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: RepeatedBordersExample())));
+    await tester.binding.setSurfaceSize(const Size(900, 700));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(canvas), const Size(900, 300));
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('gallery paints intermediate states and retires offscreen rows',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 450));

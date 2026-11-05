@@ -6,6 +6,8 @@ import 'package:any_borders/extras/any_tab_decoration.dart';
 import 'package:flutter/material.dart';
 import 'corner_inspector.dart';
 import 'custom_corner.dart';
+import 'example_animation.dart';
+import 'repeated_borders.dart';
 
 List<Widget> examples() {
   const box = [
@@ -372,7 +374,13 @@ List<Widget> examples() {
     ),
   ];
 
-  return [...box, ...shadows, ...custom];
+  return [
+    ...box,
+    ...shadows,
+    ...custom,
+    const H('Reusable renderer'),
+    const RepeatedBordersExample(),
+  ];
 }
 
 List<E> buildShadows(
@@ -682,8 +690,8 @@ const constraints = BoxConstraints.tightFor(width: w, height: h);
 const double spacing = 100;
 const rowLimit = 4;
 
-const duration = Duration(milliseconds: 1000);
-const curve = Curves.easeInOut;
+const duration = ExampleToggleBus.duration;
+const curve = ExampleToggleBus.curve;
 
 const titleStyle = TextStyle(color: alpha99);
 const headerStyle =
@@ -717,18 +725,6 @@ class MyApp extends StatelessWidget {
       ),
       home: const _ExamplePage(),
     );
-  }
-}
-
-class _ExampleToggleBus extends ChangeNotifier {
-  _ExampleToggleBus._();
-
-  static final _ExampleToggleBus instance = _ExampleToggleBus._();
-  bool expanded = false;
-
-  void toggleAll() {
-    expanded = !expanded;
-    notifyListeners();
   }
 }
 
@@ -768,7 +764,7 @@ class _ExamplePageState extends State<_ExamplePage> {
     }
 
     for (var e in ex) {
-      if (e is H) {
+      if (e is H || e is RepeatedBordersExample) {
         flush();
         children.add(e);
       } else {
@@ -781,7 +777,7 @@ class _ExamplePageState extends State<_ExamplePage> {
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: _ExampleToggleBus.instance.toggleAll,
+      onTap: ExampleToggleBus.instance.toggleAll,
       child: Scaffold(
         appBar: AppBar(title: const Text('Any Borders 2.0'), actions: [
           TextButton.icon(
@@ -840,14 +836,14 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
     _controller = AnimationController(
       vsync: this,
       duration: duration,
-      value: _ExampleToggleBus.instance.expanded ? 1 : 0,
+      value: ExampleToggleBus.instance.expanded ? 1 : 0,
     );
     _animation = CurvedAnimation(parent: _controller, curve: curve);
     _tween = AnyDecorationTween(
       begin: widget.begin,
       end: widget.end,
     );
-    _ExampleToggleBus.instance.addListener(_toggle);
+    ExampleToggleBus.instance.addListener(_toggle);
   }
 
   @override
@@ -865,7 +861,7 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
   void _toggle() {
     if (!mounted) return;
 
-    if (_ExampleToggleBus.instance.expanded) {
+    if (ExampleToggleBus.instance.expanded) {
       _controller.forward();
     } else {
       _controller.reverse();
@@ -874,7 +870,7 @@ class _EState extends State<E> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    _ExampleToggleBus.instance.removeListener(_toggle);
+    ExampleToggleBus.instance.removeListener(_toggle);
     _controller.dispose();
     super.dispose();
   }
