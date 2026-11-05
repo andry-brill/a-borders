@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:any_borders/any_contour.dart';
 
+import 'any_box_border_profiles.dart';
+import 'any_edge_profile.dart';
 import 'src/utils.dart';
 
 enum AnyBoxShape {
@@ -13,6 +15,9 @@ enum AnyBoxShape {
 
 /// Rectangular border with independent side and corner overrides.
 class AnyBoxBorder extends AnyBorder {
+  /// Geometry profiles applied to the fitted edges by [AnyBoxDecoration].
+  final AnyBoxBorderProfiles profiles;
+
   /// Side used for the left edge.
   final AnySide? left;
 
@@ -69,6 +74,7 @@ class AnyBoxBorder extends AnyBorder {
     super.innerCorners,
     super.sides,
     super.offset,
+    this.profiles = const AnyBoxBorderProfiles(),
     this.left,
     this.top,
     this.right,
@@ -110,6 +116,7 @@ class AnyBoxBorder extends AnyBorder {
     if (identical(this, other)) return true;
 
     return other is AnyBoxBorder &&
+        other.profiles == profiles &&
         other.left == left &&
         other.top == top &&
         other.right == right &&
@@ -134,6 +141,7 @@ class AnyBoxBorder extends AnyBorder {
   @override
   int get hashCode => Object.hash(
         super.hashCode,
+        profiles,
         left,
         top,
         right,
@@ -208,7 +216,7 @@ class AnyBoxDecoration extends AnyDecoration {
             : resolved[i].copyWith(offset: sideOffsets[i]),
     ];
     if (bounds.isEmpty) return const [];
-    return [
+    final vertices = [
       point(
         bounds.topLeft,
         border: border,
@@ -242,6 +250,32 @@ class AnyBoxDecoration extends AnyDecoration {
         side: sides[3],
       ),
     ];
+    final profiles = border.profiles.resolvedProfiles;
+    return [
+      for (var i = 0; i < vertices.length; i++) ...[
+        vertices[i],
+        ..._profilePoints(
+            vertices[i], vertices[(i + 1) % vertices.length], profiles[i]),
+      ],
+    ];
+  }
+
+  Iterable<AnyPoint> _profilePoints(
+      AnyPoint start, AnyPoint end, AnyEdgeProfile profile) sync* {
+    final edge = end.point - start.point;
+    final tangent = edge / edge.distance;
+    // Box traversal is clockwise in screen coordinates.
+    final inward = Offset(-tangent.dy, tangent.dx);
+    for (final p in profile.buildPoints(edge.distance, start.side)) {
+      yield AnyPoint(
+        point: start.point + tangent * p.point.dx + inward * p.point.dy,
+        side: p.side,
+        shape: p.shape,
+        outer: p.outer,
+        inner: p.inner,
+        skip: p.skip,
+      );
+    }
   }
 
   @override

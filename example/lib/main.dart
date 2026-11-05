@@ -117,46 +117,80 @@ List<Widget> examples() {
               color: greenL, shapeBase: AnyShapeBase.outerBorder)),
     ),
     E(
-      title: 'Gradient',
+      title: 'Gradient steps',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(
-                gradient: gradientBG, width: 20, align: AnySide.alignCenter),
-            corners: RoundedCorner(radius: 30)),
+                gradient: gradientBG, width: 5, align: AnySide.alignCenter),
+            profiles: AnyBoxBorderProfiles(
+              vertical: AnyStepsProfile(
+                count: 3,
+                depth: 16,
+                startClearance: 12,
+                endClearance: 12,
+              ),
+            ),
+            corners: RoundedCorner(radius: 10)),
         background: AnyBackground(gradient: gradientBGL),
       ),
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(
-                gradient: gradientBGL, width: 10, align: AnySide.alignOutside),
-            corners: BevelCorner(radius: 40)),
+                gradient: gradientBGL, width: 5, align: AnySide.alignOutside),
+            profiles: AnyBoxBorderProfiles(
+              vertical: AnyStepsProfile(
+                count: 3,
+                depth: 24,
+                startClearance: 12,
+                endClearance: 12,
+                corners: RoundedCorner.infinity(),
+              ),
+            ),
+            corners: RoundedCorner(radius: 10)),
         background: AnyBackground(gradient: gradientBG),
       ),
     ),
     E(
-      title: 'Gradient HV',
+      title: 'Gradient zigzag',
       begin: AnyBoxDecoration(
           border: AnyBoxBorder(
               horizontal: AnySide(
-                  gradient: gradientBG, width: 20, align: AnySide.alignCenter),
+                  gradient: gradientBG, width: 5, align: AnySide.alignCenter),
               vertical: AnySide(
-                  gradient: gradientBGL, width: 20, align: AnySide.alignCenter),
-              corners: BevelCorner(radius: 30))),
+                  gradient: gradientBGL, width: 8, align: AnySide.alignCenter),
+              profiles: AnyBoxBorderProfiles(
+                horizontal: AnyZigZagProfile(
+                  count: 4,
+                  depth: 12,
+                  startClearance: 16,
+                  endClearance: 16,
+                ),
+              ),
+              corners: BevelCorner(radius: 10))),
       end: AnyBoxDecoration(
           border: AnyBoxBorder(
               left: AnySide(
                   gradient: gradientBGL,
-                  width: 10,
+                  width: 8,
                   align: AnySide.alignOutside),
               right: AnySide(
                   gradient: gradientBGL,
-                  width: 10,
+                  width: 8,
                   align: AnySide.alignOutside),
               top: AnySide(
-                  gradient: gradientBG, width: 10, align: AnySide.alignCenter),
+                  gradient: gradientBG, width: 5, align: AnySide.alignCenter),
               bottom: AnySide(
-                  gradient: gradientBG, width: 10, align: AnySide.alignCenter),
-              corners: RoundedCorner(radius: 20))),
+                  gradient: gradientBG, width: 5, align: AnySide.alignCenter),
+              profiles: AnyBoxBorderProfiles(
+                horizontal: AnyZigZagProfile(
+                  count: 4,
+                  depth: 20,
+                  startClearance: 16,
+                  endClearance: 16,
+                  corners: RoundedCorner.infinity(),
+                ),
+              ),
+              corners: RoundedCorner(radius: 10))),
     ),
     E(
       title: 'Images',
@@ -199,7 +233,68 @@ List<Widget> examples() {
 
   final shadows = [
     H('Shadows'),
-    ...buildShadows(blurRadius: 10, colors: [greenL], images: []),
+    const E(
+      title: 'Bounded waves',
+      begin: AnyBoxDecoration(
+        border: AnyBoxBorder(
+          sides: AnySide(color: greenD, width: 5, align: AnySide.alignInside),
+          corners: RoundedCorner(radius: 16),
+          profiles: AnyBoxBorderProfiles(
+            horizontal: AnyZigZagProfile(
+              fitToBounds: true,
+              corners: RoundedCorner.infinity(),
+              count: 7,
+              depth: 3,
+              startClearance: 16,
+              endClearance: 16,
+            ),
+            vertical: AnyZigZagProfile(
+              fitToBounds: true,
+              corners: RoundedCorner.infinity(),
+              count: 3,
+              depth: 3,
+              startClearance: 16,
+              endClearance: 16,
+            ),
+          ),
+        ),
+        background: AnyBackground(color: Color(0xFFFFFFFF)),
+        shadows: [
+          AnyShadow(color: Color(0x553C716B), blurRadius: 4, offset: Offset(0, 3)),
+        ],
+      ),
+      end: AnyBoxDecoration(
+        border: AnyBoxBorder(
+          sides: AnySide(color: greenD, width: 2, align: AnySide.alignInside),
+          corners: RoundedCorner(radius: 16),
+          profiles: AnyBoxBorderProfiles(
+            horizontal: AnyZigZagProfile(
+              fitToBounds: true,
+              corners: RoundedCorner.infinity(),
+              count: 7,
+              depth: 5,
+              startClearance: 16,
+              endClearance: 16,
+            ),
+            vertical: AnyZigZagProfile(
+              fitToBounds: true,
+              corners: RoundedCorner.infinity(),
+              count: 3,
+              depth: 5,
+              startClearance: 16,
+              endClearance: 16,
+            ),
+          ),
+        ),
+        background: AnyBackground(color: Color(0xFFFFFFFF)),
+        shadows: [
+          AnyShadow(color: Color(0x553C716B), blurRadius: 10, offset: Offset(8, 8)),
+        ],
+      ),
+    ),
+    // Replace the plain normal-shadow sample; keep the other shadow styles.
+    ...buildShadows(
+        blurRadius: 10, colors: [greenL], images: [], profileAxes: true).skip(1),
     ...buildShadows(
         blurRadius: 10,
         colors: [],
@@ -286,12 +381,30 @@ List<E> buildShadows(
     double blurRadius = 3.0,
     Offset spreadRadius = const Offset(20, 20),
     Offset shadowOffset = const Offset(15, 15),
+    bool profileAxes = false,
     AnyCorner corners = const RoundedCorner(radius: 40)}) {
   final beginColor = colors.firstOrNull;
   final endColor = colors.lastOrNull;
 
   final beginImage = images.firstOrNull;
   final endImage = images.lastOrNull;
+
+  AnyBoxBorderProfiles axisProfiles(Axis axis, double depth) {
+    if (!profileAxes) return const AnyBoxBorderProfiles();
+    final profile = AnyZigZagProfile(
+      count: axis == Axis.horizontal ? 7 : 3,
+      depth: depth,
+      fitToBounds: true,
+      corners: const RoundedCorner.infinity(),
+      startClearance: 16,
+      endClearance: 16,
+    );
+    return AnyBoxBorderProfiles(
+      horizontal: axis == Axis.horizontal ? profile : null,
+      vertical: axis == Axis.vertical ? profile : null,
+    );
+  }
+  final axisCorners = profileAxes ? const RoundedCorner(radius: 16) : corners;
 
   return [
     E(
@@ -325,11 +438,12 @@ List<E> buildShadows(
       ),
     ),
     E(
-      title: 'Inner',
+      title: profileAxes ? 'Inner\nhorizontal waves' : 'Inner',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-            corners: corners),
+            corners: axisCorners,
+            profiles: axisProfiles(Axis.horizontal, 3)),
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -343,7 +457,8 @@ List<E> buildShadows(
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-            corners: corners),
+            corners: axisCorners,
+            profiles: axisProfiles(Axis.horizontal, 5)),
         shadows: [
           AnyShadow(
             style: BlurStyle.inner,
@@ -357,11 +472,12 @@ List<E> buildShadows(
       ),
     ),
     E(
-      title: 'Outer',
+      title: profileAxes ? 'Outer\nvertical waves' : 'Outer',
       begin: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(color: greenD, width: 5, align: AnySide.alignCenter),
-            corners: corners),
+            corners: axisCorners,
+            profiles: axisProfiles(Axis.vertical, 3)),
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,
@@ -375,7 +491,8 @@ List<E> buildShadows(
       end: AnyBoxDecoration(
         border: AnyBoxBorder(
             sides: AnySide(color: greenD, width: 2, align: AnySide.alignCenter),
-            corners: corners),
+            corners: axisCorners,
+            profiles: axisProfiles(Axis.vertical, 5)),
         shadows: [
           AnyShadow(
             style: BlurStyle.outer,

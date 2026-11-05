@@ -1,3 +1,28 @@
+## 3.1.0
+
+- Added the extensible `AnyEdgeProfile` interface and separate `AnyStepsProfile`
+  and `AnyZigZagProfile` classes, with depth, repetition count, inward/outward/centered
+  placement, end clearances, and independent generated-corner settings.
+- Added `AnyBoxBorder.profiles` and `AnyBoxBorderProfiles` with all, horizontal,
+  vertical, and per-edge fallbacks. `AnyStraightProfile` overrides inherited
+  geometry with a straight edge; null continues fallback resolution.
+- Profiles expand fitted box edges into the existing contour pipeline, preserving
+  side styling, offset metadata, clipping, fills, shadows, caching, and compatible
+  point interpolation. Topology changes retain the existing midpoint fallback.
+- Updated gradient gallery examples to demonstrate sharp and rounded profiles,
+  and a shadow example to demonstrate centered rounded zigzags.
+- Centered zigzag `count` counts alternating lobes, supporting odd counts and
+  `firstInside` direction control. Automatic end clearances reserve half a wave;
+  explicit clearances still override each end independently.
+- Infinite rounded centered zigzags fit a common radius across peaks and entry/
+  exit transitions, retaining uniform rounding through depth animation and
+  retargeting.
+- Added opt-in `AnyZigZagProfile.fitToBounds` with `RoundedCorner.infinity()`
+  for fully rounded waves whose crests touch the rectangle and whose troughs
+  reach the authored depth. Circular fillets (stretched for deep repeats), normal
+  border offsets, and tangential box-corner joins use the common contour engine.
+  The shadow example demonstrates fitted zigzags on all four sides.
+
 ## 3.0.0
 
 - **Breaking:** decoration, border, and side offsets now adjust available

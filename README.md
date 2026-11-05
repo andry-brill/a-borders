@@ -149,6 +149,142 @@ const AnyBoxDecoration(
 )
 ```
 
+### Edge profiles
+
+`AnyBoxBorder.profiles` expands the fitted edges of `AnyBoxDecoration` into
+steps or zigzags before the existing corner and contour construction. Each
+generated segment inherits that edge's resolved `AnySide`, including its offset
+metadata. Profiles affect the shape used by backgrounds, clipping, and shadows.
+
+```dart
+const AnyBoxDecoration(
+  border: AnyBoxBorder(
+    sides: AnySide(color: Color(0xFF2E685F), width: 4),
+    corners: RoundedCorner(radius: 10),
+    profiles: AnyBoxBorderProfiles(
+      vertical: AnyStepsProfile(
+        count: 4,
+        depth: 16,
+        startClearance: 12,
+        endClearance: 12,
+        corners: RoundedCorner.infinity(),
+      ),
+      left: AnyStraightProfile(), // Override the vertical fallback.
+      bottom: AnyZigZagProfile(count: 6, depth: 8),
+    ),
+  ),
+  background: AnyBackground(color: Color(0xFF85AEA8)),
+)
+```
+
+`AnyBoxBorderProfiles` resolves top/right/bottom/left using the specific edge,
+then `horizontal` or `vertical`, then `all` (straight by default). Null inherits;
+`AnyStraightProfile()` explicitly keeps an edge straight. Profiles are per border
+layer and apply to `AnyBoxDecoration`; other decoration builders opt in themselves.
+
+`AnyStepsProfile` creates rectangular notches, each occupying half a repeat with
+quarter-repeat gaps at the two ends. `AnyZigZagProfile` creates triangular teeth.
+Both accept a positive `count`, finite nonnegative `depth`, and optional
+`startClearance`/`endClearance` in logical units. Explicit clearances must be finite
+and nonnegative. Clearance is measured clockwise: top left-to-right,
+right top-to-bottom, bottom right-to-left, and left bottom-to-top. Placement defaults
+to `AnyEdgePlacement.inset`; `outset` protrudes beyond the original edge. Depth is
+not clamped to the box size, so choose it to avoid crossing opposing edges.
+For waves centered on the original edge, use `AnyZigZagProfile` with
+`placement: AnyEdgePlacement.center` and rounded profile corners.
+For centered zigzags, `count` is the number of **alternating lobes**, not pairs.
+`firstInside: true` (the default) starts inward; false starts outward. Odd counts
+end in the same direction as they start, even counts in the opposite direction.
+Each unrounded lobe reaches half the depth inward or outward.
+
+Null zigzag clearances select automatic spacing. For centered placement, each
+automatic end reserves one lobe width, which is half a full wave. With both ends
+automatic, `lobeWidth = sideLength / (count + 2)`. Explicit values, including zero,
+override this independently at each end. Non-centered zigzags and steps retain
+zero automatic clearance.
+
+```dart
+AnyZigZagProfile(
+  count: 7,
+  depth: 24,
+  placement: AnyEdgePlacement.center,
+  firstInside: true,
+  corners: RoundedCorner.infinity(),
+  // Automatic half-wave clearance at each end.
+)
+```
+
+Centered zigzags fit infinite rounded corners to a common radius that allows
+rounded entry/exit transitions as well as equal-sized alternating peaks. The fit
+is recomputed during compatible animations, including depth changes and saved
+tween retargeting. Finite radii and other corner types use normal corner fitting.
+Centered steps also alternate between half-depth levels, with vertical transitions
+at the repeat boundaries and midpoints and quarter-repeat straight end leads.
+
+Generated `corners`, `outerCorners`, and `innerCorners` are independent of the
+four box corners. Null generated boundary overrides derive from the profile's
+source corners. Infinite rounded corners produce the largest fitting circular
+fillets, potentially leaving straight segments; they do not promise a sine wave.
+Clearance preserves straight leads but corner normalization may still reduce
+large box or profile corners to fit the available edges.
+
+Zero depth or clearance consuming the full edge produces a straight edge.
+Fixed point counts/order support the existing decoration tween. Changing repeat
+count, switching to centered placement, collapsing to straight, or adding/removing
+zigzag clearance vertices can change topology and use its midpoint fallback.
+Profile placement and depth do not change widget layout or add padding.
+
+Custom profiles extend `AnyEdgeProfile` and implement
+`List<AnyPoint> buildPoints(double length, AnySide side)`. Return only interior
+vertices in traversal order, with local x along the edge and positive local y
+inward. The box maps them onto each side and retains its own endpoint corners.
+Forward the supplied side and implement deterministic construction and value
+equality/hashing. The gradient examples demonstrate sharp-to-rounded steps and
+zigzags using this same contour pipeline.
+
+### Waves that touch the rectangle
+
+Use `AnyZigZagProfile` with `RoundedCorner.infinity()` and `fitToBounds: true`
+for a smooth inward edge whose crests touch the original rectangle. Fitting
+compensates for the reduction in amplitude caused by rounding: `depth` becomes
+the actual inward dip. Fully rounded repeats join with matching tangents at the
+crest and trough. Ordinary zigzags keep their existing behavior by default.
+
+```dart
+const AnyBoxBorder(
+  sides: AnySide(color: Color(0xFF386A64), width: 3, align: AnySide.alignInside),
+  corners: RoundedCorner(radius: 16),
+  profiles: AnyBoxBorderProfiles(
+    horizontal: AnyZigZagProfile(
+      fitToBounds: true, corners: RoundedCorner.infinity(),
+      count: 7, depth: 5, startClearance: 16, endClearance: 16,
+    ),
+    vertical: AnyZigZagProfile(
+      fitToBounds: true, corners: RoundedCorner.infinity(),
+      count: 3, depth: 5, startClearance: 16, endClearance: 16,
+    ),
+  ),
+)
+```
+
+The **Bounded waves** shadow example uses this configuration. Set the clearances
+to at least the box corners' edge contacts (16 for these quarter-circles), so the
+waves join the rounded corners tangentially. Inside alignment keeps the painted
+border within the same bounds; shadows may extend beyond them. Profile crests
+are exact contacts with the source edge, and troughs reach exactly `depth`.
+The source curves stay inside that envelope without clipping or overshoot.
+Shallow repeats consist of circular fillets. When depth exceeds a half-repeat's
+width, the fit stretches the fillets vertically to avoid backwards loops.
+Fitted mode requires infinite rounded corners with the default converter and
+inset or outset placement; outset mirrors the same curves outside the rectangle.
+Switching fitting on/off can change point layout and uses the existing topology
+and corner-type transition policies. Depth changes within fitted mode remain continuous.
+
+Fitted zigzags use the existing point/corner-provider contract, including
+normal-offset border boundaries, gradients, clipping, shadows, and compatible
+animation/retargeting. They validate finite nonnegative dimensions and positive
+counts; zero depth or exhausted clearances produces a straight edge.
+
 ### Bounds offsets
 
 `AnyDecoration.offset`, `AnyBorder.offset`, and `AnySide.offset` adjust available
