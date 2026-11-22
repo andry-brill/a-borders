@@ -81,6 +81,72 @@ void main() {
     expect(() => regions.clear(), throwsUnsupportedError);
   });
 
+  test('side clipping preserves the interior of a rotated rounded border', () {
+    // Seed 20260915, case 119: Flutter 3.50 PathOps dropped part of side 3
+    // when intersecting its sweep with the already-subtracted border ring.
+    const p = 71.13403806653058, n = 65.33470142074763;
+    const rotation = 0.36602684121408624;
+    const widths = [
+      52.689989391764946,
+      34.203173695077886,
+      48.8932719138876,
+      11.548896773129446
+    ];
+    const alignments = [
+      0.07895635377247201,
+      0.6593793272686355,
+      0.15124539673614712,
+      -0.1258358320681734
+    ];
+    final vertices = [
+      Offset.zero,
+      const Offset(180, 0),
+      const Offset(180, 130),
+      const Offset(0, 130)
+    ]
+        .map((v) =>
+            const Offset(17, -31) +
+            Offset(v.dx * math.cos(rotation) - v.dy * math.sin(rotation),
+                v.dx * math.sin(rotation) + v.dy * math.cos(rotation)))
+        .toList();
+    for (final general in [false, true]) {
+      final corner = general
+          ? _GeneralRounded([], p: p, n: n, converter: CornerConverter.equal)
+          : const RoundedCorner.elliptical(
+              p: p, n: n, converter: CornerConverter.equal);
+      final contour = AnyContour(
+          background: null,
+          backgroundBase: AnyShapeBase.shapeBorder,
+          clipBase: AnyShapeBase.shapeBorder,
+          shadowBase: AnyShapeBase.shapeBorder,
+          points: List.generate(
+              4,
+              (i) => AnyPoint(
+                  point: vertices[i],
+                  shape: corner,
+                  side: AnySide(
+                      width: widths[i],
+                      align: alignments[i],
+                      color: Color(0xff001100 + 31 * i)))));
+      final outer = contour.pathFor(AnyShapeBase.outerBorder);
+      final inner = contour.pathFor(AnyShapeBase.innerBorder);
+      final regions = contour.regions(backgroundMerge: false).regions;
+      expect(regions, hasLength(4));
+      // Check an interior neighborhood, not points on an antialiased edge.
+      for (final dx in [-0.25, 0.0, 0.25]) {
+        for (final dy in [-0.25, 0.0, 0.25]) {
+          final point = const Offset(-4.529263723997662, 25.365999376856536) +
+              Offset(dx, dy);
+          expect(outer.contains(point), isTrue);
+          expect(inner.contains(point), isFalse);
+          expect(regions.map((region) => region.$2.contains(point)),
+              [false, false, false, true],
+              reason: 'general=$general point=(${point.dx}, ${point.dy})');
+        }
+      }
+    }
+  });
+
   test('rectangular shortcuts agree with general topology and side ownership',
       () {
     final random = math.Random(20260915);

@@ -463,8 +463,18 @@ extension _ContourGeometry on AnyContour {
     // Oppositely authored explicit boundaries may intentionally cross.
     final artistic =
         _explicitOuter.any((e) => e) || _explicitInner.any((e) => e);
-    final target = _combinePaths(
-        artistic ? PathOperation.xor : PathOperation.difference, outer, inner);
+    // Coincident curved edges in a pre-subtracted ring can make PathOps
+    // silently drop a side component (seed 20260915, case 119). Clip curved
+    // automatic bands against each boundary instead. Straight-edged bands
+    // retain ring clipping, which avoids a separate older-engine bevel issue.
+    final clipCurvesSeparately = !artistic &&
+        outerCorners
+            .followedBy(innerCorners)
+            .any((corner) => corner.segments.any((segment) => !segment.isLine));
+    final target = clipCurvesSeparately
+        ? null
+        : _combinePaths(artistic ? PathOperation.xor : PathOperation.difference,
+            outer, inner);
     Path? claimed;
     final result = <Path>[];
     final previousSweeps = <Path>[];
@@ -477,7 +487,11 @@ extension _ContourGeometry on AnyContour {
       // Routing that connector through the shape creates a kink under mixed
       // alignments and makes explicit border fills depend on the shape setting.
       final sweep = _sideSweep(outerCorners, innerCorners, i);
-      var region = _combinePaths(PathOperation.intersect, sweep, target);
+      // S intersect (O - I) == (S intersect O) - I.
+      var region = target != null
+          ? _combinePaths(PathOperation.intersect, sweep, target)
+          : _combinePaths(PathOperation.difference,
+              _combinePaths(PathOperation.intersect, sweep, outer), inner);
       if (claimed != null) {
         try {
           region = _combinePaths(PathOperation.difference, region, claimed);
