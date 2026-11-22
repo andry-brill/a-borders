@@ -5,6 +5,5 @@ export 'any_box_decoration.dart';
 export 'any_box_border_profiles.dart';
 export 'any_edge_profile.dart';
 export 'any_decoration_cache.dart';
-export 'any_decoration_tween.dart';
 export 'any_fill.dart';
 export 'any_shadow.dart';

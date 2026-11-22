@@ -50,7 +50,9 @@ Future<int> checkTransitionRegressions() async {
               const Offset(1.5, -1.5),
               const Offset(-1.5, 1.5),
               const Offset(1.5, 1.5)
-            ].any((delta) => inside(center + delta) != expected)) continue;
+            ].any((delta) => inside(center + delta) != expected)) {
+              continue;
+            }
             final i = ((center.dy * dpr).floor() * image.width +
                     (center.dx * dpr).floor()) *
                 4;

@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:any_borders/any_borders.dart';
 import 'package:any_borders/src/geometry_diagnostics.dart';
 import 'package:flutter_test/flutter_test.dart';
+// Exercise the example package from the root package test suite.
+// ignore: avoid_relative_lib_imports
 import '../example/lib/custom_corner.dart';
 
 class _ConservativeNotch extends NotchCorner {
@@ -93,7 +95,9 @@ void main() {
         final target = match[1]!;
         if (target.startsWith('dart:')) continue;
         if (target.startsWith('package:') &&
-            !target.startsWith('package:any_borders/')) continue;
+            !target.startsWith('package:any_borders/')) {
+          continue;
+        }
         final next = target.startsWith('package:any_borders/')
             ? root.resolve(
                 'lib/${target.substring('package:any_borders/'.length)}')

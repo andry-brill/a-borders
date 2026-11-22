@@ -12,8 +12,9 @@ const double geometryAngleTolerance = 1e-10;
 Offset geometryLineMeeting(
     Offset a, Offset u, Offset b, Offset v, Offset fallback) {
   final det = geometryCross(u, v);
-  if (det.abs() <= geometryAngleTolerance * u.distance * v.distance)
+  if (det.abs() <= geometryAngleTolerance * u.distance * v.distance) {
     return fallback;
+  }
   return a + u * (geometryCross(b - a, v) / det);
 }
 

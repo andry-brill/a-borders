@@ -84,8 +84,9 @@ void main() {
       final expected = r >= 4 ? r + 4 : r + 4 * (1 + q * q * q);
       expect(b.parameters!.p, closeTo(expected, 1e-12));
       expect(b.parameters!.n, closeTo(expected, 1e-12));
-      if (r < 0.001)
+      if (r < 0.001) {
         expect((b.start - const Offset(-4, -4)).distance, lessThan(0.004));
+      }
     }
   });
   test(
@@ -181,8 +182,9 @@ void main() {
         }));
         for (var i = 0; i < count; i++) {
           final a = c.shapeCorners[i], b = reverse.shapeCorners[count - 1 - i];
-          for (final t in [0.0, 0.17, 0.5, 0.83, 1.0])
+          for (final t in [0.0, 0.17, 0.5, 0.83, 1.0]) {
             closePoint(a.pointAt(t), b.pointAt(1 - t), 0.003);
+          }
           for (final corner in [a, c.innerCorners[i], c.outerCorners[i]]) {
             for (final s in corner.segments) {
               expect(
@@ -205,9 +207,10 @@ void main() {
               .map((p) => AnyPoint(
                   point: transform(p.point), shape: p.shape, side: p.side))
               .toList());
-          for (var i = 0; i < count; i++)
+          for (var i = 0; i < count; i++) {
             closePoint(transform(c.shapeCorners[i].pointAt(0.371)),
                 moved.shapeCorners[i].pointAt(0.371), 0.003);
+          }
           final reflected = contour(points
               .map((p) => AnyPoint(
                   point: Offset(300 - p.point.dx, p.point.dy),

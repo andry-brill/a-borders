@@ -129,8 +129,9 @@ void main() {
     final source = sourceSettings.geometry.resolve(sourceSettings, frame(90));
     final equal = source.source.geometry
         .resolveBoundary(source, previousDistance: -4, nextDistance: -4);
-    for (var i = 0; i <= 20; i++)
+    for (var i = 0; i <= 20; i++) {
       closePoint(equal.pointAt(i / 20), const Offset(-4, -4));
+    }
     final unequal = source.source.geometry
         .resolveBoundary(source, previousDistance: -3, nextDistance: -7);
     closePoint(unequal.start, const Offset(-3, -7));

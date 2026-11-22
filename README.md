@@ -6,6 +6,8 @@ A Flutter package for custom shapes and layered borders with per-side widths and
 
 ![App Screenshot](https://raw.githubusercontent.com/andry-brill/a-borders/main/example/web/screenshot.png)
 
+> You might also like my other packages: [any_compact_format](https://pub.dev/packages/any_compact_format), [any_sparklines](https://pub.dev/packages/any_sparklines), [any_timeago](https://pub.dev/packages/any_timeago), and [any_treemap](https://pub.dev/packages/any_treemap).
+
 ## Quick start
 
 Add `any_borders` to your dependencies:
@@ -837,82 +839,54 @@ polygon normal displacement is not supplied by these offset fields.
 ## Animation and caching
 
 `AnyDecorationTween` pairs borders by list index. Inserted/removed layers retain
-their endpoint border and side offsets while widths fade; decoration-wide offsets
-still interpolate. Exact endpoint decorations are returned at zero and one.
+endpoint border and side offsets while widths fade; decoration-wide offsets
+still interpolate. Exact endpoint decorations are returned at zero and one,
+and identical endpoint instances are returned unchanged.
 
-Each sample discovers slots from raw layout bounds, interpolates scalar offsets
-and matching side slots, then calls both endpoint bounds hooks with their original
-typed borders. Different slot layouts retain separate endpoint values. The two
-adjusted rectangles interpolate before exhaustion checking and ratio fitting.
-Both point builders receive that same fitted rectangle and their current slots.
+Each sample discovers side slots from raw layout bounds, interpolates offsets,
+and calls both endpoint bounds hooks with their original typed borders.
+Different slot layouts retain separate endpoint values. The adjusted rectangles
+interpolate before exhaustion checking and ratio fitting; both point builders
+receive the same fitted rectangle and their current slots.
+Explicit ratios interpolate numerically, while unconstrained endpoints use the
+current adjusted rectangle's aspect. Circle-to-circle animation therefore keeps
+a diameter of `min(availableWidth(t), availableHeight(t))`, even when the limiting
+axis changes.
 
-Explicit ratios interpolate numerically. An unconstrained endpoint uses the
-current adjusted rectangle's aspect; two unconstrained endpoints use that rectangle
-directly. Circle-to-circle animation therefore has diameter
-`min(availableWidth(t), availableHeight(t))`, even when the limiting axis changes.
-Point/corner interpolation and incompatible-topology policies apply afterward.
+Saved samples preserve their endpoint definitions, interpolation progress, and
+sampled boundaries. Retargeting reevaluates bounds, slots, ratios, and nested
+corners against the current layout without applying offsets twice. Repeated
+sample nodes share construction work within each input context; these temporary
+caches do not accumulate across frames.
 
-Saved samples retain their endpoint graph and interpolation progress. Retargeting
-re-evaluates bounds policies, slots, and ratio interpolation against the new raw
-layout and current offsets, without reverting to an original ratio or applying
-offsets twice. Complete sampled geometry is retained through composition, including
-explicit-to-automatic inner/outer/zero boundary transitions. Nested source corner
-expressions normalize against the current layout before geometry is resolved.
+Transitions between explicit and automatic corners lazily prepare the effective
+boundaries, interpolating equivalent corner parameters or matching curve segments.
+For example, an explicit circle can morph continuously into the ellipse produced
+by unequal side widths. Ordinary corner transitions retain their existing
+policies, including shrink/switch/grow between different corner types.
+Discrete settings, mismatched point counts, and changed skip flags switch at
+the midpoint. Incompatible layouts select a complete endpoint sample; split or
+exhausted interiors select the affected boundary's curves and filled area.
+Other compatible geometry keeps interpolating, and saved samples preserve these
+selections when retargeted.
 
-A tween with identical endpoint instances returns that endpoint. Each construction
-shares repeated sample nodes by identity and memoizes adjustment, ratio, and point
-construction for each distinct current input context. Shared nodes receiving
-different offsets are evaluated separately. These evaluation caches are temporary;
-they do not accumulate across frames. Corner normalization also shares repeated
-expression nodes within its current frame/length context.
+Keep the same tween throughout an animation to reuse preparation. Each layer
+retains at most one context, keyed by fitted bounds, text direction, and both
+endpoint builders' side-slot values. Bounds hooks run for every sample, but equal
+resulting contexts reuse preparation; changed contexts replace it. Changing
+endpoints creates a new plan. Custom point builders must be deterministic.
+Only requested boundaries are prepared, and unchanged source geometry is reused.
 
-When an inner or outer corner changes between an explicit override and automatic
-construction, the tween lazily prepares both effective boundaries. Built-in
-providers interpolate equivalent corner parameters when possible. Otherwise,
-the shared implementation matches canonical segment intervals by exact
-subdivision and interpolates their control points in the current corner frame.
-For example, an explicit circle can transition continuously into the ellipse
-produced by unequal side widths, without a midpoint switch. Outer-derived zero
-boundaries get their own prepared transition so provider continuation state is
-never interpolated as arbitrary data.
+`AnyDecorationCache` stores read-only contour lists by decoration equality, size,
+and text direction, including decoration, border, and side offsets. A cache hit
+skips point construction and reuses the adjusted, fitted outline. The cache uses
+a least-recently-used limit of 1000 entries by default, configurable through
+`limit`, and exposes `clear()`. Intermediate tween contours bypass this shared
+cache; set `enableCache` to false to disable caching for a decoration.
 
-Preparation belongs to the tween and is reused by its sampled decorations.
-Keep the same tween for an animation; creating a new tween discards preparation.
-It retains at most one point context per layer, keyed by fitted bounds, direction,
-and both endpoint builders' current side-slot values within the endpoint recipe.
-Slots are immutable snapshots compared by value. Bounds hooks are reevaluated for
-each sample; equal resulting builder contexts reuse preparation even if scalar
-adjustments differ. Changing fitted bounds, direction, or slot metadata replaces
-that context. Changing tween endpoints creates a new plan; saved samples retain
-their original endpoint definitions. Custom point builders must be deterministic.
-
-Fixed point frames, source normalization, and unchanged source curves are reused.
-Changing contexts without boundary morphs use ordinary source evaluation instead
-of preparing source caches that cannot be reused.
-
-Only requested boundaries are prepared. Ordinary automatic/automatic and
-explicit/explicit transitions retain their existing corner policies, including
-shrink/switch/grow interpolation between different corner types. Discrete settings, mismatched
-point counts, and changed skip flags retain midpoint selection. Incompatible point
-layouts select a complete endpoint sample, including its effective boundaries.
-If an automatic endpoint's filled area differs from its raw corner outline, such
-as a split or exhausted interior, the affected boundary selects its endpoint's
-curves and final filled area at the midpoint. Other compatible geometry keeps
-interpolating. Saved fallback samples retain this selection when retargeted;
-their curves are expressed in the new endpoint frames before further morphing.
-Whole-contour checks still select direct or general assembly for each sampled frame.
-
-`AnyDecorationCache` stores read-only contour lists by decoration equality,
-size, and text direction. Equality and hashing include decoration, border, and
-side offsets. Cache lookup precedes point construction, so a hit also reuses the
-adjusted and fitted outline. It uses a least-recently-used limit (1000 by default), configurable
-through `limit`, and exposes `clear()`. Intermediate tween contours
-bypass this shared cache; decorations can disable caching with `enableCache`.
-
-Inside each contour, boundary resolution, eligibility checks, and curve samples
-are lazy and memoized. A source-only clip request does not resolve unused inner,
-outer, or zero boundaries. Unpainted regions are not constructed, and local
-memoized data is released with its contour.
+Within each contour, boundaries, eligibility checks, and curve samples are
+resolved lazily and memoized. Clipping and painting skip unused boundaries and
+regions, and this local data is released with the contour.
 
 ### Repeated painting
 
@@ -974,107 +948,7 @@ const AnyTabDecoration(
 
 ## Validation and benchmarks
 
-The [test suite](test) combines analytic geometry, seeded generated outlines,
-topology/side-ownership assertions, canonical characterization, direct/general
-comparisons, and DPR 1/2/3 raster checks. Bounds-offset regressions cover pre-fit ratios, nested samples, and analytic
-vertex distances, fixed corner profiles, winding, mixed alignments, exhausted
-outlines, custom builders/providers,
-interpolation, caching, and independent layer/effect pixels on native and
-CanvasKit backends. Provider tests also enforce the core's
-dependency boundary. Internal assertion-only diagnostics count fitting,
-flattening, boolean operations, general assembly, and painter layers; they are
-inactive in profile/release builds.
-
-Canonical snapshots store numeric coordinates and allow floating-point roundoff
-of `max(1e-12, abs(expected) * 1e-14)` across platforms. Segment structure,
-corner types, sampled fill membership, and work counts must match exactly.
-This comparison allowance is separate from construction and raster tolerances.
-
-```sh
-flutter analyze
-flutter test
-flutter test test/benchmarks/animation_geometry.dart --reporter expanded
-flutter test --dart-define=SETTLED_GEOMETRY_BENCHMARK=true test/benchmarks/animation_geometry.dart --reporter expanded
-flutter test test/benchmarks/prepared_animation.dart --reporter expanded
-```
-
-The native benchmark separates contour preparation from region construction
-across isolated fixtures and the current indexed gallery examples. Its default protocol
-uses two warm-up passes; the optional settled protocol adds prolonged JIT
-warm-up. CPU geometry timings do not measure animation frame rate or GPU work.
-
-Run standalone CanvasKit fill checks from `example/`:
-
-```sh
-flutter run -d chrome -t ../test/browser_fill_main.dart
-```
-
-For browser profiling, save before/after profile builds plus a fill-check build
-from `example/`:
-
-```sh
-flutter build web --profile --no-pub --no-wasm-dry-run -t ../test/benchmarks/browser_animation.dart --output ABSOLUTE_OUTPUT_DIR
-flutter build web --profile --no-pub --no-wasm-dry-run -t ../test/browser_fill_main.dart --output ABSOLUTE_CHECK_DIR
-```
-
-Then run the Node 24 harness from the repository root:
-
-```sh
-node test/benchmarks/chrome_profile.mjs BEFORE_DIR AFTER_DIR CHECK_DIR TRACE_OUTPUT_DIR
-```
-
-The runner serves the builds, captures visible animation traces/screenshots,
-runs CanvasKit checks, and closes its isolated browser. `CHROME_PATH` selects
-the executable; `CHECK_ONLY=1` runs only checks, `PROFILE_VARIANT=after` captures
-only that build, and `PROFILE_REVERSE=1` reverses capture order. These settings
-belong to the benchmark harness.
-
-### Prepared animation measurements
-
-Measured on Windows with an Intel i7-10870H, Flutter 3.47.3 and Dart 3.13.3.
-The comparison uses five warmed native runs per version, alternating execution
-order with identical inputs and dependency versions. Values are median
-milliseconds with minimum–maximum run averages in parentheses. Indexed names
-refer to the 18-example gallery captured for this measurement, before the
-NotchCorner example was added.
-
-| Native CPU geometry | Before preparation | With preparation | Median change |
-| --- | ---: | ---: | ---: |
-| Ordinary static fixtures, combined | 0.647 (0.597–0.684) | 0.656 (0.626–0.699) | +1.4% |
-| Fallback static fixtures, combined | 7.949 (7.418–9.421) | 7.528 (7.437–8.075) | −5.3% |
-| Persistent tween gallery, all 18 examples | 4.228 (4.179–4.737) | 4.234 (4.101–5.065) | +0.1% |
-| Five-sample gallery with fresh tweens | 3.787 (3.717–4.192) | 4.098 (3.831–4.306) | +8.2% |
-| [1] No horizontal | 0.141 (0.138–0.147) | 0.145 (0.139–0.179) | +3.0% |
-| [6] Images | 0.047 (0.045–0.055) | 0.059 (0.055–0.061) | +24.3% |
-| [9] Inner | 0.059 (0.054–0.062) | 0.045 (0.042–0.060) | −23.8% |
-
-Aggregate geometry throughput is unchanged within observed variation. Reusable
-cases benefit from preparation; changing contexts cannot amortize it. The Images
-case changes its fitted aspect ratio each frame and adds about 0.012 ms of CPU
-geometry work. Fresh tweens also pay the initial preparation cost. The No
-horizontal case now produces continuous effective boundary
-geometry. These measurements do not establish a general FPS increase.
-
-Visible CanvasKit profiling used Chrome 152.0.7977.83, a 1087×727 viewport at
-DPR 1.25, and three interleaved runs per build of the same six-example scene.
-Each trace followed an eight-second warmup and measured eight seconds.
-
-| Browser measurement | Before | After |
-| --- | ---: | ---: |
-| Median animation callback, ms | 4.621 (4.587–5.112) | 4.706 (4.658–4.766) |
-| 95th-percentile animation callback, ms | 6.057 (5.687–7.167) | 5.921 (5.906–5.999) |
-| Compositor displayed events/second | 59.69 (59.61–59.98) | 60.01 (59.97–60.06) |
-
-Both builds sustain approximately 60 displayed frames per second in this scene.
-Callback timings overlap across runs. Display cadence is measured separately
-from CPU geometry; GPU command timings in the full record are CPU trace events,
-not measurements of GPU execution time. CanvasKit passed 58,812 independent
-transition pixel checks plus the existing hole, multi-fill, and offset checks
-at DPR 1/2/3. The complete Flutter suite passes 234 tests; the analyzer is clean.
-
-The [complete measurement record](test/benchmarks/prepared_transition_results.json)
-includes all indexed examples, raw runs, the initial pre-implementation capture,
-environment details, and the separate Chrome comparison.
-
-You might also like [any_sparklines](https://pub.dev/packages/any_sparklines).
-
+[Benchmarks](test/benchmarks/prepared_transition_results.json) compared native CPU geometry for static shapes and animated gallery examples, plus CanvasKit browser animation, before and after tween preparation.
+Persistent-tween geometry stayed around 4.23 ms across 18 examples, fresh tweens cost about 8% more, and both browser builds sustained roughly 60 FPS in the measured scene.
+Rerun native benchmarks from the repository root with `flutter test test/benchmarks/animation_geometry.dart` and `flutter test test/benchmarks/prepared_animation.dart`.
+For browser comparisons, use the [Chrome profiling harness](test/benchmarks/chrome_profile.mjs) with before/after profile builds of [browser_animation.dart](test/benchmarks/browser_animation.dart) and a check build of [browser_fill_main.dart](test/browser_fill_main.dart).

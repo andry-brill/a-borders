@@ -54,7 +54,9 @@ class RoundedCornerGeometry extends AnyCornerGeometry {
     if (from.source.runtimeType != RoundedCorner ||
         to.source.runtimeType != RoundedCorner ||
         a?.runtimeType != RoundedCorner ||
-        b?.runtimeType != RoundedCorner) return null;
+        b?.runtimeType != RoundedCorner) {
+      return null;
+    }
     return parameterTransition(a!, b!);
   }
 

@@ -240,8 +240,9 @@ void main() {
       () {
     for (final points in [fixture80(), reversePoints(fixture80())]) {
       final c = contour(points);
-      for (final base in AnyShapeBase.values)
+      for (final base in AnyShapeBase.values) {
         expect(c.pathFor(base).getBounds().isFinite, isTrue);
+      }
       final outer = c.pathFor(AnyShapeBase.outerBorder),
           inner = c.pathFor(AnyShapeBase.innerBorder);
       for (var x = 0.37; x < 300; x += 5) {

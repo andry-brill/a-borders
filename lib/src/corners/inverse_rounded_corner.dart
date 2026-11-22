@@ -43,7 +43,9 @@ class InverseRoundedCornerGeometry extends AnyCornerGeometry {
     if (from.source.runtimeType != InverseRoundedCorner ||
         to.source.runtimeType != InverseRoundedCorner ||
         a?.runtimeType != InverseRoundedCorner ||
-        b?.runtimeType != InverseRoundedCorner) return null;
+        b?.runtimeType != InverseRoundedCorner) {
+      return null;
+    }
     return parameterTransition(a!, b!);
   }
 
@@ -122,8 +124,9 @@ class InverseRoundedCornerGeometry extends AnyCornerGeometry {
       AnyResolvedCorner source, double dp, double dn) {
     final corner = source.source as InverseRoundedCorner;
     final shifted = source.frame.shifted(dp, dn);
-    if (corner.p <= 0 || corner.n <= 0)
+    if (corner.p <= 0 || corner.n <= 0) {
       return corner.geometry.resolve(corner, shifted);
+    }
     final previous = (source.geometryState as _ScoopOffset?) ??
         _ScoopOffset(corner, source.frame, 0, 0);
     final offset = _ScoopOffset(previous.corner, previous.frame,
@@ -228,8 +231,9 @@ class InverseRoundedCornerGeometry extends AnyCornerGeometry {
       final arc = radius == null
           ? fitCurve(curve, tolerance)
           : directArc(curve, offset.sweep * (b - a), radius.abs(), tolerance);
-      if (pieces.isNotEmpty)
+      if (pieces.isNotEmpty) {
         pieces.add(AnyCornerSegment.line(pieces.last.end, arc.first.start));
+      }
       pieces.addAll(arc);
     }
     if (pieces.isNotEmpty) {

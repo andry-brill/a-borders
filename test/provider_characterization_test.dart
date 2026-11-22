@@ -7,6 +7,8 @@ import 'package:any_borders/any_borders.dart';
 import 'package:any_borders/src/geometry_diagnostics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// Exercise the example package from the root package test suite.
+// ignore: avoid_relative_lib_imports
 import '../example/lib/main.dart' as gallery;
 import 'support/direct_geometry_fixtures.dart';
 

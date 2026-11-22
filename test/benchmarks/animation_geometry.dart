@@ -6,6 +6,8 @@
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:any_borders/any_borders.dart';
+// Exercise the example package from the root package test suite.
+// ignore: avoid_relative_lib_imports
 import '../../example/lib/main.dart' as demo;
 import '../support/direct_geometry_fixtures.dart';
 
@@ -34,14 +36,16 @@ void main() {
         } else {
           fallback += elapsed;
         }
-        if (pass == 2)
+        if (pass == 2) {
           print(
               'Fixture ${fixture.name}: ${(elapsed / (samples * 1000)).toStringAsFixed(3)} ms');
+        }
       }
-      if (pass == 2)
+      if (pass == 2) {
         print(
             'Fixtures ordinary=${(ordinary / (samples * 1000)).toStringAsFixed(3)} ms, '
             'fallback=${(fallback / (samples * 1000)).toStringAsFixed(3)} ms');
+      }
     }
   });
   test('animated gallery geometry benchmark', () {

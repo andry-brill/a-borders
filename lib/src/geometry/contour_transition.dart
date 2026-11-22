@@ -153,7 +153,9 @@ class AnyContourTransition {
     if (base == AnyShapeBase.zeroBorder) base = AnyShapeBase.outerBorder;
     final supported = _supported.putIfAbsent(base, () {
       if (!List.generate(_from.length, (i) => overridesCorner(i, base))
-          .any((value) => value)) return true;
+          .any((value) => value)) {
+        return true;
+      }
       bool representedByOutline(AnyContour c) {
         final corners = c._corners(base);
         final explicit = base == AnyShapeBase.outerBorder

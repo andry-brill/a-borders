@@ -50,7 +50,9 @@ class BevelCornerGeometry extends AnyCornerGeometry {
     if (from.source.runtimeType != BevelCorner ||
         to.source.runtimeType != BevelCorner ||
         a?.runtimeType != BevelCorner ||
-        b?.runtimeType != BevelCorner) return null;
+        b?.runtimeType != BevelCorner) {
+      return null;
+    }
     return parameterTransition(a!, b!);
   }
 

@@ -2,7 +2,11 @@ import 'dart:ui';
 import 'package:any_borders/any_borders.dart';
 import 'package:any_borders/src/geometry_diagnostics.dart';
 import 'package:flutter_test/flutter_test.dart';
+// Exercise the example package from the root package test suite.
+// ignore: avoid_relative_lib_imports
 import '../example/lib/main.dart' as gallery;
+// Exercise the example package from the root package test suite.
+// ignore: avoid_relative_lib_imports
 import '../example/lib/custom_corner.dart';
 import 'support/transition_regressions.dart';
 

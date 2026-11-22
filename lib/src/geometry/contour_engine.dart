@@ -14,8 +14,9 @@ extension _ContourGeometry on AnyContour {
       _innerSettings = const [];
       return;
     }
-    if (points.length < 3)
+    if (points.length < 3) {
       throw ArgumentError('At least 3 active points are required.');
+    }
     count = points.length;
     for (final p in points) {
       if (!p.point.dx.isFinite ||
@@ -44,15 +45,17 @@ extension _ContourGeometry on AnyContour {
       for (var i = 0; i < count; i++) {
         final a = points[i].point, b = points[_wrap(i + 1)].point;
         final delta = b - a, length = delta.distance;
-        if (length <= 1e-12)
+        if (length <= 1e-12) {
           throw ArgumentError(
               'Side $i has zero length; skip duplicate points.');
+        }
         directions.add(delta / length);
         lengths.add(length);
         area += geometryCross(a - origin, b - origin);
       }
-      if (area.abs() < 1e-12)
+      if (area.abs() < 1e-12) {
         throw ArgumentError('A contour must enclose a nonzero area.');
+      }
       final winding = area > 0 ? 1.0 : -1.0;
       sideLength = List.unmodifiable(lengths);
       frames = List.unmodifiable(List.generate(
@@ -84,9 +87,10 @@ extension _ContourGeometry on AnyContour {
         final c = source[i].copyWith(p: 0, n: 0);
         return c.geometry.resolve(c, frames[i]);
       });
-      if (_sourceCrosses(sharp))
+      if (_sourceCrosses(sharp)) {
         throw ArgumentError(
             'Self-intersecting source outlines are unsupported.');
+      }
       var lo = 0.0, hi = 1.0;
       for (var step = 0; step < 28; step++) {
         final mid = (lo + hi) / 2;
@@ -174,8 +178,9 @@ extension _ContourGeometry on AnyContour {
       }
       // Reversing helpers retain two shifted contacts. An explicitly authored
       // straight vertex instead uses its single averaged boundary anchor.
-      if (overrides[i] != null && !frames[i].backtracking)
+      if (overrides[i] != null && !frames[i].backtracking) {
         return explicit[i].geometry.resolve(explicit[i], shifted[i]);
+      }
       final source = shapeCorners[i];
       return source.source.geometry.resolveBoundary(source,
           previousDistance: _offsetForBase(_wrap(i - 1), base),
@@ -251,7 +256,9 @@ extension _ContourGeometry on AnyContour {
       }
       final a = boundary[i], b = boundary[_wrap(i + 1)];
       if (geometryDot(b.frame.vertex - a.frame.vertex, f.nextRay) <= 0 ||
-          geometryDot(b.start - a.end, f.nextRay) < -1e-9) return false;
+          geometryDot(b.start - a.end, f.nextRay) < -1e-9) {
+        return false;
+      }
     }
     return true;
   }
@@ -260,13 +267,17 @@ extension _ContourGeometry on AnyContour {
     if (diagnostics.forceGeneralRegions ||
         count != 4 ||
         _boundaryFallback(AnyShapeBase.innerBorder) != null ||
-        _explicitInner.any((e) => e)) return false;
+        _explicitInner.any((e) => e)) {
+      return false;
+    }
     for (var i = 0; i < count; i++) {
       final c = shapeCorners[i], f = frames[i];
       if (!_directCorner(c) ||
           !c.traits.sharpSource ||
           f.convexity < 0 ||
-          geometryDot(f.previousRay, f.nextRay).abs() > 1e-10) return false;
+          geometryDot(f.previousRay, f.nextRay).abs() > 1e-10) {
+        return false;
+      }
     }
     final shifted = List.generate(
         count,
@@ -286,7 +297,9 @@ extension _ContourGeometry on AnyContour {
           final a = band[i], b = band[_wrap(i + 1)], f = frames[i];
           if (f.parallel ||
               geometryDot(b.frame.vertex - a.frame.vertex, f.nextRay) <= 0 ||
-              geometryDot(b.start - a.end, f.nextRay) < -1e-9) return false;
+              geometryDot(b.start - a.end, f.nextRay) < -1e-9) {
+            return false;
+          }
         }
         return _simpleBoxBand(band) || !_sourceCrosses(band);
       });
@@ -331,8 +344,9 @@ extension _ContourGeometry on AnyContour {
                   ? 1.0
                   : 0.0;
           final a = outer[i].pointAt(t), b = inner[i].pointAt(t);
-          if ((a - b).distance > 1e-9)
+          if ((a - b).distance > 1e-9) {
             connectors.add(AnyCornerSegment.line(a, b));
+          }
         }
         final error = [...outer, ...inner]
             .map((c) => c.tolerance * 0.25)
@@ -422,8 +436,9 @@ extension _ContourGeometry on AnyContour {
       ..._cornerSamples(b[next], 0, to).reversed,
       ..._cornerSamples(b[side], from, 1).reversed
     ];
-    if (!_pointsCross(samples))
+    if (!_pointsCross(samples)) {
       return _signedArea(samples) >= 0 ? strip(a, b) : strip(b, a);
+    }
     // A collapsed straight span can fold the side strip. Keep the exact curved
     // boundaries, and union the two straight-span triangles separately.
     final area = _SweepArea();
@@ -590,8 +605,9 @@ class _CornerInputs {
   _CornerInputs(this.corners);
   @override
   bool operator ==(Object other) {
-    if (other is! _CornerInputs || corners.length != other.corners.length)
+    if (other is! _CornerInputs || corners.length != other.corners.length) {
       return false;
+    }
     for (var i = 0; i < corners.length; i++) {
       if (!identical(corners[i], other.corners[i])) return false;
     }
@@ -666,8 +682,9 @@ List<AnyCorner> _normalizeConcreteSettings(
     }
   }
   for (var i = 0; i < count; i++) {
-    if (!input[i].p.isFinite && !input[i].n.isFinite)
+    if (!input[i].p.isFinite && !input[i].n.isFinite) {
       p[i] = n[i] = math.min(p[i], n[i]);
+    }
   }
   final scales = List.filled(count, 1.0);
   for (var side = 0; side < count; side++) {
@@ -792,20 +809,27 @@ bool _piecesCross(_CurvePiece a, _CurvePiece b, double error, [int depth = 0]) {
   if (x.left > y.right ||
       y.left > x.right ||
       x.top > y.bottom ||
-      y.top > x.bottom) return false;
+      y.top > x.bottom) {
+    return false;
+  }
   // Positive-width boxes touching at an extremum cannot cross in their
   // interiors. Keep degenerate line boxes, which can cross another curve.
-  if (x.width > 0 && y.width > 0 && (x.left == y.right || y.left == x.right))
+  if (x.width > 0 && y.width > 0 && (x.left == y.right || y.left == x.right)) {
     return false;
-  if (x.height > 0 && y.height > 0 && (x.top == y.bottom || y.top == x.bottom))
+  }
+  if (x.height > 0 &&
+      y.height > 0 &&
+      (x.top == y.bottom || y.top == x.bottom)) {
     return false;
+  }
   if (a.flatness <= error && b.flatness <= error) {
     return geometryIntersection(
             a.segment.start, a.segment.end, b.segment.start, b.segment.end) !=
         null;
   }
-  if (depth >= 48)
+  if (depth >= 48) {
     throw StateError('Curve intersection exceeded subdivision limit.');
+  }
   if (a.flatness >= b.flatness) {
     final (first, last) = a.halves;
     return _piecesCross(first, b, error, depth + 1) ||
@@ -818,8 +842,9 @@ bool _piecesCross(_CurvePiece a, _CurvePiece b, double error, [int depth = 0]) {
 
 bool _pieceLoops(_CurvePiece piece, double error, [int depth = 0]) {
   if (piece.monotone || piece.flatness <= error) return false;
-  if (depth >= 24)
+  if (depth >= 24) {
     throw StateError('Curve loop check exceeded subdivision limit.');
+  }
   final (a, b) = piece.halves;
   return _piecesCross(a, b, error) ||
       _pieceLoops(a, error, depth + 1) ||
@@ -945,7 +970,9 @@ bool _pointsCross(List<Offset> points, {bool closed = true}) {
       if (apart == 1 ||
           closed && apart == count - 1 ||
           a.minY > b.maxY ||
-          b.minY > a.maxY) continue;
+          b.minY > a.maxY) {
+        continue;
+      }
       if (geometryIntersection(a.a, a.b, b.a, b.b) != null) return true;
     }
   }
@@ -996,13 +1023,14 @@ class _SweepArea {
     _flush();
     Path? path;
     for (final level in _levels) {
-      if (level != null)
+      if (level != null) {
         path = path == null
             // This is deliberate normalization of a folded compound, not an
             // empty accumulator shortcut. PathOps can otherwise return an
             // incorrect later subtraction without throwing (regression 280).
             ? _combinePaths(PathOperation.union, Path(), level)
             : _combinePaths(PathOperation.union, path, level);
+      }
     }
     return path ?? Path();
   }

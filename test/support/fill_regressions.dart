@@ -238,8 +238,10 @@ Future<int> checkSideFillRegressions() async {
                 // Assert analytic alpha in side interiors on web, and across
                 // the whole seam on native, using the unchanged six-level bound.
                 if (kIsWeb &&
-                    !regionPaths.any(
-                        (path) => neighborhood.every(path.contains))) continue;
+                    !regionPaths
+                        .any((path) => neighborhood.every(path.contains))) {
+                  continue;
+                }
                 final alpha = bytes.getUint8((y * image.width + x) * 4 + 3);
                 if ((alpha - 128).abs() > 6) {
                   throw StateError(

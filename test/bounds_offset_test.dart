@@ -95,8 +95,9 @@ class _RejectOffsets extends _RawShape {
   @override
   Rect adjustBounds(Rect bounds, TextDirection? direction, AnyBorder border,
       double offset, List<double> slots) {
-    if (offset != 0)
+    if (offset != 0) {
       throw UnsupportedError('Only zero bounds adjustments are supported.');
+    }
     return bounds;
   }
 }
@@ -134,8 +135,9 @@ Future<List<int>> _paintBytes(AnyDecoration decoration, Size size,
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder)..scale(dpr.toDouble());
   final painter = decoration.createBoxPainter();
-  if (clip)
+  if (clip) {
     canvas.clipPath(decoration.getClipPath(origin & size, TextDirection.ltr));
+  }
   painter.paint(canvas, origin,
       ImageConfiguration(size: size, textDirection: TextDirection.ltr));
   final picture = recorder.endRecording();

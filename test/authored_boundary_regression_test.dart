@@ -64,8 +64,9 @@ void main() {
         shadowBase: AnyShapeBase.shapeBorder);
     final a = darkRegion(original), b = darkRegion(reversed);
     for (var x = -20.31; x < 220; x += 3) {
-      for (var y = -25.73; y < 125; y += 3)
+      for (var y = -25.73; y < 125; y += 3) {
         expect(a.contains(Offset(x, y)), b.contains(Offset(x, y)));
+      }
     }
   });
 

@@ -1,3 +1,10 @@
+## 3.2.1
+
+- Enabled Dart core lints and fixed missing braces in library and test code.
+  Documented targeted lint exceptions for tests that import the example package.
+- **Breaking for direct imports:** removed `any_decoration_tween.dart`.
+  Import `package:any_borders/any_borders.dart` to access `AnyDecorationTween`.
+
 ## 3.2.0
 
 - Added `AnyDecoration.resolveRenderer(configuration, onChanged: ...)` and

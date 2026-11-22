@@ -42,9 +42,10 @@ Future<ui.Image> gallery(int dpr) async {
     canvas.save();
     canvas.clipPath(decoration.getClipPath(
         origin & const Size(120, 80), TextDirection.ltr));
-    for (var x = 0; x < 120; x += 12)
+    for (var x = 0; x < 120; x += 12) {
       canvas.drawRect(Rect.fromLTWH(origin.dx + x, origin.dy, 5, 80),
           Paint()..color = const Color(0xffb3d5d0));
+    }
     canvas.restore();
     painter.dispose();
     // A 60-degree source fillet / asymmetric cut / scoop.
